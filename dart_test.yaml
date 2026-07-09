@@ -1,0 +1,4 @@
+# Golden tests are host-rendering dependent; CI excludes them
+# (flutter test --exclude-tags=golden) and they run locally instead.
+tags:
+  golden:
