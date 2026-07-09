@@ -1,0 +1,55 @@
+# Supabase local development configuration.
+project_id = "grocery-shopping-assistant"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+
+[auth]
+enabled = true
+site_url = "com.groceryassistant.grocery://login-callback"
+additional_redirect_urls = ["com.groceryassistant.grocery://login-callback"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+
+[auth.email]
+enable_signup = true
+enable_confirmations = false
+
+# OAuth providers: set secrets via `supabase secrets set` / dashboard.
+[auth.external.google]
+enabled = true
+client_id = "env(GOOGLE_OAUTH_CLIENT_ID)"
+secret = "env(GOOGLE_OAUTH_SECRET)"
+
+[auth.external.apple]
+enabled = true
+client_id = "env(APPLE_OAUTH_CLIENT_ID)"
+secret = "env(APPLE_OAUTH_SECRET)"
+
+[storage]
+enabled = true
+file_size_limit = "10MiB"
+
+[edge_runtime]
+enabled = true
+
+[functions.ai-proxy]
+verify_jwt = true
+
+[functions.stripe-checkout]
+verify_jwt = true
+
+[functions.price-alerts]
+# Invoked by scheduler with service key, not end users.
+verify_jwt = false
