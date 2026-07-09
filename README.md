@@ -1,17 +1,110 @@
-# grocery_shopping_assistant
+# Grocery Shopping Assistant
 
-A new Flutter project.
+AI-powered grocery shopping assistant that finds the **cheapest and smartest
+way to complete an entire grocery trip** — not just compare item prices.
 
-## Getting Started
+Give it a shopping list and it compares every nearby store, prices the
+whole basket (including your clipped coupons **and the cost of driving
+there**), and tells you whether splitting the trip across two or three
+stores is actually worth it:
 
-This project is a starting point for a Flutter application.
+```
+Option A  Everything at Aldi            $41.22
+Option B  Aldi + Walmart                $38.04   (+4 min drive)
+          Savings $3.18 — worth it ✓
+```
 
-A few resources to get you started if this is your first Flutter project:
+## Features
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+- **Basket optimizer** — the core engine. Single vs multi-store trip
+  analysis with fuel cost, travel time, coupon savings, and honest
+  explanations of *why* a recommendation wins.
+- **Shopping lists** — create, duplicate, voice input, barcode add,
+  AI-generated lists ("dinners for 4 under $60").
+- **Products** — search, categories, nutrition, unit prices, price
+  history charts, cheaper alternatives.
+- **Stores & maps** — nearby stores, opening hours, distance, drive
+  time, one-tap navigation.
+- **Offers & coupons** — weekly ads, digital coupons with clip-to-wallet,
+  cashback, expiry alerts.
+- **Meal planner** — AI weekly plans that use up pantry items and
+  currently discounted products.
+- **Pantry** — inventory with expiration tracking and use-it-up nudges.
+- **Receipt scanner** — on-device OCR (ML Kit) → structured receipts →
+  spending analytics and pantry updates.
+- **Budget & insights** — monthly spending, category breakdown,
+  next-month forecast (fl_chart).
+- **AI assistant** — natural-language chat: "Should I wait until next
+  week?", "Replace expensive products", "Find vegan alternatives".
+- **Offline-first** — Hive cache, demo mode with zero backend.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Tech stack
+
+Flutter · Riverpod 3 · GoRouter · Material 3 · Supabase (PostgreSQL,
+Auth, RLS, Realtime, Edge Functions) · Firebase Messaging · Google Maps ·
+Hive · Freezed · Dio · fl_chart · Google ML Kit · mobile_scanner ·
+speech_to_text · Stripe · GitHub Actions.
+
+## Quick start
+
+```bash
+git clone https://github.com/ClaudeTest008/grocery-shopping-assistant.git
+cd grocery-shopping-assistant
+flutter pub get
+dart run build_runner build
+flutter run          # runs in demo mode — no backend needed
+```
+
+**Demo mode**: with no `--dart-define` configuration the app boots
+against a seeded local dataset (6 Austin stores, 26 products, live-ish
+prices, offers, coupons) persisted in Hive. Every feature works,
+including the optimizer and the AI assistant (deterministic mock LLM).
+
+### Connecting real services
+
+```bash
+flutter run \
+  --dart-define=SUPABASE_URL=https://<project>.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=<anon-key> \
+  --dart-define=LLM_PROVIDER=anthropic \
+  --dart-define=LLM_API_KEY=sk-ant-... \
+  --dart-define=STRIPE_PUBLISHABLE_KEY=pk_test_...
+```
+
+See [docs/Deployment.md](docs/Deployment.md) for Supabase setup, Google
+Maps keys, Firebase config, and store releases.
+
+## Project structure
+
+```
+lib/
+  core/        config, theme, router, network, storage, AI abstraction
+  shared/      reusable widgets, extensions, cross-feature models
+  features/    feature-first Clean Architecture
+    <feature>/
+      domain/        entities (Freezed) + repository interfaces + pure logic
+      data/          Supabase + demo repository implementations
+      presentation/  screens, widgets, Riverpod providers
+supabase/      migrations, RLS policies, seed, edge functions
+test/          unit, widget, golden tests
+integration_test/
+```
+
+Details: [docs/Architecture.md](docs/Architecture.md) ·
+[docs/Database.md](docs/Database.md) · [docs/API.md](docs/API.md) ·
+[docs/Testing.md](docs/Testing.md) · [docs/Roadmap.md](docs/Roadmap.md)
+
+## Development
+
+```bash
+flutter analyze                                   # zero-warning policy
+flutter test                                      # unit + widget
+flutter test --update-goldens test/golden         # regenerate goldens
+dart run build_runner watch -d                    # codegen during dev
+```
+
+Contributions welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+MIT

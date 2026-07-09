@@ -1,0 +1,88 @@
+# Deployment
+
+## 1. Supabase
+
+```bash
+supabase login
+supabase link --project-ref <project-ref>
+supabase db push                 # applies supabase/migrations
+supabase db seed                 # optional: demo catalog (seed.sql)
+supabase functions deploy ai-proxy stripe-checkout price-alerts
+supabase secrets set LLM_PROVIDER=anthropic LLM_API_KEY=sk-ant-... \
+  STRIPE_SECRET_KEY=sk_live_... 
+```
+
+- Enable Google/Apple providers under Auth → Providers; the app's
+  redirect URL is `com.groceryassistant.grocery://login-callback`.
+- Schedule `price-alerts` hourly: Dashboard → Edge Functions → Schedules.
+
+## 2. App configuration (dart-define)
+
+| Define | Purpose | Unset behavior |
+|---|---|---|
+| `SUPABASE_URL`, `SUPABASE_ANON_KEY` | backend | demo mode |
+| `LLM_PROVIDER` (`anthropic`/`openai`/`mock`), `LLM_API_KEY`, `LLM_MODEL` | AI | mock AI |
+| `STRIPE_PUBLISHABLE_KEY` | payments | paywall disabled dialog |
+| `GOOGLE_MAPS_API_KEY` | map tiles (iOS reads it via xcconfig) | banner on map screen |
+
+## 3. Google Maps keys
+
+- **Android**: key is injected as a manifest placeholder. Provide it via
+  `android/gradle.properties` (`MAPS_API_KEY=...`) or the `MAPS_API_KEY`
+  env var in CI. Empty default builds fine.
+- **iOS**: add `GOOGLE_MAPS_API_KEY = <key>` to
+  `ios/Flutter/Release.xcconfig` (and Debug); `Info.plist` maps it into
+  `GMSApiKey`, read guardedly in `AppDelegate`.
+
+## 4. Firebase Messaging
+
+1. Create a Firebase project with Android app id
+   `com.groceryassistant.grocery_shopping_assistant` and your iOS bundle.
+2. Drop `google-services.json` into `android/app/` and
+   `GoogleService-Info.plist` into `ios/Runner/` (both gitignored).
+3. Android: apply the `com.google.gms.google-services` plugin in
+   `android/app/build.gradle.kts` and its classpath in
+   `android/settings.gradle.kts` when you add the config file.
+4. Without config files the app runs normally with push disabled.
+
+## 5. Stripe
+
+- Set `STRIPE_PUBLISHABLE_KEY` dart-define at build time and
+  `STRIPE_SECRET_KEY` as a Supabase secret.
+- The paywall calls the `stripe-checkout` edge function and presents the
+  native PaymentSheet. Use webhooks (`payment_intent.succeeded`) to set
+  `users.is_premium` — left to your Stripe account setup.
+
+## 6. Android release
+
+```bash
+keytool -genkey -v -keystore upload-keystore.jks -alias upload \
+  -keyalg RSA -keysize 2048 -validity 10000
+```
+
+Create `android/key.properties` (see Flutter docs). CI signs when
+`ANDROID_KEYSTORE_BASE64` + `ANDROID_KEY_PROPERTIES` secrets exist.
+
+```bash
+flutter build appbundle --release --dart-define=... 
+```
+
+## 7. iOS release
+
+```bash
+flutter build ipa --release --dart-define=...
+```
+
+Requires Xcode signing (team + provisioning). CI produces an unsigned
+archive; sign in your fastlane/App Store Connect pipeline.
+
+## 8. GitHub Actions
+
+- `ci.yml`: analyze, format, tests, Android debug APK, iOS no-codesign
+  build on every push/PR to `main`.
+- `release.yml`: on `v*` tags — signed AAB (when secrets present)
+  attached to a GitHub release, plus unsigned iOS archive.
+
+Repository secrets used: `SUPABASE_URL`, `SUPABASE_ANON_KEY`,
+`MAPS_API_KEY`, `STRIPE_PUBLISHABLE_KEY`, `ANDROID_KEYSTORE_BASE64`,
+`ANDROID_KEY_PROPERTIES`.
