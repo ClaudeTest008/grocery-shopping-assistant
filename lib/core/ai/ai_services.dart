@@ -28,35 +28,41 @@ class AiServices {
     List<String> discountedProducts = const [],
     double? weeklyBudget,
   }) async {
-    final response = await _llm.complete(LlmRequest(
-      system:
-          'You are a budget meal planner. [intent:meal_plan] Reply with ONLY '
-          'a JSON object: {"meals":[{"day","type","name","usesPantry":[],'
-          '"ingredients":[],"estimatedCost"}]}. 5 dinners, Monday-Friday.',
-      messages: [
-        LlmMessage.user(jsonEncode({
-          'pantry': [for (final p in pantry) '${p.name} (${p.quantity} ${p.unit})'],
-          'dietary_restrictions': dietaryRestrictions,
-          'currently_discounted': discountedProducts,
-          'weekly_budget': weeklyBudget,
-        })),
-      ],
-      jsonMode: true,
-      maxTokens: 1500,
-    ));
+    final response = await _llm.complete(
+      LlmRequest(
+        system:
+            'You are a budget meal planner. [intent:meal_plan] Reply with ONLY '
+            'a JSON object: {"meals":[{"day","type","name","usesPantry":[],'
+            '"ingredients":[],"estimatedCost"}]}. 5 dinners, Monday-Friday.',
+        messages: [
+          LlmMessage.user(
+            jsonEncode({
+              'pantry': [
+                for (final p in pantry) '${p.name} (${p.quantity} ${p.unit})',
+              ],
+              'dietary_restrictions': dietaryRestrictions,
+              'currently_discounted': discountedProducts,
+              'weekly_budget': weeklyBudget,
+            }),
+          ),
+        ],
+        jsonMode: true,
+        maxTokens: 1500,
+      ),
+    );
     final json = _decodeMap(response);
     final meals = (json['meals'] as List? ?? const [])
         .cast<Map<String, dynamic>>()
-        .map((m) => PlannedMeal(
-              day: m['day'] as String? ?? 'Monday',
-              type: m['type'] as String? ?? 'dinner',
-              name: m['name'] as String? ?? 'Meal',
-              ingredients:
-                  (m['ingredients'] as List? ?? const []).cast<String>(),
-              usesPantry:
-                  (m['usesPantry'] as List? ?? const []).cast<String>(),
-              estimatedCost: (m['estimatedCost'] as num?)?.toDouble(),
-            ))
+        .map(
+          (m) => PlannedMeal(
+            day: m['day'] as String? ?? 'Monday',
+            type: m['type'] as String? ?? 'dinner',
+            name: m['name'] as String? ?? 'Meal',
+            ingredients: (m['ingredients'] as List? ?? const []).cast<String>(),
+            usesPantry: (m['usesPantry'] as List? ?? const []).cast<String>(),
+            estimatedCost: (m['estimatedCost'] as num?)?.toDouble(),
+          ),
+        )
         .toList();
     if (meals.isEmpty) throw const AiFailure('No meals generated');
     return MealPlan(
@@ -76,31 +82,38 @@ class AiServices {
     double? budget,
     List<String> dietaryRestrictions = const [],
   }) async {
-    final response = await _llm.complete(LlmRequest(
-      system: 'You build grocery lists. [intent:generate_list] Reply with '
-          'ONLY JSON: {"name","items":[{"name","quantity","unit",'
-          '"estimatedPrice"}],"estimatedTotal","notes"}.',
-      messages: [
-        LlmMessage.user(jsonEncode({
-          'goal': goal,
-          'budget': budget,
-          'dietary_restrictions': dietaryRestrictions,
-        })),
-      ],
-      jsonMode: true,
-      maxTokens: 1200,
-    ));
+    final response = await _llm.complete(
+      LlmRequest(
+        system:
+            'You build grocery lists. [intent:generate_list] Reply with '
+            'ONLY JSON: {"name","items":[{"name","quantity","unit",'
+            '"estimatedPrice"}],"estimatedTotal","notes"}.',
+        messages: [
+          LlmMessage.user(
+            jsonEncode({
+              'goal': goal,
+              'budget': budget,
+              'dietary_restrictions': dietaryRestrictions,
+            }),
+          ),
+        ],
+        jsonMode: true,
+        maxTokens: 1200,
+      ),
+    );
     final json = _decodeMap(response);
     final items = (json['items'] as List? ?? const [])
         .cast<Map<String, dynamic>>()
-        .map((i) => ShoppingItem(
-              id: _uuid.v4(),
-              listId: listId,
-              name: i['name'] as String? ?? 'Item',
-              quantity: (i['quantity'] as num?)?.toDouble() ?? 1,
-              unit: i['unit'] as String? ?? 'ea',
-              estimatedPrice: (i['estimatedPrice'] as num?)?.toDouble(),
-            ))
+        .map(
+          (i) => ShoppingItem(
+            id: _uuid.v4(),
+            listId: listId,
+            name: i['name'] as String? ?? 'Item',
+            quantity: (i['quantity'] as num?)?.toDouble() ?? 1,
+            unit: i['unit'] as String? ?? 'ea',
+            estimatedPrice: (i['estimatedPrice'] as num?)?.toDouble(),
+          ),
+        )
         .toList();
     if (items.isEmpty) throw const AiFailure('No items generated');
     return (json['name'] as String? ?? goal, items);
@@ -108,44 +121,55 @@ class AiServices {
 
   /// Cheaper / dietary-compatible substitutions for expensive items.
   Future<List<Map<String, dynamic>>> suggestSubstitutions(
-      List<String> itemNames,
-      {List<String> dietaryRestrictions = const []}) async {
-    final response = await _llm.complete(LlmRequest(
-      system: 'You suggest cheaper grocery substitutions. '
-          '[intent:substitute] Reply with ONLY JSON: {"substitutions":'
-          '[{"original","replacement","savings","reason"}]}.',
-      messages: [
-        LlmMessage.user(jsonEncode({
-          'items': itemNames,
-          'dietary_restrictions': dietaryRestrictions,
-        })),
-      ],
-      jsonMode: true,
-    ));
+    List<String> itemNames, {
+    List<String> dietaryRestrictions = const [],
+  }) async {
+    final response = await _llm.complete(
+      LlmRequest(
+        system:
+            'You suggest cheaper grocery substitutions. '
+            '[intent:substitute] Reply with ONLY JSON: {"substitutions":'
+            '[{"original","replacement","savings","reason"}]}.',
+        messages: [
+          LlmMessage.user(
+            jsonEncode({
+              'items': itemNames,
+              'dietary_restrictions': dietaryRestrictions,
+            }),
+          ),
+        ],
+        jsonMode: true,
+      ),
+    );
     return (_decodeMap(response)['substitutions'] as List? ?? const [])
         .cast<Map<String, dynamic>>();
   }
 
   Future<String> summarizeReceipt(Map<String, dynamic> receiptJson) =>
-      _llm.complete(LlmRequest(
-        system: 'Summarize this grocery receipt for the shopper in 2-3 '
-            'sentences, noting anything priced above its usual range. '
-            '[intent:receipt_summary]',
-        messages: [LlmMessage.user(jsonEncode(receiptJson))],
-        maxTokens: 300,
-      ));
+      _llm.complete(
+        LlmRequest(
+          system:
+              'Summarize this grocery receipt for the shopper in 2-3 '
+              'sentences, noting anything priced above its usual range. '
+              '[intent:receipt_summary]',
+          messages: [LlmMessage.user(jsonEncode(receiptJson))],
+          maxTokens: 300,
+        ),
+      );
 
   /// Free-form assistant chat with app context injected.
-  Future<String> chat(List<LlmMessage> history,
-      {String? contextSummary}) =>
-      _llm.complete(LlmRequest(
-        system: 'You are a grocery shopping assistant inside a mobile app. '
-            'You help with budgets, meal plans, price timing, and cheaper '
-            'alternatives. Be concise and concrete with dollar amounts. '
-            '${contextSummary ?? ''}',
-        messages: history,
-        maxTokens: 800,
-      ));
+  Future<String> chat(List<LlmMessage> history, {String? contextSummary}) =>
+      _llm.complete(
+        LlmRequest(
+          system:
+              'You are a grocery shopping assistant inside a mobile app. '
+              'You help with budgets, meal plans, price timing, and cheaper '
+              'alternatives. Be concise and concrete with dollar amounts. '
+              '${contextSummary ?? ''}',
+          messages: history,
+          maxTokens: 800,
+        ),
+      );
 
   Map<String, dynamic> _decodeMap(String raw) {
     try {
@@ -156,5 +180,6 @@ class AiServices {
   }
 }
 
-final aiServicesProvider =
-    Provider<AiServices>((ref) => AiServices(ref.watch(llmClientProvider)));
+final aiServicesProvider = Provider<AiServices>(
+  (ref) => AiServices(ref.watch(llmClientProvider)),
+);

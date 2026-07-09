@@ -9,7 +9,7 @@ abstract final class SupabaseService {
     if (!AppConfig.hasSupabase) return;
     await Supabase.initialize(
       url: AppConfig.supabaseUrl,
-      anonKey: AppConfig.supabaseAnonKey,
+      publishableKey: AppConfig.supabaseAnonKey,
     );
   }
 }

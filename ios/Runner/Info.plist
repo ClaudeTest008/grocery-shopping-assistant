@@ -26,6 +26,27 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>GMSApiKey</key>
+	<string>$(GOOGLE_MAPS_API_KEY)</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Scan product barcodes and grocery receipts.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Add shopping list items by voice.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Convert your voice into shopping list items.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Find nearby stores and calculate travel costs for the cheapest shopping trip.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Pick receipt photos for scanning.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.groceryassistant.grocery</string>
+			</array>
+		</dict>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

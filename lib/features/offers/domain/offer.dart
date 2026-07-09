@@ -16,8 +16,10 @@ abstract class Offer with _$Offer {
     required String title,
     String? description,
     @Default(OfferType.discount) OfferType type,
+
     /// Percent off (0-100) when applicable.
     double? discountPercent,
+
     /// Absolute discount when applicable.
     double? discountAmount,
     DateTime? validFrom,

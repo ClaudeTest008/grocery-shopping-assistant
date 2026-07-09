@@ -9,20 +9,25 @@ abstract class Coupon with _$Coupon {
 
   const factory Coupon({
     required String id,
+
     /// Null = valid at any store.
     String? storeId,
+
     /// Null = order-level coupon.
     String? productId,
     required String title,
     String? code,
     String? description,
+
     /// Exactly one of amount / percent is set.
     double? discountAmount,
     double? discountPercent,
+
     /// Minimum basket value to apply.
     double? minSpend,
     required DateTime expiresAt,
     @Default(true) bool isDigital,
+
     /// User has added it to their wallet.
     @Default(false) bool clipped,
   }) = _Coupon;

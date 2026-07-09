@@ -15,11 +15,13 @@ class DemoProductRepository implements ProductRepository {
   Future<List<Product>> search({String query = '', String? category}) async {
     final q = query.toLowerCase();
     return DemoSeed.products
-        .where((p) =>
-            (category == null || p.category == category) &&
-            (q.isEmpty ||
-                p.name.toLowerCase().contains(q) ||
-                (p.brand?.toLowerCase().contains(q) ?? false)))
+        .where(
+          (p) =>
+              (category == null || p.category == category) &&
+              (q.isEmpty ||
+                  p.name.toLowerCase().contains(q) ||
+                  (p.brand?.toLowerCase().contains(q) ?? false)),
+        )
         .toList();
   }
 
@@ -37,7 +39,8 @@ class DemoProductRepository implements ProductRepository {
 
   @override
   Future<Map<String, List<Price>>> pricesForProducts(
-      List<String> productIds) async {
+    List<String> productIds,
+  ) async {
     final ids = productIds.toSet();
     final result = <String, List<Price>>{};
     for (final price in DemoSeed.prices) {
@@ -89,8 +92,11 @@ class SupabaseProductRepository implements ProductRepository {
 
   @override
   Future<Product?> byId(String id) async {
-    final row =
-        await _client.from('products').select().eq('id', id).maybeSingle();
+    final row = await _client
+        .from('products')
+        .select()
+        .eq('id', id)
+        .maybeSingle();
     return row == null ? null : Product.fromJson(row);
   }
 
@@ -108,8 +114,10 @@ class SupabaseProductRepository implements ProductRepository {
   Future<List<Price>> pricesFor(String productId) async {
     final cacheKey = 'prices_$productId';
     try {
-      final rows =
-          await _client.from('prices').select().eq('product_id', productId);
+      final rows = await _client
+          .from('prices')
+          .select()
+          .eq('product_id', productId);
       final prices = rows.map(Price.fromJson).toList();
       await _store.putJsonList(cacheKey, rows);
       return prices;
@@ -123,7 +131,8 @@ class SupabaseProductRepository implements ProductRepository {
 
   @override
   Future<Map<String, List<Price>>> pricesForProducts(
-      List<String> productIds) async {
+    List<String> productIds,
+  ) async {
     final rows = await _client
         .from('prices')
         .select()

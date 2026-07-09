@@ -9,14 +9,17 @@ class ReceiptParser {
 
   static const _uuid = Uuid();
 
-  static final _priceLine =
-      RegExp(r'^(.{2,40}?)\s+\$?(\d{1,4}[.,]\d{2})\s*[A-Z]?$');
+  static final _priceLine = RegExp(
+    r'^(.{2,40}?)\s+\$?(\d{1,4}[.,]\d{2})\s*[A-Z]?$',
+  );
   static final _totalLine = RegExp(
-      r'(?:total|amount due|balance)\s*:?\s*\$?(\d{1,4}[.,]\d{2})',
-      caseSensitive: false);
-  static final _subtotalWords =
-      RegExp(r'subtotal|sub-total|tax|change|cash|credit|debit|tend',
-          caseSensitive: false);
+    r'(?:total|amount due|balance)\s*:?\s*\$?(\d{1,4}[.,]\d{2})',
+    caseSensitive: false,
+  );
+  static final _subtotalWords = RegExp(
+    r'subtotal|sub-total|tax|change|cash|credit|debit|tend',
+    caseSensitive: false,
+  );
   static final _date = RegExp(r'(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})');
 
   static const _knownChains = {
@@ -76,12 +79,14 @@ class ReceiptParser {
         final name = itemMatch.group(1)!.trim();
         // Skip lines that are clearly not products.
         if (name.length < 2 || _date.hasMatch(name)) continue;
-        items.add(ReceiptItem(
-          id: _uuid.v4(),
-          receiptId: receiptId,
-          name: _titleCase(name),
-          price: _num(itemMatch.group(2)!),
-        ));
+        items.add(
+          ReceiptItem(
+            id: _uuid.v4(),
+            receiptId: receiptId,
+            name: _titleCase(name),
+            price: _num(itemMatch.group(2)!),
+          ),
+        );
       }
     }
 

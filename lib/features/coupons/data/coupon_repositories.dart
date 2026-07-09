@@ -48,7 +48,8 @@ class SupabaseCouponRepository implements CouponRepository {
         .select('*, user_coupons(user_id)')
         .gt('expires_at', DateTime.now().toIso8601String());
     return rows.map((row) {
-      final clips = (row['user_coupons'] as List?) ?? const [];
+      final clips = ((row['user_coupons'] as List?) ?? const [])
+          .whereType<Map>();
       row.remove('user_coupons');
       final clipped = clips.any((c) => c['user_id'] == _userId);
       return Coupon.fromJson(row).copyWith(clipped: clipped);

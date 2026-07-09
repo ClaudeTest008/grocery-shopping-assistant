@@ -13,32 +13,53 @@ abstract final class DemoSeed {
 
   static final stores = <Store>[
     _store('aldi-1', 'Aldi', 'aldi', '2610 E Riverside Dr', 30.2401, -97.7269),
-    _store('walmart-1', 'Walmart Supercenter', 'walmart',
-        '710 E Ben White Blvd', 30.2201, -97.7570),
-    _store('kroger-1', 'Kroger', 'kroger', '1601 W 38th St', 30.3055,
-        -97.7484),
-    _store('target-1', 'Target', 'target', '5300 S MoPac Expy', 30.2320,
-        -97.8100),
+    _store(
+      'walmart-1',
+      'Walmart Supercenter',
+      'walmart',
+      '710 E Ben White Blvd',
+      30.2201,
+      -97.7570,
+    ),
+    _store('kroger-1', 'Kroger', 'kroger', '1601 W 38th St', 30.3055, -97.7484),
+    _store(
+      'target-1',
+      'Target',
+      'target',
+      '5300 S MoPac Expy',
+      30.2320,
+      -97.8100,
+    ),
     _store('heb-1', 'H-E-B', 'heb', '2400 S Congress Ave', 30.2410, -97.7515),
-    _store('tj-1', "Trader Joe's", 'traderjoes', '211 Walter Seaholm Dr',
-        30.2680, -97.7530),
+    _store(
+      'tj-1',
+      "Trader Joe's",
+      'traderjoes',
+      '211 Walter Seaholm Dr',
+      30.2680,
+      -97.7530,
+    ),
   ];
 
   static Store _store(
-          String id, String name, String chain, String addr, double lat,
-          double lng) =>
-      Store(
-        id: id,
-        name: name,
-        chain: chain,
-        address: '$addr, Austin, TX',
-        lat: lat,
-        lng: lng,
-        openingHours: {
-          for (var d = 1; d <= 6; d++) '$d': '08:00-21:00',
-          '7': '09:00-20:00',
-        },
-      );
+    String id,
+    String name,
+    String chain,
+    String addr,
+    double lat,
+    double lng,
+  ) => Store(
+    id: id,
+    name: name,
+    chain: chain,
+    address: '$addr, Austin, TX',
+    lat: lat,
+    lng: lng,
+    openingHours: {
+      for (var d = 1; d <= 6; d++) '$d': '08:00-21:00',
+      '7': '09:00-20:00',
+    },
+  );
 
   /// (id, name, brand, category, unit, unitSize, tags)
   static final products = <Product>[
@@ -55,17 +76,14 @@ abstract final class DemoSeed {
     _p('chicken', 'Chicken Breast', null, 'meat', 'lb', 1, []),
     _p('gbeef', 'Ground Beef 80/20', null, 'meat', 'lb', 1, []),
     _p('turkey', 'Ground Turkey', null, 'meat', 'lb', 1, []),
-    _p('bread', 'Whole Wheat Bread', 'Nature\'s Own', 'bakery', 'loaf', 1,
-        []),
+    _p('bread', 'Whole Wheat Bread', 'Nature\'s Own', 'bakery', 'loaf', 1, []),
     _p('tortillas', 'Flour Tortillas', 'Mission', 'bakery', 'ct', 10, []),
     _p('rice', 'Long Grain Rice', null, 'pantry', 'lb', 2, ['vegan']),
     _p('pasta', 'Spaghetti', 'Barilla', 'pantry', 'oz', 16, ['vegan']),
     _p('beans', 'Black Beans', 'Goya', 'pantry', 'can', 1, ['vegan']),
-    _p('tomsauce', 'Canned Tomatoes', 'Hunt\'s', 'pantry', 'can', 1,
-        ['vegan']),
+    _p('tomsauce', 'Canned Tomatoes', 'Hunt\'s', 'pantry', 'can', 1, ['vegan']),
     _p('pb', 'Peanut Butter', 'Jif', 'pantry', 'oz', 16, ['vegan']),
-    _p('cereal', 'Honey Nut Cereal', 'General Mills', 'pantry', 'oz', 18,
-        []),
+    _p('cereal', 'Honey Nut Cereal', 'General Mills', 'pantry', 'oz', 18, []),
     _p('coffee', 'Ground Coffee', 'Folgers', 'beverages', 'oz', 24, ['vegan']),
     _p('oj', 'Orange Juice', 'Tropicana', 'beverages', 'oz', 52, ['vegan']),
     _p('frbroccoli', 'Frozen Broccoli', null, 'frozen', 'oz', 12, ['vegan']),
@@ -73,29 +91,54 @@ abstract final class DemoSeed {
     _p('tofu', 'Firm Tofu', null, 'meat', 'oz', 14, ['vegan']),
   ];
 
-  static Product _p(String id, String name, String? brand, String category,
-          String unit, double size, List<String> tags) =>
-      Product(
-        id: id,
-        name: name,
-        brand: brand,
-        barcode: '0000${id.hashCode.abs()}',
-        category: category,
-        unit: unit,
-        unitSize: size,
-        tags: tags,
-        nutrition: const {'calories': 120, 'protein_g': 4, 'fat_g': 3},
-      );
+  static Product _p(
+    String id,
+    String name,
+    String? brand,
+    String category,
+    String unit,
+    double size,
+    List<String> tags,
+  ) => Product(
+    id: id,
+    name: name,
+    brand: brand,
+    barcode: '0000${id.hashCode.abs()}',
+    category: category,
+    unit: unit,
+    unitSize: size,
+    tags: tags,
+    nutrition: const {'calories': 120, 'protein_g': 4, 'fat_g': 3},
+  );
 
   /// Base price per product; per-store multipliers create honest spread.
   static const _basePrices = <String, double>{
-    'milk': 3.49, 'eggs': 2.89, 'butter': 4.29, 'cheddar': 2.49,
-    'yogurt': 5.49, 'bananas': 0.58, 'apples': 1.49, 'lettuce': 2.29,
-    'tomatoes': 1.39, 'broccoli': 1.99, 'chicken': 3.29, 'gbeef': 4.49,
-    'turkey': 3.99, 'bread': 2.49, 'tortillas': 2.89, 'rice': 2.19,
-    'pasta': 1.39, 'beans': 0.89, 'tomsauce': 1.09, 'pb': 2.79,
-    'cereal': 3.99, 'coffee': 8.99, 'oj': 3.89, 'frbroccoli': 1.79,
-    'icecream': 4.99, 'tofu': 1.99,
+    'milk': 3.49,
+    'eggs': 2.89,
+    'butter': 4.29,
+    'cheddar': 2.49,
+    'yogurt': 5.49,
+    'bananas': 0.58,
+    'apples': 1.49,
+    'lettuce': 2.29,
+    'tomatoes': 1.39,
+    'broccoli': 1.99,
+    'chicken': 3.29,
+    'gbeef': 4.49,
+    'turkey': 3.99,
+    'bread': 2.49,
+    'tortillas': 2.89,
+    'rice': 2.19,
+    'pasta': 1.39,
+    'beans': 0.89,
+    'tomsauce': 1.09,
+    'pb': 2.79,
+    'cereal': 3.99,
+    'coffee': 8.99,
+    'oj': 3.89,
+    'frbroccoli': 1.79,
+    'icecream': 4.99,
+    'tofu': 1.99,
   };
 
   static const _storeMultiplier = <String, double>{
@@ -140,16 +183,18 @@ abstract final class DemoSeed {
           price = _round(price * 0.78);
         }
         final product = products.firstWhere((p) => p.id == entry.key);
-        out.add(Price(
-          id: '${store.id}-${entry.key}',
-          productId: entry.key,
-          storeId: store.id,
-          price: price,
-          regularPrice: regular,
-          unitPrice: _round(price / product.unitSize),
-          validTo: now.add(const Duration(days: 6)),
-          updatedAt: now,
-        ));
+        out.add(
+          Price(
+            id: '${store.id}-${entry.key}',
+            productId: entry.key,
+            storeId: store.id,
+            price: price,
+            regularPrice: regular,
+            unitPrice: _round(price / product.unitSize),
+            validTo: now.add(const Duration(days: 6)),
+            updatedAt: now,
+          ),
+        );
       }
     }
     return out;
@@ -166,11 +211,13 @@ abstract final class DemoSeed {
         PricePoint(
           recordedAt: now.subtract(Duration(days: d)),
           // Slow seasonal drift + periodic sale dip every ~28 days.
-          price: _round(base *
-              (1 +
-                  0.06 * _wave(d / 45) -
-                  (d % 28 < 4 ? 0.18 : 0) +
-                  ((productId.hashCode + d) % 7 - 3) / 200)),
+          price: _round(
+            base *
+                (1 +
+                    0.06 * _wave(d / 45) -
+                    (d % 28 < 4 ? 0.18 : 0) +
+                    ((productId.hashCode + d) % 7 - 3) / 200),
+          ),
         ),
     ];
   }

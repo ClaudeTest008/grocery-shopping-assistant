@@ -13,10 +13,12 @@ abstract class Price with _$Price {
     required String productId,
     required String storeId,
     required double price,
+
     /// Price per base unit of the product (e.g. per oz), for honest
     /// comparison across package sizes.
     double? unitPrice,
     @Default('USD') String currency,
+
     /// Non-null when the price is promotional.
     double? regularPrice,
     DateTime? validFrom,

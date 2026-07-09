@@ -8,11 +8,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 class LocalStore {
   LocalStore._();
 
-  static const _boxNames = [
-    cacheBox,
-    prefsBox,
-    pendingOpsBox,
-  ];
+  static const _boxNames = [cacheBox, prefsBox, pendingOpsBox];
 
   static const cacheBox = 'cache';
   static const prefsBox = 'prefs';
@@ -31,10 +27,7 @@ class LocalStore {
 
   /// Cache a JSON document list under [key] with a freshness timestamp.
   Future<void> putJsonList(String key, List<Map<String, dynamic>> docs) =>
-      cache.put(key, {
-        'at': DateTime.now().toIso8601String(),
-        'docs': docs,
-      });
+      cache.put(key, {'at': DateTime.now().toIso8601String(), 'docs': docs});
 
   /// Returns cached docs, or null when absent/older than [maxAge].
   List<Map<String, dynamic>>? getJsonList(String key, {Duration? maxAge}) {

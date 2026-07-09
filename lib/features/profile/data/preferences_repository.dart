@@ -63,4 +63,5 @@ class PreferencesNotifier extends Notifier<UserPreferences> {
 
 final preferencesProvider =
     NotifierProvider<PreferencesNotifier, UserPreferences>(
-        PreferencesNotifier.new);
+      PreferencesNotifier.new,
+    );

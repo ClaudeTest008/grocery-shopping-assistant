@@ -4,6 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Emits true when the device has any network path.
 final isOnlineProvider = StreamProvider<bool>((ref) {
   return Connectivity().onConnectivityChanged.map(
-        (results) => results.any((r) => r != ConnectivityResult.none),
-      );
+    (results) => results.any((r) => r != ConnectivityResult.none),
+  );
 });

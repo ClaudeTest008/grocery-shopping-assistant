@@ -16,12 +16,15 @@ abstract final class AppConfig {
   static const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
   static const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
   static const googleMapsApiKey = String.fromEnvironment('GOOGLE_MAPS_API_KEY');
-  static const stripePublishableKey =
-      String.fromEnvironment('STRIPE_PUBLISHABLE_KEY');
+  static const stripePublishableKey = String.fromEnvironment(
+    'STRIPE_PUBLISHABLE_KEY',
+  );
 
   /// One of: `anthropic`, `openai`, `mock`.
-  static const llmProvider =
-      String.fromEnvironment('LLM_PROVIDER', defaultValue: 'mock');
+  static const llmProvider = String.fromEnvironment(
+    'LLM_PROVIDER',
+    defaultValue: 'mock',
+  );
   static const llmApiKey = String.fromEnvironment('LLM_API_KEY');
   static const llmModel = String.fromEnvironment('LLM_MODEL');
 

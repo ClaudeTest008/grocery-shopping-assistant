@@ -14,28 +14,31 @@ const _uuid = Uuid();
 
 class DemoShoppingListRepository implements ShoppingListRepository {
   DemoShoppingListRepository(LocalStore store)
-      : _lists = DemoCollection(
-          store,
-          'demo_shopping_lists',
-          fromJson: ShoppingList.fromJson,
-          toJson: (l) => l.toJson(),
-          seed: _seedLists,
-        );
+    : _lists = DemoCollection(
+        store,
+        'demo_shopping_lists',
+        fromJson: ShoppingList.fromJson,
+        toJson: (l) => l.toJson(),
+        seed: _seedLists,
+      );
 
   final DemoCollection<ShoppingList> _lists;
 
   static List<ShoppingList> _seedLists() {
     final listId = _uuid.v4();
-    ShoppingItem item(String productId, String name, double qty,
-            [String unit = 'ea']) =>
-        ShoppingItem(
-          id: _uuid.v4(),
-          listId: listId,
-          productId: productId,
-          name: name,
-          quantity: qty,
-          unit: unit,
-        );
+    ShoppingItem item(
+      String productId,
+      String name,
+      double qty, [
+      String unit = 'ea',
+    ]) => ShoppingItem(
+      id: _uuid.v4(),
+      listId: listId,
+      productId: productId,
+      name: name,
+      quantity: qty,
+      unit: unit,
+    );
     return [
       ShoppingList(
         id: listId,
@@ -60,8 +63,8 @@ class DemoShoppingListRepository implements ShoppingListRepository {
   }
 
   @override
-  Future<List<ShoppingList>> lists() async => _lists.load()
-    ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  Future<List<ShoppingList>> lists() async =>
+      _lists.load()..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
   @override
   Future<ShoppingList?> byId(String id) async =>
@@ -127,9 +130,9 @@ class DemoShoppingListRepository implements ShoppingListRepository {
     final list = await byId(item.listId);
     if (list == null) return;
     await _lists.upsert(
-      list.copyWith(items: [
-        for (final i in list.items) i.id == item.id ? item : i,
-      ]),
+      list.copyWith(
+        items: [for (final i in list.items) i.id == item.id ? item : i],
+      ),
       (l) => l.id == item.listId,
     );
   }
@@ -139,8 +142,7 @@ class DemoShoppingListRepository implements ShoppingListRepository {
     final list = await byId(listId);
     if (list == null) return;
     await _lists.upsert(
-      list.copyWith(
-          items: list.items.where((i) => i.id != itemId).toList()),
+      list.copyWith(items: list.items.where((i) => i.id != itemId).toList()),
       (l) => l.id == listId,
     );
   }
@@ -194,12 +196,14 @@ class SupabaseShoppingListRepository implements ShoppingListRepository {
   }
 
   @override
-  Future<void> rename(String id, String name, {double? budget}) =>
-      _client.from('shopping_lists').update({
+  Future<void> rename(String id, String name, {double? budget}) => _client
+      .from('shopping_lists')
+      .update({
         'name': name,
         'budget': budget,
         'updated_at': DateTime.now().toIso8601String(),
-      }).eq('id', id);
+      })
+      .eq('id', id);
 
   @override
   Future<void> delete(String id) =>
@@ -238,22 +242,23 @@ class SupabaseShoppingListRepository implements ShoppingListRepository {
       });
 
   @override
-  Future<void> updateItem(ShoppingItem item) =>
-      _client.from('shopping_items').update({
+  Future<void> updateItem(ShoppingItem item) => _client
+      .from('shopping_items')
+      .update({
         'name': item.name,
         'quantity': item.quantity,
         'unit': item.unit,
         'checked': item.checked,
         'notes': item.notes,
-      }).eq('id', item.id);
+      })
+      .eq('id', item.id);
 
   @override
   Future<void> removeItem(String listId, String itemId) =>
       _client.from('shopping_items').delete().eq('id', itemId);
 }
 
-final shoppingListRepositoryProvider =
-    Provider<ShoppingListRepository>((ref) {
+final shoppingListRepositoryProvider = Provider<ShoppingListRepository>((ref) {
   if (AppConfig.isDemoMode) {
     return DemoShoppingListRepository(ref.watch(localStoreProvider));
   }

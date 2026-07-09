@@ -4,13 +4,8 @@ import '../errors/failures.dart';
 import 'llm_client.dart';
 
 class AnthropicClient implements LlmClient {
-  AnthropicClient({
-    required Dio dio,
-    required String apiKey,
-    String? model,
-  })  : _dio = dio,
-        _apiKey = apiKey,
-        _model = (model == null || model.isEmpty) ? defaultModel : model;
+  AnthropicClient({required this._dio, required this._apiKey, String? model})
+    : _model = (model == null || model.isEmpty) ? defaultModel : model;
 
   static const defaultModel = 'claude-sonnet-5';
 
@@ -26,10 +21,9 @@ class AnthropicClient implements LlmClient {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
         'https://api.anthropic.com/v1/messages',
-        options: Options(headers: {
-          'x-api-key': _apiKey,
-          'anthropic-version': '2023-06-01',
-        }),
+        options: Options(
+          headers: {'x-api-key': _apiKey, 'anthropic-version': '2023-06-01'},
+        ),
         data: {
           'model': _model,
           'max_tokens': request.maxTokens,

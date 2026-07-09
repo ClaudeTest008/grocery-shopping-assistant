@@ -12,13 +12,13 @@ import '../domain/receipt_repository.dart';
 
 class DemoReceiptRepository implements ReceiptRepository {
   DemoReceiptRepository(LocalStore store)
-      : _receipts = DemoCollection(
-          store,
-          'demo_receipts',
-          fromJson: Receipt.fromJson,
-          toJson: (r) => r.toJson(),
-          seed: _seed,
-        );
+    : _receipts = DemoCollection(
+        store,
+        'demo_receipts',
+        fromJson: Receipt.fromJson,
+        toJson: (r) => r.toJson(),
+        seed: _seed,
+      );
 
   final DemoCollection<Receipt> _receipts;
 
@@ -47,22 +47,24 @@ class DemoReceiptRepository implements ReceiptRepository {
             category: categories[(week + i) % categories.length],
           ),
       ];
-      out.add(Receipt(
-        id: receiptId,
-        userId: DemoSeed.demoUserId,
-        storeId: storeRotation[storeIdx],
-        storeName: storeNames[storeIdx],
-        total: double.parse(total.toStringAsFixed(2)),
-        purchasedAt: now.subtract(Duration(days: week * 7)),
-        items: items,
-      ));
+      out.add(
+        Receipt(
+          id: receiptId,
+          userId: DemoSeed.demoUserId,
+          storeId: storeRotation[storeIdx],
+          storeName: storeNames[storeIdx],
+          total: double.parse(total.toStringAsFixed(2)),
+          purchasedAt: now.subtract(Duration(days: week * 7)),
+          items: items,
+        ),
+      );
     }
     return out;
   }
 
   @override
-  Future<List<Receipt>> receipts() async => _receipts.load()
-    ..sort((a, b) => b.purchasedAt.compareTo(a.purchasedAt));
+  Future<List<Receipt>> receipts() async =>
+      _receipts.load()..sort((a, b) => b.purchasedAt.compareTo(a.purchasedAt));
 
   @override
   Future<void> add(Receipt receipt) =>

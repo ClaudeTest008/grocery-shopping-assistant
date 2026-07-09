@@ -10,6 +10,7 @@ abstract class Store with _$Store {
   const factory Store({
     required String id,
     required String name,
+
     /// Chain identifier: aldi, walmart, kroger...
     required String chain,
     required String address,
@@ -17,8 +18,10 @@ abstract class Store with _$Store {
     required double lng,
     String? logoUrl,
     String? phone,
+
     /// Weekday (1=Mon..7=Sun, as strings) -> "08:00-21:00" or "closed".
     Map<String, String>? openingHours,
+
     /// Filled in client-side from user location; not persisted.
     double? distanceKm,
   }) = _Store;
@@ -34,6 +37,7 @@ abstract class Store with _$Store {
       final p = hhmm.split(':');
       return int.parse(p[0]) * 60 + int.parse(p[1]);
     }
+
     final now = DateTime.now();
     final nowMin = now.hour * 60 + now.minute;
     return nowMin >= minutes(parts[0]) && nowMin < minutes(parts[1]);

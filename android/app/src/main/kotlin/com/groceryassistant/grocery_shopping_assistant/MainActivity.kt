@@ -1,5 +1,7 @@
 package com.groceryassistant.grocery_shopping_assistant
 
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 
-class MainActivity : FlutterActivity()
+// FlutterFragmentActivity (not FlutterActivity) is required by
+// flutter_stripe's PaymentSheet.
+class MainActivity : FlutterFragmentActivity()

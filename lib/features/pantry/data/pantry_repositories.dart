@@ -12,32 +12,37 @@ import '../domain/pantry_repository.dart';
 
 class DemoPantryRepository implements PantryRepository {
   DemoPantryRepository(LocalStore store)
-      : _items = DemoCollection(
-          store,
-          'demo_pantry',
-          fromJson: PantryItem.fromJson,
-          toJson: (i) => i.toJson(),
-          seed: _seed,
-        );
+    : _items = DemoCollection(
+        store,
+        'demo_pantry',
+        fromJson: PantryItem.fromJson,
+        toJson: (i) => i.toJson(),
+        seed: _seed,
+      );
 
   final DemoCollection<PantryItem> _items;
 
   static List<PantryItem> _seed() {
     const uuid = Uuid();
     final now = DateTime.now();
-    PantryItem item(String name, double qty, String unit, int? expiresDays,
-            String location) =>
-        PantryItem(
-          id: uuid.v4(),
-          userId: DemoSeed.demoUserId,
-          name: name,
-          quantity: qty,
-          unit: unit,
-          expiresAt:
-              expiresDays == null ? null : now.add(Duration(days: expiresDays)),
-          location: location,
-          addedAt: now,
-        );
+    PantryItem item(
+      String name,
+      double qty,
+      String unit,
+      int? expiresDays,
+      String location,
+    ) => PantryItem(
+      id: uuid.v4(),
+      userId: DemoSeed.demoUserId,
+      name: name,
+      quantity: qty,
+      unit: unit,
+      expiresAt: expiresDays == null
+          ? null
+          : now.add(Duration(days: expiresDays)),
+      location: location,
+      addedAt: now,
+    );
     return [
       item('Long Grain Rice', 1.5, 'lb', null, 'pantry'),
       item('Black Beans', 4, 'can', null, 'pantry'),

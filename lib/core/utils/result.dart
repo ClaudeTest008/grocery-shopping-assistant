@@ -9,28 +9,27 @@ sealed class Result<T> {
   R when<R>({
     required R Function(T value) ok,
     required R Function(Failure failure) err,
-  }) =>
-      switch (this) {
-        Ok(:final value) => ok(value),
-        Err(:final failure) => err(failure),
-      };
+  }) => switch (this) {
+    Ok(:final value) => ok(value),
+    Err(:final failure) => err(failure),
+  };
 
   T getOrThrow() => switch (this) {
-        Ok(:final value) => value,
-        Err(:final failure) => throw failure,
-      };
+    Ok(:final value) => value,
+    Err(:final failure) => throw failure,
+  };
 
   T getOrElse(T fallback) => switch (this) {
-        Ok(:final value) => value,
-        Err() => fallback,
-      };
+    Ok(:final value) => value,
+    Err() => fallback,
+  };
 
   bool get isOk => this is Ok<T>;
 
   Result<R> map<R>(R Function(T value) transform) => switch (this) {
-        Ok(:final value) => Ok(transform(value)),
-        Err(:final failure) => Err(failure),
-      };
+    Ok(:final value) => Ok(transform(value)),
+    Err(:final failure) => Err(failure),
+  };
 }
 
 final class Ok<T> extends Result<T> {
@@ -50,6 +49,6 @@ Future<Result<T>> guard<T>(Future<T> Function() body) async {
   } on Failure catch (f) {
     return Err(f);
   } catch (e) {
-    return Err(UnknownFailure(e.toString(), cause: e));
+    return Err(UnknownFailure(e.toString(), e));
   }
 }

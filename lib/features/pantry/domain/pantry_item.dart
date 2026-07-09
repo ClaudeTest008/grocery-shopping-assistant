@@ -15,6 +15,7 @@ abstract class PantryItem with _$PantryItem {
     @Default(1.0) double quantity,
     @Default('ea') String unit,
     DateTime? expiresAt,
+
     /// fridge, freezer, pantry...
     @Default('pantry') String location,
     DateTime? addedAt,
@@ -23,8 +24,7 @@ abstract class PantryItem with _$PantryItem {
   factory PantryItem.fromJson(Map<String, dynamic> json) =>
       _$PantryItemFromJson(json);
 
-  bool get isExpired =>
-      expiresAt != null && DateTime.now().isAfter(expiresAt!);
+  bool get isExpired => expiresAt != null && DateTime.now().isAfter(expiresAt!);
 
   bool get expiresSoon =>
       expiresAt != null &&

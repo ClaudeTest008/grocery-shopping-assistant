@@ -7,12 +7,10 @@ class DemoCollection<T> {
   DemoCollection(
     this._store,
     this._key, {
-    required T Function(Map<String, dynamic>) fromJson,
-    required Map<String, dynamic> Function(T) toJson,
-    List<T> Function()? seed,
-  })  : _fromJson = fromJson,
-        _toJson = toJson,
-        _seed = seed;
+    required this._fromJson,
+    required this._toJson,
+    this._seed,
+  });
 
   final LocalStore _store;
   final String _key;

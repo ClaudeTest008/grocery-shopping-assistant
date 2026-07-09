@@ -4,13 +4,8 @@ import '../errors/failures.dart';
 import 'llm_client.dart';
 
 class OpenAiClient implements LlmClient {
-  OpenAiClient({
-    required Dio dio,
-    required String apiKey,
-    String? model,
-  })  : _dio = dio,
-        _apiKey = apiKey,
-        _model = (model == null || model.isEmpty) ? defaultModel : model;
+  OpenAiClient({required this._dio, required this._apiKey, String? model})
+    : _model = (model == null || model.isEmpty) ? defaultModel : model;
 
   static const defaultModel = 'gpt-4o-mini';
 
@@ -41,8 +36,10 @@ class OpenAiClient implements LlmClient {
         },
       );
       final choices = res.data?['choices'] as List<dynamic>?;
-      final text = (choices?.firstOrNull
-          as Map<String, dynamic>?)?['message']?['content'] as String?;
+      final message =
+          (choices?.firstOrNull as Map<String, dynamic>?)?['message']
+              as Map<String, dynamic>?;
+      final text = message?['content'] as String?;
       if (text == null || text.isEmpty) {
         throw const AiFailure('Empty response from OpenAI');
       }

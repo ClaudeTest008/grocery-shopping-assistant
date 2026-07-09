@@ -19,47 +19,69 @@ abstract interface class NotificationRepository {
 
 class DemoNotificationRepository implements NotificationRepository {
   DemoNotificationRepository(LocalStore store)
-      : _items = DemoCollection(
-          store,
-          'demo_notifications',
-          fromJson: AppNotification.fromJson,
-          toJson: (n) => n.toJson(),
-          seed: _seed,
-        );
+    : _items = DemoCollection(
+        store,
+        'demo_notifications',
+        fromJson: AppNotification.fromJson,
+        toJson: (n) => n.toJson(),
+        seed: _seed,
+      );
 
   final DemoCollection<AppNotification> _items;
 
   static List<AppNotification> _seed() {
     const uuid = Uuid();
     final now = DateTime.now();
-    AppNotification n(NotificationType type, String title, String body,
-            String? route, int hoursAgo) =>
-        AppNotification(
-          id: uuid.v4(),
-          userId: DemoSeed.demoUserId,
-          type: type,
-          title: title,
-          body: body,
-          route: route,
-          createdAt: now.subtract(Duration(hours: hoursAgo)),
-        );
+    AppNotification n(
+      NotificationType type,
+      String title,
+      String body,
+      String? route,
+      int hoursAgo,
+    ) => AppNotification(
+      id: uuid.v4(),
+      userId: DemoSeed.demoUserId,
+      type: type,
+      title: title,
+      body: body,
+      route: route,
+      createdAt: now.subtract(Duration(hours: hoursAgo)),
+    );
     return [
-      n(NotificationType.priceDrop, 'Price drop: Chicken Breast',
-          'Now \$2.57/lb at Kroger — 22% below its 90-day average.',
-          '/products/chicken', 2),
-      n(NotificationType.couponExpiring, 'Coupon expires tomorrow',
-          '50c off Peanut Butter at Walmart is about to expire.',
-          '/coupons', 6),
-      n(NotificationType.sale, 'Weekly ads are out',
-          '5 new offers at stores near you.', '/offers', 26),
-      n(NotificationType.pantryExpiring, 'Use your yogurt',
-          'Greek Yogurt in your fridge expires in 2 days.', '/pantry', 30),
+      n(
+        NotificationType.priceDrop,
+        'Price drop: Chicken Breast',
+        'Now \$2.57/lb at Kroger — 22% below its 90-day average.',
+        '/products/chicken',
+        2,
+      ),
+      n(
+        NotificationType.couponExpiring,
+        'Coupon expires tomorrow',
+        '50c off Peanut Butter at Walmart is about to expire.',
+        '/coupons',
+        6,
+      ),
+      n(
+        NotificationType.sale,
+        'Weekly ads are out',
+        '5 new offers at stores near you.',
+        '/offers',
+        26,
+      ),
+      n(
+        NotificationType.pantryExpiring,
+        'Use your yogurt',
+        'Greek Yogurt in your fridge expires in 2 days.',
+        '/pantry',
+        30,
+      ),
     ];
   }
 
   @override
-  Future<List<AppNotification>> notifications() async => _items.load()
-    ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  Future<List<AppNotification>> notifications() async =>
+      _items.load()..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
   @override
   Future<void> markRead(String id) async {
@@ -72,8 +94,9 @@ class DemoNotificationRepository implements NotificationRepository {
 
   @override
   Future<void> markAllRead() async {
-    await _items.saveAll(
-        [for (final n in _items.load()) n.copyWith(read: true)]);
+    await _items.saveAll([
+      for (final n in _items.load()) n.copyWith(read: true),
+    ]);
   }
 }
 
@@ -102,11 +125,11 @@ class SupabaseNotificationRepository implements NotificationRepository {
   @override
   Future<void> markAllRead() => _client
       .from('notifications')
-      .update({'read': true}).eq('user_id', _userId);
+      .update({'read': true})
+      .eq('user_id', _userId);
 }
 
-final notificationRepositoryProvider =
-    Provider<NotificationRepository>((ref) {
+final notificationRepositoryProvider = Provider<NotificationRepository>((ref) {
   if (AppConfig.isDemoMode) {
     return DemoNotificationRepository(ref.watch(localStoreProvider));
   }

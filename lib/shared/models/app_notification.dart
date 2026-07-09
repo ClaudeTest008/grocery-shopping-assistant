@@ -21,6 +21,7 @@ abstract class AppNotification with _$AppNotification {
     @Default(NotificationType.general) NotificationType type,
     required String title,
     required String body,
+
     /// Deep-link route, e.g. /products/abc123.
     String? route,
     required DateTime createdAt,

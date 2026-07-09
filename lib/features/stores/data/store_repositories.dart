@@ -9,7 +9,10 @@ import '../domain/store.dart';
 import '../domain/store_repository.dart';
 
 List<Store> _sortByDistance(
-    Iterable<Store> stores, GeoPoint location, double radiusKm) {
+  Iterable<Store> stores,
+  GeoPoint location,
+  double radiusKm,
+) {
   final withDistance = [
     for (final s in stores)
       s.copyWith(distanceKm: location.distanceKmTo(GeoPoint(s.lat, s.lng))),
@@ -34,8 +37,7 @@ class SupabaseStoreRepository implements StoreRepository {
   final SupabaseClient _client;
 
   @override
-  Future<List<Store>> nearby(GeoPoint location,
-      {double radiusKm = 25}) async {
+  Future<List<Store>> nearby(GeoPoint location, {double radiusKm = 25}) async {
     // Bounding-box prefilter in SQL, precise sort client-side.
     final latDelta = radiusKm / 111.0;
     final rows = await _client
@@ -48,8 +50,11 @@ class SupabaseStoreRepository implements StoreRepository {
 
   @override
   Future<Store?> byId(String id) async {
-    final row =
-        await _client.from('stores').select().eq('id', id).maybeSingle();
+    final row = await _client
+        .from('stores')
+        .select()
+        .eq('id', id)
+        .maybeSingle();
     return row == null ? null : Store.fromJson(row);
   }
 }

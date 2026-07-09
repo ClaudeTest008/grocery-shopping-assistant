@@ -11,6 +11,7 @@ abstract class ShoppingList with _$ShoppingList {
     required String id,
     required String userId,
     required String name,
+
     /// Optional spending cap for this trip.
     double? budget,
     @Default(<ShoppingItem>[]) List<ShoppingItem> items,
@@ -31,6 +32,7 @@ abstract class ShoppingItem with _$ShoppingItem {
   const factory ShoppingItem({
     required String id,
     required String listId,
+
     /// Linked catalog product when known; free-text items have null.
     String? productId,
     required String name,
@@ -38,6 +40,7 @@ abstract class ShoppingItem with _$ShoppingItem {
     @Default('ea') String unit,
     @Default(false) bool checked,
     String? notes,
+
     /// Estimated price used before optimization resolves real prices.
     double? estimatedPrice,
   }) = _ShoppingItem;

@@ -14,15 +14,15 @@ final llmClientProvider = Provider<LlmClient>((ref) {
   final dio = ref.watch(dioProvider);
   return switch (AppConfig.llmProvider) {
     'anthropic' when AppConfig.llmApiKey.isNotEmpty => AnthropicClient(
-        dio: dio,
-        apiKey: AppConfig.llmApiKey,
-        model: AppConfig.llmModel,
-      ),
+      dio: dio,
+      apiKey: AppConfig.llmApiKey,
+      model: AppConfig.llmModel,
+    ),
     'openai' when AppConfig.llmApiKey.isNotEmpty => OpenAiClient(
-        dio: dio,
-        apiKey: AppConfig.llmApiKey,
-        model: AppConfig.llmModel,
-      ),
+      dio: dio,
+      apiKey: AppConfig.llmApiKey,
+      model: AppConfig.llmModel,
+    ),
     _ => const MockLlmClient(),
   };
 });

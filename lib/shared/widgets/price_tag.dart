@@ -28,13 +28,14 @@ class PriceTag extends StatelessWidget {
       children: [
         Text(
           Formatters.currency(price, code: currency),
-          style: (large
-                  ? theme.textTheme.headlineSmall
-                  : theme.textTheme.titleMedium)
-              ?.copyWith(
-            fontWeight: FontWeight.w800,
-            color: hasDeal ? theme.colorScheme.primary : null,
-          ),
+          style:
+              (large
+                      ? theme.textTheme.headlineSmall
+                      : theme.textTheme.titleMedium)
+                  ?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: hasDeal ? theme.colorScheme.primary : null,
+                  ),
         ),
         if (hasDeal) ...[
           const SizedBox(width: 6),

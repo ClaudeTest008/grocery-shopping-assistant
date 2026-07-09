@@ -10,22 +10,24 @@ import '../domain/meal_plan_repository.dart';
 
 class DemoMealPlanRepository implements MealPlanRepository {
   DemoMealPlanRepository(LocalStore store)
-      : _plans = DemoCollection(
-          store,
-          'demo_meal_plans',
-          fromJson: MealPlan.fromJson,
-          toJson: (p) => p.toJson(),
-        );
+    : _plans = DemoCollection(
+        store,
+        'demo_meal_plans',
+        fromJson: MealPlan.fromJson,
+        toJson: (p) => p.toJson(),
+      );
 
   final DemoCollection<MealPlan> _plans;
 
   @override
   Future<MealPlan?> forWeek(DateTime weekStart) async => _plans
       .load()
-      .where((p) =>
-          p.weekStart.year == weekStart.year &&
-          p.weekStart.month == weekStart.month &&
-          p.weekStart.day == weekStart.day)
+      .where(
+        (p) =>
+            p.weekStart.year == weekStart.year &&
+            p.weekStart.month == weekStart.month &&
+            p.weekStart.day == weekStart.day,
+      )
       .firstOrNull;
 
   @override
@@ -60,11 +62,11 @@ class SupabaseMealPlanRepository implements MealPlanRepository {
 
   @override
   Future<void> save(MealPlan plan) => _client.from('meal_plans').upsert({
-        'id': plan.id,
-        'user_id': _userId,
-        'week_start': plan.weekStart.toIso8601String().substring(0, 10),
-        'meals': [for (final m in plan.meals) m.toJson()],
-      });
+    'id': plan.id,
+    'user_id': _userId,
+    'week_start': plan.weekStart.toIso8601String().substring(0, 10),
+    'meals': [for (final m in plan.meals) m.toJson()],
+  });
 }
 
 final mealPlanRepositoryProvider = Provider<MealPlanRepository>((ref) {

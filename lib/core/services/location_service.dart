@@ -17,7 +17,8 @@ class GeoPoint {
     const r = 6371.0;
     final dLat = _rad(other.lat - lat);
     final dLng = _rad(other.lng - lng);
-    final a = math.pow(math.sin(dLat / 2), 2) +
+    final a =
+        math.pow(math.sin(dLat / 2), 2) +
         math.cos(_rad(lat)) *
             math.cos(_rad(other.lat)) *
             math.pow(math.sin(dLng / 2), 2);

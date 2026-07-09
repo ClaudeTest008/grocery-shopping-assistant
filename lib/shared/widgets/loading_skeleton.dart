@@ -45,9 +45,8 @@ class ListSkeleton extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       physics: const NeverScrollableScrollPhysics(),
       itemCount: itemCount,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (_, __) =>
-          SkeletonBox(height: itemHeight, radius: 16),
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
+      itemBuilder: (_, _) => SkeletonBox(height: itemHeight, radius: 16),
     );
   }
 }

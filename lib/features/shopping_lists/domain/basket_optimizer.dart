@@ -45,8 +45,13 @@ class BasketOptimizer {
     // All store combinations of size 1..3.
     for (var size = 1; size <= 3 && size <= candidates.length; size++) {
       for (final combo in _combinations(candidates, size)) {
-        final option = _evaluate(combo, items, pricesByProduct, home,
-            clippedCoupons);
+        final option = _evaluate(
+          combo,
+          items,
+          pricesByProduct,
+          home,
+          clippedCoupons,
+        );
         if (option != null) options.add(option);
       }
     }
@@ -68,8 +73,8 @@ class BasketOptimizer {
     // otherwise the errand isn't worth it.
     BasketOption recommended = best;
     if (best.visits.length > 1 && bestSingle != null) {
-      final sameCoverage = bestSingle.unavailableItems.length ==
-          best.unavailableItems.length;
+      final sameCoverage =
+          bestSingle.unavailableItems.length == best.unavailableItems.length;
       final savings = bestSingle.totalCost - best.totalCost;
       if (sameCoverage && savings < multiStoreThreshold) {
         recommended = bestSingle;
@@ -86,8 +91,10 @@ class BasketOptimizer {
 
     return OptimizationResult(
       options: annotated,
-      recommended:
-          annotated.firstWhere((o) => o.recommended, orElse: () => annotated.first),
+      recommended: annotated.firstWhere(
+        (o) => o.recommended,
+        orElse: () => annotated.first,
+      ),
     );
   }
 
@@ -106,19 +113,23 @@ class BasketOptimizer {
       final prices = item.productId == null
           ? const <Price>[]
           : (pricesByProduct[item.productId!] ?? const <Price>[])
-              .where((p) => comboIds.contains(p.storeId))
-              .toList();
+                .where((p) => comboIds.contains(p.storeId))
+                .toList();
       if (prices.isEmpty) {
         unavailable.add(item);
         continue;
       }
       prices.sort((a, b) => a.price.compareTo(b.price));
       final cheapest = prices.first;
-      assignments.putIfAbsent(cheapest.storeId, () => []).add(ItemAssignment(
-            item: item,
-            price: cheapest,
-            lineTotal: cheapest.price * item.quantity,
-          ));
+      assignments
+          .putIfAbsent(cheapest.storeId, () => [])
+          .add(
+            ItemAssignment(
+              item: item,
+              price: cheapest,
+              lineTotal: cheapest.price * item.quantity,
+            ),
+          );
     }
 
     // A combo where some store gets nothing is strictly worse than the
@@ -130,20 +141,21 @@ class BasketOptimizer {
         StoreVisit(
           store: store,
           items: assignments[store.id]!,
-          subtotal: assignments[store.id]!
-              .fold(0.0, (sum, a) => sum + a.lineTotal),
+          subtotal: assignments[store.id]!.fold(
+            0.0,
+            (sum, a) => sum + a.lineTotal,
+          ),
         ),
     ];
     final itemsTotal = visits.fold(0.0, (sum, v) => sum + v.subtotal);
 
-    final couponSavings =
-        _couponSavings(coupons, visits, comboIds, itemsTotal);
+    final couponSavings = _couponSavings(coupons, visits, comboIds, itemsTotal);
 
     final travelKm = _bestTourKm(home, combo);
     final travelCost = travelKm * fuelCostPerKm;
-    final travelTime =
-        Duration(minutes: (travelKm / urbanSpeedKmh * 60).round() +
-            8 * combo.length); // ~8 min in-store overhead per extra stop
+    final travelTime = Duration(
+      minutes: (travelKm / urbanSpeedKmh * 60).round() + 8 * combo.length,
+    ); // ~8 min in-store overhead per extra stop
 
     return BasketOption(
       visits: visits,
@@ -157,8 +169,12 @@ class BasketOptimizer {
     );
   }
 
-  double _couponSavings(List<Coupon> coupons, List<StoreVisit> visits,
-      Set<String> comboIds, double itemsTotal) {
+  double _couponSavings(
+    List<Coupon> coupons,
+    List<StoreVisit> visits,
+    Set<String> comboIds,
+    double itemsTotal,
+  ) {
     var savings = 0.0;
     for (final coupon in coupons.where((c) => c.clipped && !c.isExpired)) {
       // Store-bound coupons need that store in the trip.
@@ -184,9 +200,7 @@ class BasketOptimizer {
         // Basket coupon with optional minimum spend.
         final qualifying = coupon.storeId == null
             ? itemsTotal
-            : visits
-                .firstWhere((v) => v.store.id == coupon.storeId)
-                .subtotal;
+            : visits.firstWhere((v) => v.store.id == coupon.storeId).subtotal;
         if (coupon.minSpend == null || qualifying >= coupon.minSpend!) {
           savings += coupon.valueOn(qualifying);
         }
@@ -218,35 +232,43 @@ class BasketOptimizer {
   }
 
   String _explain(
-      BasketOption o, BasketOption? bestSingle, BasketOption recommended) {
+    BasketOption o,
+    BasketOption? bestSingle,
+    BasketOption recommended,
+  ) {
     final storeNames = o.visits.map((v) => v.store.name).join(' + ');
     final buffer = StringBuffer();
     if (o.visits.length == 1) {
       buffer.write('Everything in one stop at $storeNames.');
     } else {
-      buffer.write('Split across $storeNames — each item bought where it '
-          'is cheapest.');
+      buffer.write(
+        'Split across $storeNames — each item bought where it '
+        'is cheapest.',
+      );
     }
     if (o.couponSavings > 0) {
       buffer.write(
-          ' Includes \$${o.couponSavings.toStringAsFixed(2)} coupon savings.');
+        ' Includes \$${o.couponSavings.toStringAsFixed(2)} coupon savings.',
+      );
     }
     if (bestSingle != null && !identical(o, bestSingle)) {
       final savings = bestSingle.totalCost - o.totalCost;
-      final extraMin =
-          o.travelTime.inMinutes - bestSingle.travelTime.inMinutes;
+      final extraMin = o.travelTime.inMinutes - bestSingle.travelTime.inMinutes;
       if (savings > 0) {
-        buffer.write(' Saves \$${savings.toStringAsFixed(2)} vs the best '
-            'single store for about $extraMin extra minutes'
-            '${identical(o, recommended) ? ' — worth it.' : ', which is not worth the trip.'}');
+        buffer.write(
+          ' Saves \$${savings.toStringAsFixed(2)} vs the best '
+          'single store for about $extraMin extra minutes'
+          '${identical(o, recommended) ? ' — worth it.' : ', which is not worth the trip.'}',
+        );
       } else {
-        buffer.write(' Costs \$${(-savings).toStringAsFixed(2)} more than '
-            'the best single store once driving is priced in.');
+        buffer.write(
+          ' Costs \$${(-savings).toStringAsFixed(2)} more than '
+          'the best single store once driving is priced in.',
+        );
       }
     }
     if (o.unavailableItems.isNotEmpty) {
-      buffer.write(
-          ' Unavailable here: ${o.unavailableItems.join(', ')}.');
+      buffer.write(' Unavailable here: ${o.unavailableItems.join(', ')}.');
     }
     return buffer.toString();
   }

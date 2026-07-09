@@ -10,9 +10,11 @@ extension ContextX on BuildContext {
   void showSnack(String message, {bool error = false}) {
     ScaffoldMessenger.of(this)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(
-        content: Text(message),
-        backgroundColor: error ? colors.error : null,
-      ));
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: error ? colors.error : null,
+        ),
+      );
   }
 }
