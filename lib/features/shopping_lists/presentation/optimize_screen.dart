@@ -244,9 +244,21 @@ class _OptionCard extends ConsumerWidget {
               ),
             ],
             if (option.unavailableItems.isNotEmpty)
-              Text(
-                'Not available: ${option.unavailableItems.join(', ')}',
-                style: context.text.bodySmall?.copyWith(color: colors.error),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Not available: ${option.unavailableItems.join(', ')}',
+                      style: context.text.bodySmall?.copyWith(
+                        color: colors.error,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => _suggestSubstitutes(context, ref),
+                    child: const Text('Substitutes'),
+                  ),
+                ],
               ),
             const SizedBox(height: 8),
             Row(
@@ -276,6 +288,55 @@ class _OptionCard extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _suggestSubstitutes(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final subs = await ref
+          .read(aiServicesProvider)
+          .suggestSubstitutions(option.unavailableItems);
+      if (!context.mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Cheaper substitutes'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                for (final sub in subs)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text('${sub['original']} → ${sub['replacement']}'),
+                    subtitle: Text(sub['reason'] as String? ?? ''),
+                    trailing: sub['savings'] != null
+                        ? Text(
+                            '−${Formatters.currency((sub['savings'] as num).toDouble())}',
+                            style: TextStyle(
+                              color: Theme.of(ctx).colorScheme.primary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          )
+                        : null,
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Could not fetch substitutes: $e')),
+      );
+    }
   }
 
   Future<void> _explainWithAi(BuildContext context, WidgetRef ref) async {

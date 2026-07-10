@@ -193,6 +193,77 @@ void main() {
       expect(result.recommended!.unavailableItems, isEmpty);
     });
 
+    test('out-of-stock prices are never used', () {
+      final result = const BasketOptimizer().optimize(
+        items: [item('milk')],
+        stores: [storeA, storeB],
+        pricesByProduct: {
+          'milk': [
+            // Cheaper at A but out of stock there.
+            const Price(
+              id: 'A-milk',
+              productId: 'milk',
+              storeId: 'A',
+              price: 1.00,
+              inStock: false,
+            ),
+            price('milk', 'B', 3.00),
+          ],
+        },
+        home: home,
+      );
+
+      expect(result.recommended!.visits.single.store.id, 'B');
+    });
+
+    test('value of time is priced into totals', () {
+      final withTime = const BasketOptimizer(valueOfTimePerHour: 30).optimize(
+        items: [item('milk')],
+        stores: [storeB],
+        pricesByProduct: {
+          'milk': [price('milk', 'B', 3.00)],
+        },
+        home: home,
+      );
+      final option = withTime.recommended!;
+      expect(option.timeCost, greaterThan(0));
+      expect(
+        option.totalCost,
+        closeTo(option.itemsTotal + option.travelCost + option.timeCost, 0.011),
+      );
+    });
+
+    test('multi-store visits come back in driving order', () {
+      // Three collinear stores north of home. Any optimal tour walks the
+      // line, so the middle store must be the middle stop — regardless
+      // of the (deliberately shuffled) input order.
+      final storeC = store('C', 0.03);
+      final result = const BasketOptimizer(multiStoreThreshold: 0).optimize(
+        items: [item('milk'), item('steak'), item('bread')],
+        stores: [storeC, storeA, storeB], // shuffled
+        pricesByProduct: {
+          'milk': [
+            price('milk', 'A', 1.00),
+            price('milk', 'B', 9.00),
+            price('milk', 'C', 9.00),
+          ],
+          'steak': [
+            price('steak', 'A', 9.00),
+            price('steak', 'B', 1.00),
+            price('steak', 'C', 9.00),
+          ],
+          'bread': [
+            price('bread', 'A', 9.00),
+            price('bread', 'B', 9.00),
+            price('bread', 'C', 1.00),
+          ],
+        },
+        home: home,
+      );
+      final threeStop = result.options.firstWhere((o) => o.visits.length == 3);
+      expect(threeStop.visits[1].store.id, 'B');
+    });
+
     test('empty input yields empty result', () {
       final result = const BasketOptimizer().optimize(
         items: [],
