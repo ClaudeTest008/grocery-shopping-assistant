@@ -28,6 +28,10 @@ abstract class UserPreferences with _$UserPreferences {
     /// Minimum savings before a multi-store trip is recommended.
     @Default(2.0) double multiStoreThreshold,
 
+    /// How the user prices an hour of their time in trip totals.
+    /// 0 = optimize on money alone.
+    @Default(0.0) double valueOfTimePerHour,
+
     /// Accessibility: scale factor bump for large text.
     @Default(1.0) double textScale,
     @Default(false) bool highContrast,

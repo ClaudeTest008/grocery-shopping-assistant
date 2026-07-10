@@ -18,7 +18,8 @@ mixin _$Price {
  String get id; String get productId; String get storeId; double get price;/// Price per base unit of the product (e.g. per oz), for honest
 /// comparison across package sizes.
  double? get unitPrice; String get currency;/// Non-null when the price is promotional.
- double? get regularPrice; DateTime? get validFrom; DateTime? get validTo; DateTime? get updatedAt;
+ double? get regularPrice;/// Inventory signal from the store feed; optimizer skips false.
+ bool get inStock; DateTime? get validFrom; DateTime? get validTo; DateTime? get updatedAt;
 /// Create a copy of Price
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -31,16 +32,16 @@ $PriceCopyWith<Price> get copyWith => _$PriceCopyWithImpl<Price>(this as Price, 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Price&&(identical(other.id, id) || other.id == id)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.storeId, storeId) || other.storeId == storeId)&&(identical(other.price, price) || other.price == price)&&(identical(other.unitPrice, unitPrice) || other.unitPrice == unitPrice)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.regularPrice, regularPrice) || other.regularPrice == regularPrice)&&(identical(other.validFrom, validFrom) || other.validFrom == validFrom)&&(identical(other.validTo, validTo) || other.validTo == validTo)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Price&&(identical(other.id, id) || other.id == id)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.storeId, storeId) || other.storeId == storeId)&&(identical(other.price, price) || other.price == price)&&(identical(other.unitPrice, unitPrice) || other.unitPrice == unitPrice)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.regularPrice, regularPrice) || other.regularPrice == regularPrice)&&(identical(other.inStock, inStock) || other.inStock == inStock)&&(identical(other.validFrom, validFrom) || other.validFrom == validFrom)&&(identical(other.validTo, validTo) || other.validTo == validTo)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,productId,storeId,price,unitPrice,currency,regularPrice,validFrom,validTo,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,productId,storeId,price,unitPrice,currency,regularPrice,inStock,validFrom,validTo,updatedAt);
 
 @override
 String toString() {
-  return 'Price(id: $id, productId: $productId, storeId: $storeId, price: $price, unitPrice: $unitPrice, currency: $currency, regularPrice: $regularPrice, validFrom: $validFrom, validTo: $validTo, updatedAt: $updatedAt)';
+  return 'Price(id: $id, productId: $productId, storeId: $storeId, price: $price, unitPrice: $unitPrice, currency: $currency, regularPrice: $regularPrice, inStock: $inStock, validFrom: $validFrom, validTo: $validTo, updatedAt: $updatedAt)';
 }
 
 
@@ -51,7 +52,7 @@ abstract mixin class $PriceCopyWith<$Res>  {
   factory $PriceCopyWith(Price value, $Res Function(Price) _then) = _$PriceCopyWithImpl;
 @useResult
 $Res call({
- String id, String productId, String storeId, double price, double? unitPrice, String currency, double? regularPrice, DateTime? validFrom, DateTime? validTo, DateTime? updatedAt
+ String id, String productId, String storeId, double price, double? unitPrice, String currency, double? regularPrice, bool inStock, DateTime? validFrom, DateTime? validTo, DateTime? updatedAt
 });
 
 
@@ -68,7 +69,7 @@ class _$PriceCopyWithImpl<$Res>
 
 /// Create a copy of Price
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? productId = null,Object? storeId = null,Object? price = null,Object? unitPrice = freezed,Object? currency = null,Object? regularPrice = freezed,Object? validFrom = freezed,Object? validTo = freezed,Object? updatedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? productId = null,Object? storeId = null,Object? price = null,Object? unitPrice = freezed,Object? currency = null,Object? regularPrice = freezed,Object? inStock = null,Object? validFrom = freezed,Object? validTo = freezed,Object? updatedAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,productId: null == productId ? _self.productId : productId // ignore: cast_nullable_to_non_nullable
@@ -77,7 +78,8 @@ as String,price: null == price ? _self.price : price // ignore: cast_nullable_to
 as double,unitPrice: freezed == unitPrice ? _self.unitPrice : unitPrice // ignore: cast_nullable_to_non_nullable
 as double?,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
 as String,regularPrice: freezed == regularPrice ? _self.regularPrice : regularPrice // ignore: cast_nullable_to_non_nullable
-as double?,validFrom: freezed == validFrom ? _self.validFrom : validFrom // ignore: cast_nullable_to_non_nullable
+as double?,inStock: null == inStock ? _self.inStock : inStock // ignore: cast_nullable_to_non_nullable
+as bool,validFrom: freezed == validFrom ? _self.validFrom : validFrom // ignore: cast_nullable_to_non_nullable
 as DateTime?,validTo: freezed == validTo ? _self.validTo : validTo // ignore: cast_nullable_to_non_nullable
 as DateTime?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,
@@ -165,10 +167,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String productId,  String storeId,  double price,  double? unitPrice,  String currency,  double? regularPrice,  DateTime? validFrom,  DateTime? validTo,  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String productId,  String storeId,  double price,  double? unitPrice,  String currency,  double? regularPrice,  bool inStock,  DateTime? validFrom,  DateTime? validTo,  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Price() when $default != null:
-return $default(_that.id,_that.productId,_that.storeId,_that.price,_that.unitPrice,_that.currency,_that.regularPrice,_that.validFrom,_that.validTo,_that.updatedAt);case _:
+return $default(_that.id,_that.productId,_that.storeId,_that.price,_that.unitPrice,_that.currency,_that.regularPrice,_that.inStock,_that.validFrom,_that.validTo,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -186,10 +188,10 @@ return $default(_that.id,_that.productId,_that.storeId,_that.price,_that.unitPri
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String productId,  String storeId,  double price,  double? unitPrice,  String currency,  double? regularPrice,  DateTime? validFrom,  DateTime? validTo,  DateTime? updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String productId,  String storeId,  double price,  double? unitPrice,  String currency,  double? regularPrice,  bool inStock,  DateTime? validFrom,  DateTime? validTo,  DateTime? updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _Price():
-return $default(_that.id,_that.productId,_that.storeId,_that.price,_that.unitPrice,_that.currency,_that.regularPrice,_that.validFrom,_that.validTo,_that.updatedAt);case _:
+return $default(_that.id,_that.productId,_that.storeId,_that.price,_that.unitPrice,_that.currency,_that.regularPrice,_that.inStock,_that.validFrom,_that.validTo,_that.updatedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -206,10 +208,10 @@ return $default(_that.id,_that.productId,_that.storeId,_that.price,_that.unitPri
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String productId,  String storeId,  double price,  double? unitPrice,  String currency,  double? regularPrice,  DateTime? validFrom,  DateTime? validTo,  DateTime? updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String productId,  String storeId,  double price,  double? unitPrice,  String currency,  double? regularPrice,  bool inStock,  DateTime? validFrom,  DateTime? validTo,  DateTime? updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _Price() when $default != null:
-return $default(_that.id,_that.productId,_that.storeId,_that.price,_that.unitPrice,_that.currency,_that.regularPrice,_that.validFrom,_that.validTo,_that.updatedAt);case _:
+return $default(_that.id,_that.productId,_that.storeId,_that.price,_that.unitPrice,_that.currency,_that.regularPrice,_that.inStock,_that.validFrom,_that.validTo,_that.updatedAt);case _:
   return null;
 
 }
@@ -221,7 +223,7 @@ return $default(_that.id,_that.productId,_that.storeId,_that.price,_that.unitPri
 @JsonSerializable()
 
 class _Price extends Price {
-  const _Price({required this.id, required this.productId, required this.storeId, required this.price, this.unitPrice, this.currency = 'USD', this.regularPrice, this.validFrom, this.validTo, this.updatedAt}): super._();
+  const _Price({required this.id, required this.productId, required this.storeId, required this.price, this.unitPrice, this.currency = 'USD', this.regularPrice, this.inStock = true, this.validFrom, this.validTo, this.updatedAt}): super._();
   factory _Price.fromJson(Map<String, dynamic> json) => _$PriceFromJson(json);
 
 @override final  String id;
@@ -234,6 +236,8 @@ class _Price extends Price {
 @override@JsonKey() final  String currency;
 /// Non-null when the price is promotional.
 @override final  double? regularPrice;
+/// Inventory signal from the store feed; optimizer skips false.
+@override@JsonKey() final  bool inStock;
 @override final  DateTime? validFrom;
 @override final  DateTime? validTo;
 @override final  DateTime? updatedAt;
@@ -251,16 +255,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Price&&(identical(other.id, id) || other.id == id)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.storeId, storeId) || other.storeId == storeId)&&(identical(other.price, price) || other.price == price)&&(identical(other.unitPrice, unitPrice) || other.unitPrice == unitPrice)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.regularPrice, regularPrice) || other.regularPrice == regularPrice)&&(identical(other.validFrom, validFrom) || other.validFrom == validFrom)&&(identical(other.validTo, validTo) || other.validTo == validTo)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Price&&(identical(other.id, id) || other.id == id)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.storeId, storeId) || other.storeId == storeId)&&(identical(other.price, price) || other.price == price)&&(identical(other.unitPrice, unitPrice) || other.unitPrice == unitPrice)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.regularPrice, regularPrice) || other.regularPrice == regularPrice)&&(identical(other.inStock, inStock) || other.inStock == inStock)&&(identical(other.validFrom, validFrom) || other.validFrom == validFrom)&&(identical(other.validTo, validTo) || other.validTo == validTo)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,productId,storeId,price,unitPrice,currency,regularPrice,validFrom,validTo,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,productId,storeId,price,unitPrice,currency,regularPrice,inStock,validFrom,validTo,updatedAt);
 
 @override
 String toString() {
-  return 'Price(id: $id, productId: $productId, storeId: $storeId, price: $price, unitPrice: $unitPrice, currency: $currency, regularPrice: $regularPrice, validFrom: $validFrom, validTo: $validTo, updatedAt: $updatedAt)';
+  return 'Price(id: $id, productId: $productId, storeId: $storeId, price: $price, unitPrice: $unitPrice, currency: $currency, regularPrice: $regularPrice, inStock: $inStock, validFrom: $validFrom, validTo: $validTo, updatedAt: $updatedAt)';
 }
 
 
@@ -271,7 +275,7 @@ abstract mixin class _$PriceCopyWith<$Res> implements $PriceCopyWith<$Res> {
   factory _$PriceCopyWith(_Price value, $Res Function(_Price) _then) = __$PriceCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String productId, String storeId, double price, double? unitPrice, String currency, double? regularPrice, DateTime? validFrom, DateTime? validTo, DateTime? updatedAt
+ String id, String productId, String storeId, double price, double? unitPrice, String currency, double? regularPrice, bool inStock, DateTime? validFrom, DateTime? validTo, DateTime? updatedAt
 });
 
 
@@ -288,7 +292,7 @@ class __$PriceCopyWithImpl<$Res>
 
 /// Create a copy of Price
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? productId = null,Object? storeId = null,Object? price = null,Object? unitPrice = freezed,Object? currency = null,Object? regularPrice = freezed,Object? validFrom = freezed,Object? validTo = freezed,Object? updatedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? productId = null,Object? storeId = null,Object? price = null,Object? unitPrice = freezed,Object? currency = null,Object? regularPrice = freezed,Object? inStock = null,Object? validFrom = freezed,Object? validTo = freezed,Object? updatedAt = freezed,}) {
   return _then(_Price(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,productId: null == productId ? _self.productId : productId // ignore: cast_nullable_to_non_nullable
@@ -297,7 +301,8 @@ as String,price: null == price ? _self.price : price // ignore: cast_nullable_to
 as double,unitPrice: freezed == unitPrice ? _self.unitPrice : unitPrice // ignore: cast_nullable_to_non_nullable
 as double?,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
 as String,regularPrice: freezed == regularPrice ? _self.regularPrice : regularPrice // ignore: cast_nullable_to_non_nullable
-as double?,validFrom: freezed == validFrom ? _self.validFrom : validFrom // ignore: cast_nullable_to_non_nullable
+as double?,inStock: null == inStock ? _self.inStock : inStock // ignore: cast_nullable_to_non_nullable
+as bool,validFrom: freezed == validFrom ? _self.validFrom : validFrom // ignore: cast_nullable_to_non_nullable
 as DateTime?,validTo: freezed == validTo ? _self.validTo : validTo // ignore: cast_nullable_to_non_nullable
 as DateTime?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,

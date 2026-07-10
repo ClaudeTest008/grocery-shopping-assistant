@@ -20,7 +20,9 @@ mixin _$UserPreferences {
  String get themeMode; List<String> get dietaryRestrictions; List<String> get favoriteStoreIds;/// Monthly grocery budget.
  double? get monthlyBudget; bool get notificationsEnabled; bool get priceDropAlerts; bool get couponExpiryAlerts;/// Basket optimizer: cost per km driven.
  double get fuelCostPerKm;/// Minimum savings before a multi-store trip is recommended.
- double get multiStoreThreshold;/// Accessibility: scale factor bump for large text.
+ double get multiStoreThreshold;/// How the user prices an hour of their time in trip totals.
+/// 0 = optimize on money alone.
+ double get valueOfTimePerHour;/// Accessibility: scale factor bump for large text.
  double get textScale; bool get highContrast;
 /// Create a copy of UserPreferences
 /// with the given fields replaced by the non-null parameter values.
@@ -34,16 +36,16 @@ $UserPreferencesCopyWith<UserPreferences> get copyWith => _$UserPreferencesCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserPreferences&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.units, units) || other.units == units)&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&const DeepCollectionEquality().equals(other.dietaryRestrictions, dietaryRestrictions)&&const DeepCollectionEquality().equals(other.favoriteStoreIds, favoriteStoreIds)&&(identical(other.monthlyBudget, monthlyBudget) || other.monthlyBudget == monthlyBudget)&&(identical(other.notificationsEnabled, notificationsEnabled) || other.notificationsEnabled == notificationsEnabled)&&(identical(other.priceDropAlerts, priceDropAlerts) || other.priceDropAlerts == priceDropAlerts)&&(identical(other.couponExpiryAlerts, couponExpiryAlerts) || other.couponExpiryAlerts == couponExpiryAlerts)&&(identical(other.fuelCostPerKm, fuelCostPerKm) || other.fuelCostPerKm == fuelCostPerKm)&&(identical(other.multiStoreThreshold, multiStoreThreshold) || other.multiStoreThreshold == multiStoreThreshold)&&(identical(other.textScale, textScale) || other.textScale == textScale)&&(identical(other.highContrast, highContrast) || other.highContrast == highContrast));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserPreferences&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.units, units) || other.units == units)&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&const DeepCollectionEquality().equals(other.dietaryRestrictions, dietaryRestrictions)&&const DeepCollectionEquality().equals(other.favoriteStoreIds, favoriteStoreIds)&&(identical(other.monthlyBudget, monthlyBudget) || other.monthlyBudget == monthlyBudget)&&(identical(other.notificationsEnabled, notificationsEnabled) || other.notificationsEnabled == notificationsEnabled)&&(identical(other.priceDropAlerts, priceDropAlerts) || other.priceDropAlerts == priceDropAlerts)&&(identical(other.couponExpiryAlerts, couponExpiryAlerts) || other.couponExpiryAlerts == couponExpiryAlerts)&&(identical(other.fuelCostPerKm, fuelCostPerKm) || other.fuelCostPerKm == fuelCostPerKm)&&(identical(other.multiStoreThreshold, multiStoreThreshold) || other.multiStoreThreshold == multiStoreThreshold)&&(identical(other.valueOfTimePerHour, valueOfTimePerHour) || other.valueOfTimePerHour == valueOfTimePerHour)&&(identical(other.textScale, textScale) || other.textScale == textScale)&&(identical(other.highContrast, highContrast) || other.highContrast == highContrast));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,currency,units,themeMode,const DeepCollectionEquality().hash(dietaryRestrictions),const DeepCollectionEquality().hash(favoriteStoreIds),monthlyBudget,notificationsEnabled,priceDropAlerts,couponExpiryAlerts,fuelCostPerKm,multiStoreThreshold,textScale,highContrast);
+int get hashCode => Object.hash(runtimeType,currency,units,themeMode,const DeepCollectionEquality().hash(dietaryRestrictions),const DeepCollectionEquality().hash(favoriteStoreIds),monthlyBudget,notificationsEnabled,priceDropAlerts,couponExpiryAlerts,fuelCostPerKm,multiStoreThreshold,valueOfTimePerHour,textScale,highContrast);
 
 @override
 String toString() {
-  return 'UserPreferences(currency: $currency, units: $units, themeMode: $themeMode, dietaryRestrictions: $dietaryRestrictions, favoriteStoreIds: $favoriteStoreIds, monthlyBudget: $monthlyBudget, notificationsEnabled: $notificationsEnabled, priceDropAlerts: $priceDropAlerts, couponExpiryAlerts: $couponExpiryAlerts, fuelCostPerKm: $fuelCostPerKm, multiStoreThreshold: $multiStoreThreshold, textScale: $textScale, highContrast: $highContrast)';
+  return 'UserPreferences(currency: $currency, units: $units, themeMode: $themeMode, dietaryRestrictions: $dietaryRestrictions, favoriteStoreIds: $favoriteStoreIds, monthlyBudget: $monthlyBudget, notificationsEnabled: $notificationsEnabled, priceDropAlerts: $priceDropAlerts, couponExpiryAlerts: $couponExpiryAlerts, fuelCostPerKm: $fuelCostPerKm, multiStoreThreshold: $multiStoreThreshold, valueOfTimePerHour: $valueOfTimePerHour, textScale: $textScale, highContrast: $highContrast)';
 }
 
 
@@ -54,7 +56,7 @@ abstract mixin class $UserPreferencesCopyWith<$Res>  {
   factory $UserPreferencesCopyWith(UserPreferences value, $Res Function(UserPreferences) _then) = _$UserPreferencesCopyWithImpl;
 @useResult
 $Res call({
- String currency, String units, String themeMode, List<String> dietaryRestrictions, List<String> favoriteStoreIds, double? monthlyBudget, bool notificationsEnabled, bool priceDropAlerts, bool couponExpiryAlerts, double fuelCostPerKm, double multiStoreThreshold, double textScale, bool highContrast
+ String currency, String units, String themeMode, List<String> dietaryRestrictions, List<String> favoriteStoreIds, double? monthlyBudget, bool notificationsEnabled, bool priceDropAlerts, bool couponExpiryAlerts, double fuelCostPerKm, double multiStoreThreshold, double valueOfTimePerHour, double textScale, bool highContrast
 });
 
 
@@ -71,7 +73,7 @@ class _$UserPreferencesCopyWithImpl<$Res>
 
 /// Create a copy of UserPreferences
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? currency = null,Object? units = null,Object? themeMode = null,Object? dietaryRestrictions = null,Object? favoriteStoreIds = null,Object? monthlyBudget = freezed,Object? notificationsEnabled = null,Object? priceDropAlerts = null,Object? couponExpiryAlerts = null,Object? fuelCostPerKm = null,Object? multiStoreThreshold = null,Object? textScale = null,Object? highContrast = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? currency = null,Object? units = null,Object? themeMode = null,Object? dietaryRestrictions = null,Object? favoriteStoreIds = null,Object? monthlyBudget = freezed,Object? notificationsEnabled = null,Object? priceDropAlerts = null,Object? couponExpiryAlerts = null,Object? fuelCostPerKm = null,Object? multiStoreThreshold = null,Object? valueOfTimePerHour = null,Object? textScale = null,Object? highContrast = null,}) {
   return _then(_self.copyWith(
 currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
 as String,units: null == units ? _self.units : units // ignore: cast_nullable_to_non_nullable
@@ -84,6 +86,7 @@ as bool,priceDropAlerts: null == priceDropAlerts ? _self.priceDropAlerts : price
 as bool,couponExpiryAlerts: null == couponExpiryAlerts ? _self.couponExpiryAlerts : couponExpiryAlerts // ignore: cast_nullable_to_non_nullable
 as bool,fuelCostPerKm: null == fuelCostPerKm ? _self.fuelCostPerKm : fuelCostPerKm // ignore: cast_nullable_to_non_nullable
 as double,multiStoreThreshold: null == multiStoreThreshold ? _self.multiStoreThreshold : multiStoreThreshold // ignore: cast_nullable_to_non_nullable
+as double,valueOfTimePerHour: null == valueOfTimePerHour ? _self.valueOfTimePerHour : valueOfTimePerHour // ignore: cast_nullable_to_non_nullable
 as double,textScale: null == textScale ? _self.textScale : textScale // ignore: cast_nullable_to_non_nullable
 as double,highContrast: null == highContrast ? _self.highContrast : highContrast // ignore: cast_nullable_to_non_nullable
 as bool,
@@ -171,10 +174,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String currency,  String units,  String themeMode,  List<String> dietaryRestrictions,  List<String> favoriteStoreIds,  double? monthlyBudget,  bool notificationsEnabled,  bool priceDropAlerts,  bool couponExpiryAlerts,  double fuelCostPerKm,  double multiStoreThreshold,  double textScale,  bool highContrast)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String currency,  String units,  String themeMode,  List<String> dietaryRestrictions,  List<String> favoriteStoreIds,  double? monthlyBudget,  bool notificationsEnabled,  bool priceDropAlerts,  bool couponExpiryAlerts,  double fuelCostPerKm,  double multiStoreThreshold,  double valueOfTimePerHour,  double textScale,  bool highContrast)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _UserPreferences() when $default != null:
-return $default(_that.currency,_that.units,_that.themeMode,_that.dietaryRestrictions,_that.favoriteStoreIds,_that.monthlyBudget,_that.notificationsEnabled,_that.priceDropAlerts,_that.couponExpiryAlerts,_that.fuelCostPerKm,_that.multiStoreThreshold,_that.textScale,_that.highContrast);case _:
+return $default(_that.currency,_that.units,_that.themeMode,_that.dietaryRestrictions,_that.favoriteStoreIds,_that.monthlyBudget,_that.notificationsEnabled,_that.priceDropAlerts,_that.couponExpiryAlerts,_that.fuelCostPerKm,_that.multiStoreThreshold,_that.valueOfTimePerHour,_that.textScale,_that.highContrast);case _:
   return orElse();
 
 }
@@ -192,10 +195,10 @@ return $default(_that.currency,_that.units,_that.themeMode,_that.dietaryRestrict
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String currency,  String units,  String themeMode,  List<String> dietaryRestrictions,  List<String> favoriteStoreIds,  double? monthlyBudget,  bool notificationsEnabled,  bool priceDropAlerts,  bool couponExpiryAlerts,  double fuelCostPerKm,  double multiStoreThreshold,  double textScale,  bool highContrast)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String currency,  String units,  String themeMode,  List<String> dietaryRestrictions,  List<String> favoriteStoreIds,  double? monthlyBudget,  bool notificationsEnabled,  bool priceDropAlerts,  bool couponExpiryAlerts,  double fuelCostPerKm,  double multiStoreThreshold,  double valueOfTimePerHour,  double textScale,  bool highContrast)  $default,) {final _that = this;
 switch (_that) {
 case _UserPreferences():
-return $default(_that.currency,_that.units,_that.themeMode,_that.dietaryRestrictions,_that.favoriteStoreIds,_that.monthlyBudget,_that.notificationsEnabled,_that.priceDropAlerts,_that.couponExpiryAlerts,_that.fuelCostPerKm,_that.multiStoreThreshold,_that.textScale,_that.highContrast);case _:
+return $default(_that.currency,_that.units,_that.themeMode,_that.dietaryRestrictions,_that.favoriteStoreIds,_that.monthlyBudget,_that.notificationsEnabled,_that.priceDropAlerts,_that.couponExpiryAlerts,_that.fuelCostPerKm,_that.multiStoreThreshold,_that.valueOfTimePerHour,_that.textScale,_that.highContrast);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -212,10 +215,10 @@ return $default(_that.currency,_that.units,_that.themeMode,_that.dietaryRestrict
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String currency,  String units,  String themeMode,  List<String> dietaryRestrictions,  List<String> favoriteStoreIds,  double? monthlyBudget,  bool notificationsEnabled,  bool priceDropAlerts,  bool couponExpiryAlerts,  double fuelCostPerKm,  double multiStoreThreshold,  double textScale,  bool highContrast)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String currency,  String units,  String themeMode,  List<String> dietaryRestrictions,  List<String> favoriteStoreIds,  double? monthlyBudget,  bool notificationsEnabled,  bool priceDropAlerts,  bool couponExpiryAlerts,  double fuelCostPerKm,  double multiStoreThreshold,  double valueOfTimePerHour,  double textScale,  bool highContrast)?  $default,) {final _that = this;
 switch (_that) {
 case _UserPreferences() when $default != null:
-return $default(_that.currency,_that.units,_that.themeMode,_that.dietaryRestrictions,_that.favoriteStoreIds,_that.monthlyBudget,_that.notificationsEnabled,_that.priceDropAlerts,_that.couponExpiryAlerts,_that.fuelCostPerKm,_that.multiStoreThreshold,_that.textScale,_that.highContrast);case _:
+return $default(_that.currency,_that.units,_that.themeMode,_that.dietaryRestrictions,_that.favoriteStoreIds,_that.monthlyBudget,_that.notificationsEnabled,_that.priceDropAlerts,_that.couponExpiryAlerts,_that.fuelCostPerKm,_that.multiStoreThreshold,_that.valueOfTimePerHour,_that.textScale,_that.highContrast);case _:
   return null;
 
 }
@@ -227,7 +230,7 @@ return $default(_that.currency,_that.units,_that.themeMode,_that.dietaryRestrict
 @JsonSerializable()
 
 class _UserPreferences implements UserPreferences {
-  const _UserPreferences({this.currency = 'USD', this.units = 'imperial', this.themeMode = 'system', final  List<String> dietaryRestrictions = const <String>[], final  List<String> favoriteStoreIds = const <String>[], this.monthlyBudget, this.notificationsEnabled = true, this.priceDropAlerts = true, this.couponExpiryAlerts = true, this.fuelCostPerKm = 0.12, this.multiStoreThreshold = 2.0, this.textScale = 1.0, this.highContrast = false}): _dietaryRestrictions = dietaryRestrictions,_favoriteStoreIds = favoriteStoreIds;
+  const _UserPreferences({this.currency = 'USD', this.units = 'imperial', this.themeMode = 'system', final  List<String> dietaryRestrictions = const <String>[], final  List<String> favoriteStoreIds = const <String>[], this.monthlyBudget, this.notificationsEnabled = true, this.priceDropAlerts = true, this.couponExpiryAlerts = true, this.fuelCostPerKm = 0.12, this.multiStoreThreshold = 2.0, this.valueOfTimePerHour = 0.0, this.textScale = 1.0, this.highContrast = false}): _dietaryRestrictions = dietaryRestrictions,_favoriteStoreIds = favoriteStoreIds;
   factory _UserPreferences.fromJson(Map<String, dynamic> json) => _$UserPreferencesFromJson(json);
 
 @override@JsonKey() final  String currency;
@@ -258,6 +261,9 @@ class _UserPreferences implements UserPreferences {
 @override@JsonKey() final  double fuelCostPerKm;
 /// Minimum savings before a multi-store trip is recommended.
 @override@JsonKey() final  double multiStoreThreshold;
+/// How the user prices an hour of their time in trip totals.
+/// 0 = optimize on money alone.
+@override@JsonKey() final  double valueOfTimePerHour;
 /// Accessibility: scale factor bump for large text.
 @override@JsonKey() final  double textScale;
 @override@JsonKey() final  bool highContrast;
@@ -275,16 +281,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserPreferences&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.units, units) || other.units == units)&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&const DeepCollectionEquality().equals(other._dietaryRestrictions, _dietaryRestrictions)&&const DeepCollectionEquality().equals(other._favoriteStoreIds, _favoriteStoreIds)&&(identical(other.monthlyBudget, monthlyBudget) || other.monthlyBudget == monthlyBudget)&&(identical(other.notificationsEnabled, notificationsEnabled) || other.notificationsEnabled == notificationsEnabled)&&(identical(other.priceDropAlerts, priceDropAlerts) || other.priceDropAlerts == priceDropAlerts)&&(identical(other.couponExpiryAlerts, couponExpiryAlerts) || other.couponExpiryAlerts == couponExpiryAlerts)&&(identical(other.fuelCostPerKm, fuelCostPerKm) || other.fuelCostPerKm == fuelCostPerKm)&&(identical(other.multiStoreThreshold, multiStoreThreshold) || other.multiStoreThreshold == multiStoreThreshold)&&(identical(other.textScale, textScale) || other.textScale == textScale)&&(identical(other.highContrast, highContrast) || other.highContrast == highContrast));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserPreferences&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.units, units) || other.units == units)&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&const DeepCollectionEquality().equals(other._dietaryRestrictions, _dietaryRestrictions)&&const DeepCollectionEquality().equals(other._favoriteStoreIds, _favoriteStoreIds)&&(identical(other.monthlyBudget, monthlyBudget) || other.monthlyBudget == monthlyBudget)&&(identical(other.notificationsEnabled, notificationsEnabled) || other.notificationsEnabled == notificationsEnabled)&&(identical(other.priceDropAlerts, priceDropAlerts) || other.priceDropAlerts == priceDropAlerts)&&(identical(other.couponExpiryAlerts, couponExpiryAlerts) || other.couponExpiryAlerts == couponExpiryAlerts)&&(identical(other.fuelCostPerKm, fuelCostPerKm) || other.fuelCostPerKm == fuelCostPerKm)&&(identical(other.multiStoreThreshold, multiStoreThreshold) || other.multiStoreThreshold == multiStoreThreshold)&&(identical(other.valueOfTimePerHour, valueOfTimePerHour) || other.valueOfTimePerHour == valueOfTimePerHour)&&(identical(other.textScale, textScale) || other.textScale == textScale)&&(identical(other.highContrast, highContrast) || other.highContrast == highContrast));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,currency,units,themeMode,const DeepCollectionEquality().hash(_dietaryRestrictions),const DeepCollectionEquality().hash(_favoriteStoreIds),monthlyBudget,notificationsEnabled,priceDropAlerts,couponExpiryAlerts,fuelCostPerKm,multiStoreThreshold,textScale,highContrast);
+int get hashCode => Object.hash(runtimeType,currency,units,themeMode,const DeepCollectionEquality().hash(_dietaryRestrictions),const DeepCollectionEquality().hash(_favoriteStoreIds),monthlyBudget,notificationsEnabled,priceDropAlerts,couponExpiryAlerts,fuelCostPerKm,multiStoreThreshold,valueOfTimePerHour,textScale,highContrast);
 
 @override
 String toString() {
-  return 'UserPreferences(currency: $currency, units: $units, themeMode: $themeMode, dietaryRestrictions: $dietaryRestrictions, favoriteStoreIds: $favoriteStoreIds, monthlyBudget: $monthlyBudget, notificationsEnabled: $notificationsEnabled, priceDropAlerts: $priceDropAlerts, couponExpiryAlerts: $couponExpiryAlerts, fuelCostPerKm: $fuelCostPerKm, multiStoreThreshold: $multiStoreThreshold, textScale: $textScale, highContrast: $highContrast)';
+  return 'UserPreferences(currency: $currency, units: $units, themeMode: $themeMode, dietaryRestrictions: $dietaryRestrictions, favoriteStoreIds: $favoriteStoreIds, monthlyBudget: $monthlyBudget, notificationsEnabled: $notificationsEnabled, priceDropAlerts: $priceDropAlerts, couponExpiryAlerts: $couponExpiryAlerts, fuelCostPerKm: $fuelCostPerKm, multiStoreThreshold: $multiStoreThreshold, valueOfTimePerHour: $valueOfTimePerHour, textScale: $textScale, highContrast: $highContrast)';
 }
 
 
@@ -295,7 +301,7 @@ abstract mixin class _$UserPreferencesCopyWith<$Res> implements $UserPreferences
   factory _$UserPreferencesCopyWith(_UserPreferences value, $Res Function(_UserPreferences) _then) = __$UserPreferencesCopyWithImpl;
 @override @useResult
 $Res call({
- String currency, String units, String themeMode, List<String> dietaryRestrictions, List<String> favoriteStoreIds, double? monthlyBudget, bool notificationsEnabled, bool priceDropAlerts, bool couponExpiryAlerts, double fuelCostPerKm, double multiStoreThreshold, double textScale, bool highContrast
+ String currency, String units, String themeMode, List<String> dietaryRestrictions, List<String> favoriteStoreIds, double? monthlyBudget, bool notificationsEnabled, bool priceDropAlerts, bool couponExpiryAlerts, double fuelCostPerKm, double multiStoreThreshold, double valueOfTimePerHour, double textScale, bool highContrast
 });
 
 
@@ -312,7 +318,7 @@ class __$UserPreferencesCopyWithImpl<$Res>
 
 /// Create a copy of UserPreferences
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? currency = null,Object? units = null,Object? themeMode = null,Object? dietaryRestrictions = null,Object? favoriteStoreIds = null,Object? monthlyBudget = freezed,Object? notificationsEnabled = null,Object? priceDropAlerts = null,Object? couponExpiryAlerts = null,Object? fuelCostPerKm = null,Object? multiStoreThreshold = null,Object? textScale = null,Object? highContrast = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? currency = null,Object? units = null,Object? themeMode = null,Object? dietaryRestrictions = null,Object? favoriteStoreIds = null,Object? monthlyBudget = freezed,Object? notificationsEnabled = null,Object? priceDropAlerts = null,Object? couponExpiryAlerts = null,Object? fuelCostPerKm = null,Object? multiStoreThreshold = null,Object? valueOfTimePerHour = null,Object? textScale = null,Object? highContrast = null,}) {
   return _then(_UserPreferences(
 currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
 as String,units: null == units ? _self.units : units // ignore: cast_nullable_to_non_nullable
@@ -325,6 +331,7 @@ as bool,priceDropAlerts: null == priceDropAlerts ? _self.priceDropAlerts : price
 as bool,couponExpiryAlerts: null == couponExpiryAlerts ? _self.couponExpiryAlerts : couponExpiryAlerts // ignore: cast_nullable_to_non_nullable
 as bool,fuelCostPerKm: null == fuelCostPerKm ? _self.fuelCostPerKm : fuelCostPerKm // ignore: cast_nullable_to_non_nullable
 as double,multiStoreThreshold: null == multiStoreThreshold ? _self.multiStoreThreshold : multiStoreThreshold // ignore: cast_nullable_to_non_nullable
+as double,valueOfTimePerHour: null == valueOfTimePerHour ? _self.valueOfTimePerHour : valueOfTimePerHour // ignore: cast_nullable_to_non_nullable
 as double,textScale: null == textScale ? _self.textScale : textScale // ignore: cast_nullable_to_non_nullable
 as double,highContrast: null == highContrast ? _self.highContrast : highContrast // ignore: cast_nullable_to_non_nullable
 as bool,

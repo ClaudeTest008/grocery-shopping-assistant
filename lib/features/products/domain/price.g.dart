@@ -14,6 +14,7 @@ _Price _$PriceFromJson(Map<String, dynamic> json) => _Price(
   unitPrice: (json['unit_price'] as num?)?.toDouble(),
   currency: json['currency'] as String? ?? 'USD',
   regularPrice: (json['regular_price'] as num?)?.toDouble(),
+  inStock: json['in_stock'] as bool? ?? true,
   validFrom: json['valid_from'] == null
       ? null
       : DateTime.parse(json['valid_from'] as String),
@@ -33,6 +34,7 @@ Map<String, dynamic> _$PriceToJson(_Price instance) => <String, dynamic>{
   'unit_price': instance.unitPrice,
   'currency': instance.currency,
   'regular_price': instance.regularPrice,
+  'in_stock': instance.inStock,
   'valid_from': instance.validFrom?.toIso8601String(),
   'valid_to': instance.validTo?.toIso8601String(),
   'updated_at': instance.updatedAt?.toIso8601String(),

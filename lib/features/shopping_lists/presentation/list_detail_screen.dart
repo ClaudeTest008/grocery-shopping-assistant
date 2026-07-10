@@ -32,6 +32,7 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
 
   @override
   void dispose() {
+    _speech.cancel();
     _input.dispose();
     super.dispose();
   }
@@ -119,6 +120,18 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
   Future<void> _aiGenerateSheet() async {
     final goalController = TextEditingController();
     final budgetController = TextEditingController();
+    try {
+      await _runAiGenerate(goalController, budgetController);
+    } finally {
+      goalController.dispose();
+      budgetController.dispose();
+    }
+  }
+
+  Future<void> _runAiGenerate(
+    TextEditingController goalController,
+    TextEditingController budgetController,
+  ) async {
     final generate = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -198,8 +211,10 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
       messenger.showSnackBar(
         SnackBar(content: Text('Added ${items.length} items')),
       );
-    } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Generation failed: $e')));
+    } catch (_) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Generation failed. Please try again.')),
+      );
     }
   }
 

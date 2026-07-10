@@ -208,6 +208,29 @@ class SettingsScreen extends ConsumerWidget {
                   notifier.update(prefs.copyWith(multiStoreThreshold: v)),
             ),
           ),
+          ListTile(
+            title: const Text('Value of your time'),
+            subtitle: Text(
+              prefs.valueOfTimePerHour == 0
+                  ? 'Off — optimize on money alone'
+                  : '${Formatters.currency(prefs.valueOfTimePerHour, code: prefs.currency)}/hour '
+                        'of driving is added to trip totals',
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Slider(
+              value: prefs.valueOfTimePerHour.clamp(0, 60).toDouble(),
+              min: 0,
+              max: 60,
+              divisions: 12,
+              label: prefs.valueOfTimePerHour == 0
+                  ? 'Off'
+                  : '${Formatters.currency(prefs.valueOfTimePerHour, code: prefs.currency)}/h',
+              onChanged: (v) =>
+                  notifier.update(prefs.copyWith(valueOfTimePerHour: v)),
+            ),
+          ),
           const SectionHeader(title: 'About'),
           const ListTile(title: Text('Version'), trailing: Text('1.0.0')),
           if (AppConfig.isDemoMode)

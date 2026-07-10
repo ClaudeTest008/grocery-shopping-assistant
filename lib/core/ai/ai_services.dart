@@ -145,6 +145,37 @@ class AiServices {
         .cast<Map<String, dynamic>>();
   }
 
+  /// Conversational rationale for a basket-optimizer option.
+  Future<String> explainTrip({
+    required List<String> storeNames,
+    required double itemsTotal,
+    required double couponSavings,
+    required double travelCost,
+    required int travelMinutes,
+    required double totalCost,
+    required bool recommended,
+  }) => _llm.complete(
+    LlmRequest(
+      system:
+          'You explain grocery trip recommendations in 2-3 friendly, '
+          'concrete sentences with dollar amounts. [intent:explain_trip]',
+      messages: [
+        LlmMessage.user(
+          jsonEncode({
+            'stores': storeNames,
+            'items_total': itemsTotal,
+            'coupon_savings': couponSavings,
+            'travel_cost': travelCost,
+            'travel_minutes': travelMinutes,
+            'total_cost': totalCost,
+            'is_recommended': recommended,
+          }),
+        ),
+      ],
+      maxTokens: 300,
+    ),
+  );
+
   Future<String> summarizeReceipt(Map<String, dynamic> receiptJson) =>
       _llm.complete(
         LlmRequest(

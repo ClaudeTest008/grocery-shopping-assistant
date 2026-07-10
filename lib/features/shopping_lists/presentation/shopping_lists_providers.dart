@@ -46,6 +46,7 @@ final optimizationProvider = FutureProvider.family<OptimizationResult, String>((
   return BasketOptimizer(
     fuelCostPerKm: prefs.fuelCostPerKm,
     multiStoreThreshold: prefs.multiStoreThreshold,
+    valueOfTimePerHour: prefs.valueOfTimePerHour,
   ).optimize(
     items: pending,
     stores: stores,

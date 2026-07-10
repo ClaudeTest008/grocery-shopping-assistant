@@ -70,8 +70,6 @@ jobs:
 
       - name: Build APK (debug, unconfigured demo build)
         run: flutter build apk --debug
-        env:
-          MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
 
       - uses: actions/upload-artifact@v4
         with:

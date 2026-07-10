@@ -21,11 +21,6 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        // Google Maps key comes from gradle.properties / CI env; empty
-        // default keeps local builds working without a key.
-        manifestPlaceholders["MAPS_API_KEY"] =
-            (project.findProperty("MAPS_API_KEY") as String?)
-                ?: System.getenv("MAPS_API_KEY") ?: ""
     }
 
     buildTypes {

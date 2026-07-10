@@ -21,6 +21,9 @@ abstract class Price with _$Price {
 
     /// Non-null when the price is promotional.
     double? regularPrice,
+
+    /// Inventory signal from the store feed; optimizer skips false.
+    @Default(true) bool inStock,
     DateTime? validFrom,
     DateTime? validTo,
     DateTime? updatedAt,

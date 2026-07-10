@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/ai/ai_services.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/extensions/context_extensions.dart';
 import '../../../shared/widgets/async_value_widget.dart';
 import '../../../shared/widgets/empty_state.dart';
+import '../../maps/presentation/map_providers.dart';
 import '../domain/basket_optimizer.dart';
 import 'shopping_lists_providers.dart';
 
@@ -42,6 +45,8 @@ class OptimizeScreen extends ConsumerWidget {
               return _OptionCard(
                 option: option,
                 label: String.fromCharCode(64 + i), // A, B, C...
+                result: optimization,
+                index: i - 1,
               );
             },
           );
@@ -71,14 +76,21 @@ class _Explainer extends StatelessWidget {
   }
 }
 
-class _OptionCard extends StatelessWidget {
-  const _OptionCard({required this.option, required this.label});
+class _OptionCard extends ConsumerWidget {
+  const _OptionCard({
+    required this.option,
+    required this.label,
+    required this.result,
+    required this.index,
+  });
 
   final BasketOption option;
   final String label;
+  final OptimizationResult result;
+  final int index;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
     final storeNames = option.visits.map((v) => v.store.name).join(' + ');
     return Card(
@@ -236,10 +248,69 @@ class _OptionCard extends StatelessWidget {
                 'Not available: ${option.unavailableItems.join(', ')}',
                 style: context.text.bodySmall?.copyWith(color: colors.error),
               ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton.tonalIcon(
+                    onPressed: () {
+                      ref.read(tripOverlayProvider.notifier).state =
+                          TripOverlay(result: result, selectedIndex: index);
+                      context.push('/map');
+                    },
+                    icon: const Icon(Icons.map_rounded, size: 18),
+                    label: const Text('View on map'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _explainWithAi(context, ref),
+                    icon: const Icon(Icons.auto_awesome_rounded, size: 18),
+                    label: const Text('Ask AI why'),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _explainWithAi(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final explanation = await ref
+          .read(aiServicesProvider)
+          .explainTrip(
+            storeNames: [for (final v in option.visits) v.store.name],
+            itemsTotal: option.itemsTotal,
+            couponSavings: option.couponSavings,
+            travelCost: option.travelCost,
+            travelMinutes: option.travelTime.inMinutes,
+            totalCost: option.totalCost,
+            recommended: option.recommended,
+          );
+      if (!context.mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text('Why option $label?'),
+          content: Text(explanation),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('AI explanation failed: $e')),
+      );
+    }
   }
 
   static String _qty(double v) =>

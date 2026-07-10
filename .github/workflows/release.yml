@@ -32,13 +32,18 @@ jobs:
 
       # Release signing: provide an upload keystore via secrets, decode it,
       # and reference it from android/key.properties. Falls back to debug
-      # signing when secrets are absent (e.g. on forks).
+      # signing when secrets are absent (e.g. on forks). Note: the
+      # `secrets` context is not allowed in step `if:` expressions, so the
+      # emptiness check happens inside the script.
       - name: Configure signing
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           KEY_PROPERTIES: ${{ secrets.ANDROID_KEY_PROPERTIES }}
         run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "No keystore secret — falling back to debug signing."
+            exit 0
+          fi
           echo "$KEYSTORE_BASE64" | base64 -d > android/upload-keystore.jks
           echo "$KEY_PROPERTIES" > android/key.properties
 
@@ -49,8 +54,6 @@ jobs:
           --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
           --dart-define=LLM_PROVIDER=${{ vars.LLM_PROVIDER || 'mock' }}
           --dart-define=STRIPE_PUBLISHABLE_KEY=${{ secrets.STRIPE_PUBLISHABLE_KEY }}
-        env:
-          MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
 
       - name: Attach to GitHub release
         uses: softprops/action-gh-release@v2

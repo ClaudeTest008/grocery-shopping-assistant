@@ -28,6 +28,8 @@ _UserPreferences _$UserPreferencesFromJson(Map<String, dynamic> json) =>
       fuelCostPerKm: (json['fuel_cost_per_km'] as num?)?.toDouble() ?? 0.12,
       multiStoreThreshold:
           (json['multi_store_threshold'] as num?)?.toDouble() ?? 2.0,
+      valueOfTimePerHour:
+          (json['value_of_time_per_hour'] as num?)?.toDouble() ?? 0.0,
       textScale: (json['text_scale'] as num?)?.toDouble() ?? 1.0,
       highContrast: json['high_contrast'] as bool? ?? false,
     );
@@ -45,6 +47,7 @@ Map<String, dynamic> _$UserPreferencesToJson(_UserPreferences instance) =>
       'coupon_expiry_alerts': instance.couponExpiryAlerts,
       'fuel_cost_per_km': instance.fuelCostPerKm,
       'multi_store_threshold': instance.multiStoreThreshold,
+      'value_of_time_per_hour': instance.valueOfTimePerHour,
       'text_scale': instance.textScale,
       'high_contrast': instance.highContrast,
     };

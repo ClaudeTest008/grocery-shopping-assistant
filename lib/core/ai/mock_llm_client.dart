@@ -21,6 +21,7 @@ class MockLlmClient implements LlmClient {
     if (prompt.contains('[intent:substitute]')) return _substitutions;
     if (prompt.contains('[intent:recipe]')) return _recipe;
     if (prompt.contains('[intent:receipt_summary]')) return _receiptSummary;
+    if (prompt.contains('[intent:explain_trip]')) return _explainTrip;
     return _chatFallback(prompt);
   }
 
@@ -65,6 +66,15 @@ class MockLlmClient implements LlmClient {
   {"name":"Tomato","quantity":"2","cost":0.75}
  ],
  "steps":["Brown the turkey with taco seasoning.","Warm shells and beans.","Assemble with toppings."]}''';
+
+  static const _explainTrip =
+      'This trip wins on the all-in number, not just shelf prices: after '
+      'subtracting your clipped coupons and adding what the driving '
+      'actually costs, it comes out cheapest for completing your whole '
+      'list. A shorter trip exists, but it gives up more in savings than '
+      'it returns in time — about a coffee\'s worth per extra minute. If '
+      'your schedule is tight today, option A remains a solid single-stop '
+      'fallback.';
 
   static const _receiptSummary =
       '''You spent \$54.20 across 18 items. Produce (\$14.10) and dairy (\$11.30) led. Prices were typical except strawberries, \$1.20 above their 90-day average — they go on sale most weeks at Kroger, so consider timing that purchase.''';

@@ -16,6 +16,7 @@ class BasketOptimizer {
     this.multiStoreThreshold = 2.0,
     this.maxStoresConsidered = 6,
     this.urbanSpeedKmh = 35,
+    this.valueOfTimePerHour = 0,
   });
 
   /// Marginal driving cost per km (fuel + wear).
@@ -28,6 +29,9 @@ class BasketOptimizer {
   final int maxStoresConsidered;
 
   final double urbanSpeedKmh;
+
+  /// How the user prices an hour of their time. 0 = only money counts.
+  final double valueOfTimePerHour;
 
   OptimizationResult optimize({
     required List<ShoppingItem> items,
@@ -113,7 +117,9 @@ class BasketOptimizer {
       final prices = item.productId == null
           ? const <Price>[]
           : (pricesByProduct[item.productId!] ?? const <Price>[])
-                .where((p) => comboIds.contains(p.storeId))
+                // Inventory awareness: never route the user to a store
+                // that is out of stock.
+                .where((p) => p.inStock && comboIds.contains(p.storeId))
                 .toList();
       if (prices.isEmpty) {
         unavailable.add(item);
@@ -136,8 +142,12 @@ class BasketOptimizer {
     // smaller combo — skip to avoid recommending pointless stops.
     if (assignments.length < combo.length) return null;
 
+    final (travelKm, tourOrder) = _bestTour(home, combo);
+
+    // Visits in actual driving order so map polylines and directions
+    // follow the recommended tour.
     final visits = [
-      for (final store in combo)
+      for (final store in tourOrder)
         StoreVisit(
           store: store,
           items: assignments[store.id]!,
@@ -151,11 +161,13 @@ class BasketOptimizer {
 
     final couponSavings = _couponSavings(coupons, visits, comboIds, itemsTotal);
 
-    final travelKm = _bestTourKm(home, combo);
     final travelCost = travelKm * fuelCostPerKm;
     final travelTime = Duration(
       minutes: (travelKm / urbanSpeedKmh * 60).round() + 8 * combo.length,
     ); // ~8 min in-store overhead per extra stop
+    // Optional time-money tradeoff: users who value their time see it
+    // priced into the total.
+    final timeCost = travelTime.inMinutes / 60 * valueOfTimePerHour;
 
     return BasketOption(
       visits: visits,
@@ -164,7 +176,8 @@ class BasketOptimizer {
       travelKm: _r(travelKm),
       travelCost: _r(travelCost),
       travelTime: travelTime,
-      totalCost: _r(itemsTotal - couponSavings + travelCost),
+      timeCost: _r(timeCost),
+      totalCost: _r(itemsTotal - couponSavings + travelCost + timeCost),
       unavailableItems: [for (final i in unavailable) i.name],
     );
   }
@@ -210,8 +223,9 @@ class BasketOptimizer {
   }
 
   /// Shortest home -> stores -> home tour over all permutations
-  /// (max 3 stores => max 6 permutations).
-  double _bestTourKm(GeoPoint home, List<Store> stores) {
+  /// (max 3 stores => max 6 permutations). Returns distance plus the
+  /// store order of the winning tour.
+  (double, List<Store>) _bestTour(GeoPoint home, List<Store> stores) {
     double tour(List<Store> order) {
       var km = 0.0;
       var at = home;
@@ -224,11 +238,15 @@ class BasketOptimizer {
     }
 
     var best = double.infinity;
+    var bestOrder = stores;
     for (final perm in _permutations(stores)) {
       final km = tour(perm);
-      if (km < best) best = km;
+      if (km < best) {
+        best = km;
+        bestOrder = perm;
+      }
     }
-    return best;
+    return (best, bestOrder);
   }
 
   String _explain(
@@ -334,11 +352,13 @@ class BasketOption {
     required this.travelCost,
     required this.travelTime,
     required this.totalCost,
+    this.timeCost = 0,
     this.unavailableItems = const [],
     this.recommended = false,
     this.explanation = '',
   });
 
+  /// Store stops in recommended driving order (home -> ... -> home).
   final List<StoreVisit> visits;
   final double itemsTotal;
   final double couponSavings;
@@ -346,7 +366,10 @@ class BasketOption {
   final double travelCost;
   final Duration travelTime;
 
-  /// itemsTotal - couponSavings + travelCost. The honest number.
+  /// Monetized travel time when the user prices their hours.
+  final double timeCost;
+
+  /// itemsTotal - couponSavings + travelCost + timeCost. The honest number.
   final double totalCost;
   final List<String> unavailableItems;
   final bool recommended;
@@ -360,6 +383,7 @@ class BasketOption {
         travelKm: travelKm,
         travelCost: travelCost,
         travelTime: travelTime,
+        timeCost: timeCost,
         totalCost: totalCost,
         unavailableItems: unavailableItems,
         recommended: recommended ?? this.recommended,
