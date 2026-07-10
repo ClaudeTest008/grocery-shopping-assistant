@@ -1,0 +1,59 @@
+name: Deploy web demo
+
+# Every push to main publishes the demo to GitHub Pages.
+# The demo build carries NO secrets/dart-defines: the app boots in demo
+# mode (seeded local data, mock AI), which doubles as the demo
+# environment. A production web deployment would add --dart-define
+# values from secrets and a separate hosting target (see
+# docs/Deployment.md).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: "3.44.5"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+      - run: dart run build_runner build
+
+      - name: Build web (demo mode)
+        run: >
+          flutter build web --release
+          --base-href /grocery-shopping-assistant/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
