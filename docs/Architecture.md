@@ -113,12 +113,43 @@ consumes `AsyncValue` via `AsyncValueWidget`, which renders skeletons,
 retry-able error views, or data. `Result<T>`/`guard()` cover non-async
 flows and repository internals.
 
+## Map
+
+`flutter_map` over OpenStreetMap/CARTO raster tiles — deliberately
+key-free so the map renders on every platform (including the web demo)
+with zero configuration. `MapScreen` owns:
+
+- tween-animated camera moves and bounds fitting (700ms easeInOutCubic)
+- dependency-free screen-space grid clustering (cells shrink with zoom;
+  keeps thousands of markers usable)
+- the optimizer trip overlay: `tripOverlayProvider` carries an
+  `OptimizationResult` from `OptimizeScreen`; the map draws the
+  home→stops→home polyline in recommended driving order (the optimizer
+  now returns visits in best-tour order), numbers the stop markers and
+  lets the user switch options A/B/C on-map
+- store bottom sheet (offers, favorite toggle, guarded directions
+  launch), search + open-now/favorites filters, dark tiles, rotation
+  with compass reset, required OSM attribution
+
+Turn-by-turn navigation, indoor maps, and AR remain external-launch /
+future work: they slot in behind the same trip overlay without touching
+optimizer or repository code (see docs/Scaling.md for routing-matrix
+integration).
+
+## Observability
+
+`Telemetry` (core/observability): global `FlutterError` +
+`PlatformDispatcher.onError` capture, a Riverpod `ProviderObserver` for
+provider failures, and `logEvent` product analytics — console-only in
+demo, `analytics` table inserts when Supabase is configured. Sentry or
+Crashlytics plug into `Telemetry.recordError` in one place.
+
 ## Platform notes
 
 - `MainActivity` extends `FlutterFragmentActivity` and themes are
   AppCompat-based — both required by flutter_stripe.
-- Google Maps keys are injected via Gradle manifest placeholder
-  (`MAPS_API_KEY`) and xcconfig (`GOOGLE_MAPS_API_KEY`); missing keys
-  degrade to a banner, never a crash.
+- The map needs no API keys on any platform.
 - Firebase Messaging initializes defensively; without
   `google-services.json` the app runs with push disabled.
+- Web (demo) builds carry no secrets; native-only plugins (ML Kit OCR,
+  Stripe sheet) are runtime-guarded with graceful fallbacks.

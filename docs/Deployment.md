@@ -1,5 +1,28 @@
 # Deployment
 
+## 0. Live web demo (GitHub Pages)
+
+**URL: <https://claudetest008.github.io/grocery-shopping-assistant/>**
+
+- Every push to `main` triggers `.github/workflows/deploy-web.yml`:
+  `flutter build web --release --base-href /grocery-shopping-assistant/`
+  → `actions/deploy-pages`. No secrets are injected — the build boots in
+  **demo mode** (seeded local data, mock AI), which *is* the demo
+  environment.
+- **Environment separation**: a production web deployment is a second
+  workflow/hosting target that adds `--dart-define` values from secrets
+  (Supabase URL/key, LLM provider, Stripe key). Demo and production can
+  never share data because demo has no backend at all.
+- **Demo reset**: automatic per visitor (state lives in the browser's
+  IndexedDB; new visitor = pristine seed). In-app: Settings → "Reset
+  demo data". 
+- **Rollback**: `git revert <bad-commit> && git push` (redeploys), or
+  re-run the last green "Deploy web demo" run from the Actions tab
+  ("Re-run all jobs") — Pages always serves the most recent successful
+  deployment.
+- **Local web run**: `flutter run -d chrome` (or
+  `flutter build web && npx serve build/web`).
+
 ## 1. Supabase
 
 ```bash
@@ -23,16 +46,15 @@ supabase secrets set LLM_PROVIDER=anthropic LLM_API_KEY=sk-ant-... \
 | `SUPABASE_URL`, `SUPABASE_ANON_KEY` | backend | demo mode |
 | `LLM_PROVIDER` (`anthropic`/`openai`/`mock`), `LLM_API_KEY`, `LLM_MODEL` | AI | mock AI |
 | `STRIPE_PUBLISHABLE_KEY` | payments | paywall disabled dialog |
-| `GOOGLE_MAPS_API_KEY` | map tiles (iOS reads it via xcconfig) | banner on map screen |
 
-## 3. Google Maps keys
+## 3. Maps
 
-- **Android**: key is injected as a manifest placeholder. Provide it via
-  `android/gradle.properties` (`MAPS_API_KEY=...`) or the `MAPS_API_KEY`
-  env var in CI. Empty default builds fine.
-- **iOS**: add `GOOGLE_MAPS_API_KEY = <key>` to
-  `ios/Flutter/Release.xcconfig` (and Debug); `Info.plist` maps it into
-  `GMSApiKey`, read guardedly in `AppDelegate`.
+The map uses **flutter_map with OpenStreetMap/CARTO raster tiles — no
+API key on any platform**, including the web demo. For production scale,
+switch `urlTemplate` in
+`lib/features/maps/presentation/map_screen.dart` to a contracted tile
+provider (MapTiler, Protomaps, self-hosted) and keep the required
+attribution widget.
 
 ## 4. Firebase Messaging
 
@@ -80,9 +102,10 @@ archive; sign in your fastlane/App Store Connect pipeline.
 
 - `ci.yml`: analyze, format, tests, Android debug APK, iOS no-codesign
   build on every push/PR to `main`.
+- `deploy-web.yml`: web demo to GitHub Pages on every push to `main`.
 - `release.yml`: on `v*` tags — signed AAB (when secrets present)
   attached to a GitHub release, plus unsigned iOS archive.
 
 Repository secrets used: `SUPABASE_URL`, `SUPABASE_ANON_KEY`,
-`MAPS_API_KEY`, `STRIPE_PUBLISHABLE_KEY`, `ANDROID_KEYSTORE_BASE64`,
+`STRIPE_PUBLISHABLE_KEY`, `ANDROID_KEYSTORE_BASE64`,
 `ANDROID_KEY_PROPERTIES`.

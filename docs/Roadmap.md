@@ -1,5 +1,18 @@
 # Roadmap
 
+## Shipped in v1.1 (post-audit milestones)
+
+- Premium map: flutter_map/OSM (key-free), animated camera, clustering,
+  optimizer route polylines + on-map A/B/C comparison, store sheets,
+  search/filters, dark tiles
+- Optimizer intelligence: inventory awareness, value-of-time pricing,
+  driving-order stops, AI trip explanations, AI substitutes
+- Demo: 104 products / 12 stores, one-tap demo login, animated
+  onboarding, seeded AI conversation, demo reset
+- **Flutter Web live demo, auto-deployed to GitHub Pages on every push**
+- Observability: crash capture, provider-failure observer, analytics
+  events; high-contrast theme; authenticated Stripe checkout
+
 ## Now (v1.0 — shipped in this repo)
 
 - Basket optimizer (1–3 stores, coupons, travel cost, explanations)

@@ -170,6 +170,29 @@ Consistency notes first: all screens share `AsyncValueWidget` (skeleton/error/re
 
 ---
 
+## Addendum — resolved after this audit (same day)
+
+The audit above is the frozen "before" snapshot at `8d4ce04`. The
+following findings were fixed in the milestone work that followed:
+
+| Finding | Resolution |
+|---|---|
+| Map 3/10, blank without key | Rebuilt on flutter_map/OSM: key-free tiles, animated camera, clustering, route polylines, trip overlay, store sheet, filters, dark tiles. Re-scored ≈8/10 (missing: real road routing, offline tile packs). |
+| No web target | `web/` enabled; auto-deployed demo at <https://claudetest008.github.io/grocery-shopping-assistant/> on every push to main. |
+| iOS CI failure (google_maps_flutter_ios) | Plugin removed with the map migration. |
+| release.yml parse error (`secrets` in step `if`) | Emptiness check moved into the script body. |
+| High-contrast toggle cosmetic | Now feeds `ColorScheme.fromSeed(contrastLevel: 1.0)`. |
+| Stripe checkout unauthenticated | Supabase session bearer + apikey headers added; sign-in guard. |
+| `SpeechToText` leak in ListDetailScreen | `cancel()` in dispose. |
+| No onboarding / demo reset / seeded AI chat / demo button | All added (Milestone 3). |
+| No global error capture / telemetry | `Telemetry` + provider observer + optimize_run event. |
+| Zero Semantics | Labels added to map markers, clusters, home pin, PriceTag. Broad per-screen pass still open. |
+| Optimizer ignores stock / time value | `Price.inStock` + `valueOfTimePerHour` in totals, both tested. |
+
+Still open (tracked in Roadmap): `pending_ops` offline write queue,
+realtime client subscriptions, pagination, password reset, full
+Semantics coverage, offline tile packs, road-distance routing.
+
 ## Priority findings (feed into roadmap)
 
 1. **Map is the weakest feature by far (3/10)** and needs a key-free tile source to ever demo well.

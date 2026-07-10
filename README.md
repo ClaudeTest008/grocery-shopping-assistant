@@ -1,5 +1,7 @@
 # Grocery Shopping Assistant
 
+**▶ Live demo (no install): <https://claudetest008.github.io/grocery-shopping-assistant/>**
+
 AI-powered grocery shopping assistant that finds the **cheapest and smartest
 way to complete an entire grocery trip** — not just compare item prices.
 
@@ -23,8 +25,9 @@ Option B  Aldi + Walmart                $38.04   (+4 min drive)
   AI-generated lists ("dinners for 4 under $60").
 - **Products** — search, categories, nutrition, unit prices, price
   history charts, cheaper alternatives.
-- **Stores & maps** — nearby stores, opening hours, distance, drive
-  time, one-tap navigation.
+- **Interactive map** — key-free OpenStreetMap tiles, animated camera,
+  marker clustering, optimizer route polylines with numbered stops,
+  search/filters, store bottom sheets, dark tiles.
 - **Offers & coupons** — weekly ads, digital coupons with clip-to-wallet,
   cashback, expiry alerts.
 - **Meal planner** — AI weekly plans that use up pantry items and
@@ -40,10 +43,11 @@ Option B  Aldi + Walmart                $38.04   (+4 min drive)
 
 ## Tech stack
 
-Flutter · Riverpod 3 · GoRouter · Material 3 · Supabase (PostgreSQL,
-Auth, RLS, Realtime, Edge Functions) · Firebase Messaging · Google Maps ·
-Hive · Freezed · Dio · fl_chart · Google ML Kit · mobile_scanner ·
-speech_to_text · Stripe · GitHub Actions.
+Flutter (Android · iOS · Web) · Riverpod 3 · GoRouter · Material 3 ·
+Supabase (PostgreSQL, Auth, RLS, Realtime, Edge Functions) · Firebase
+Messaging · flutter_map (OpenStreetMap) · Hive · Freezed · Dio ·
+fl_chart · Google ML Kit · mobile_scanner · speech_to_text · Stripe ·
+GitHub Actions (CI + Pages auto-deploy).
 
 ## Quick start
 
