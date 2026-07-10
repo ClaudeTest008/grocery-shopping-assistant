@@ -25,6 +25,15 @@ class LocalStore {
   Box<dynamic> get prefs => Hive.box<dynamic>(prefsBox);
   Box<dynamic> get pendingOps => Hive.box<dynamic>(pendingOpsBox);
 
+  /// Demo reset: clears every box (lists, pantry, receipts, prefs,
+  /// onboarding flag...). Caller is responsible for rebuilding app state
+  /// afterwards (see AppBootstrap.restart).
+  Future<void> wipe() async {
+    for (final name in _boxNames) {
+      await Hive.box<dynamic>(name).clear();
+    }
+  }
+
   /// Cache a JSON document list under [key] with a freshness timestamp.
   Future<void> putJsonList(String key, List<Map<String, dynamic>> docs) =>
       cache.put(key, {'at': DateTime.now().toIso8601String(), 'docs': docs});

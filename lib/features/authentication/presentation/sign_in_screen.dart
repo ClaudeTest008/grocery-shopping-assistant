@@ -118,6 +118,14 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                       ),
                     ),
                     if (AppConfig.isDemoMode) ...[
+                      const SizedBox(height: 20),
+                      FilledButton.tonalIcon(
+                        onPressed: () => ref
+                            .read(authRepositoryProvider)
+                            .signInWithEmail('demo@grocery.app', 'demo'),
+                        icon: const Icon(Icons.play_arrow_rounded),
+                        label: const Text('Explore the demo — no account'),
+                      ),
                       const SizedBox(height: 8),
                       Text(
                         'Demo mode — any credentials work',

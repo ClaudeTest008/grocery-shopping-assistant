@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'app.dart';
+import 'app_bootstrap.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/stripe_service.dart';
 import 'core/services/supabase_service.dart';
@@ -16,5 +15,5 @@ Future<void> main() async {
   await NotificationService.init();
   await StripeService.init();
 
-  runApp(const ProviderScope(child: GroceryApp()));
+  runApp(const AppBootstrap());
 }

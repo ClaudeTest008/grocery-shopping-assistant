@@ -1,12 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app_bootstrap.dart';
 import '../../../core/config/app_config.dart';
+import '../../../core/storage/local_store.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/extensions/context_extensions.dart';
 import '../../../shared/widgets/section_header.dart';
 import '../../profile/data/preferences_repository.dart';
 import '../../profile/domain/user_preferences.dart';
+
+Future<void> _resetDemo(BuildContext context, WidgetRef ref) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Reset demo data?'),
+      content: const Text(
+        'This clears your lists, pantry, receipts, meal plans and '
+        'settings, restoring the original demo dataset. It cannot be '
+        'undone.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: const Text('Reset'),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true || !context.mounted) return;
+  await ref.read(localStoreProvider).wipe();
+  if (context.mounted) AppBootstrap.restart(context);
+}
 
 const _currencies = ['USD', 'EUR', 'GBP', 'CAD'];
 const _dietaryOptions = [
@@ -233,7 +262,7 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SectionHeader(title: 'About'),
           const ListTile(title: Text('Version'), trailing: Text('1.0.0')),
-          if (AppConfig.isDemoMode)
+          if (AppConfig.isDemoMode) ...[
             ListTile(
               leading: Icon(
                 Icons.info_outline_rounded,
@@ -244,6 +273,19 @@ class SettingsScreen extends ConsumerWidget {
                 'No backend configured — running on seeded local data',
               ),
             ),
+            ListTile(
+              leading: Icon(
+                Icons.restart_alt_rounded,
+                color: context.colors.error,
+              ),
+              title: const Text('Reset demo data'),
+              subtitle: const Text(
+                'Restore the original seeded lists, pantry, receipts and '
+                'settings',
+              ),
+              onTap: () => _resetDemo(context, ref),
+            ),
+          ],
         ],
       ),
     );

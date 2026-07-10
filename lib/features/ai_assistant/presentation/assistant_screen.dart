@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/ai/ai_services.dart';
 import '../../../core/ai/llm_client.dart';
+import '../../../core/config/app_config.dart';
 import '../../../shared/extensions/context_extensions.dart';
 
 const _suggestions = [
@@ -22,8 +23,23 @@ class AssistantScreen extends ConsumerStatefulWidget {
 class _AssistantScreenState extends ConsumerState<AssistantScreen> {
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
-  final List<LlmMessage> _history = [];
   bool _sending = false;
+
+  // Demo mode opens on a worked example so the assistant's value is
+  // obvious before the first keystroke.
+  final List<LlmMessage> _history = AppConfig.isDemoMode
+      ? [
+          const LlmMessage.user(
+            'Should I wait until next week to buy chicken?',
+          ),
+          const LlmMessage.assistant(
+            'Based on 12 weeks of price history, chicken breast at Aldi '
+            'drops to about \$1.99/lb during their first-week-of-month '
+            'sale — that is 4 days away. If your pantry covers dinners '
+            'until then, waiting saves roughly \$4 on your list.',
+          ),
+        ]
+      : [];
 
   @override
   void dispose() {

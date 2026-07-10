@@ -9,6 +9,7 @@ import '../../features/authentication/presentation/sign_in_screen.dart';
 import '../../features/coupons/presentation/coupons_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/home/presentation/notifications_screen.dart';
+import '../../features/home/presentation/onboarding_screen.dart';
 import '../../features/maps/presentation/map_screen.dart';
 import '../../features/meal_planner/presentation/meal_planner_screen.dart';
 import '../../features/offers/presentation/offers_screen.dart';
@@ -46,10 +47,21 @@ final routerProvider = Provider<GoRouter>((ref) {
       final onAuth = state.matchedLocation == '/auth';
       if (!signedIn && !onAuth) return '/auth';
       if (signedIn && onAuth) return '/';
+      // First-run walkthrough before the shell.
+      if (signedIn &&
+          !ref.read(seenOnboardingProvider) &&
+          state.matchedLocation != '/onboarding') {
+        return '/onboarding';
+      }
       return null;
     },
     routes: [
       GoRoute(path: '/auth', builder: (_, _) => const SignInScreen()),
+      GoRoute(
+        path: '/onboarding',
+        parentNavigatorKey: _rootKey,
+        builder: (_, _) => const OnboardingScreen(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (_, _, shell) => _ShellScaffold(shell: shell),
         branches: [

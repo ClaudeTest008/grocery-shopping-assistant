@@ -39,6 +39,36 @@ abstract final class DemoSeed {
       30.2680,
       -97.7530,
     ),
+    _store(
+      'wholefoods-1',
+      'Whole Foods Market',
+      'wholefoods',
+      '525 N Lamar Blvd',
+      30.2711,
+      -97.7537,
+    ),
+    _store(
+      'sprouts-1',
+      'Sprouts Farmers Market',
+      'sprouts',
+      '4006 S Lamar Blvd',
+      30.2330,
+      -97.7910,
+    ),
+    _store('costco-1', 'Costco', 'costco', '4301 W William Cannon Dr', 30.2100,
+        -97.8300),
+    _store('randalls-1', 'Randalls', 'randalls', '1500 W 35th St', 30.3080,
+        -97.7550),
+    _store('fiesta-1', 'Fiesta Mart', 'fiesta', '3909 N I-35', 30.2990,
+        -97.7180),
+    _store(
+      'cm-1',
+      'Central Market',
+      'centralmarket',
+      '4001 N Lamar Blvd',
+      30.3090,
+      -97.7400,
+    ),
   ];
 
   static Store _store(
@@ -62,7 +92,7 @@ abstract final class DemoSeed {
   );
 
   /// (id, name, brand, category, unit, unitSize, tags)
-  static final products = <Product>[
+  static final _baseProducts = <Product>[
     _p('milk', 'Whole Milk', 'Great Value', 'dairy', 'gal', 1, []),
     _p('eggs', 'Large Eggs, Dozen', null, 'dairy', 'ct', 12, []),
     _p('butter', 'Salted Butter', 'Land O Lakes', 'dairy', 'oz', 16, []),
@@ -90,6 +120,44 @@ abstract final class DemoSeed {
     _p('icecream', 'Vanilla Ice Cream', 'Blue Bell', 'frozen', 'oz', 16, []),
     _p('tofu', 'Firm Tofu', null, 'meat', 'oz', 14, ['vegan']),
   ];
+
+  /// (id suffix, brand, price factor, extra tags) used to expand each
+  /// base product into value / premium / organic variants — 104 catalog
+  /// entries total, enough for realistic browsing and substitution demos.
+  static const _variantSpecs = [
+    ('value', 'Field Day', 0.85, <String>[]),
+    ('premium', 'Harvest Reserve', 1.30, <String>[]),
+    ('organic', 'Simply Organic', 1.45, ['organic']),
+  ];
+
+  static final products = <Product>[
+    ..._baseProducts,
+    for (final base in _baseProducts)
+      for (final (suffix, brand, _, extraTags) in _variantSpecs)
+        base.copyWith(
+          id: '${base.id}-$suffix',
+          brand: brand,
+          barcode: '0000${'${base.id}-$suffix'.hashCode.abs()}',
+          tags: [...base.tags, ...extraTags],
+        ),
+  ];
+
+  /// Price factor for a (possibly variant) product id.
+  static double _variantFactor(String productId) {
+    final dash = productId.indexOf('-');
+    if (dash < 0) return 1;
+    final suffix = productId.substring(dash + 1);
+    for (final (s, _, factor, _) in _variantSpecs) {
+      if (s == suffix) return factor;
+    }
+    return 1;
+  }
+
+  /// Base product id for a variant ('milk-organic' -> 'milk').
+  static String _baseId(String productId) {
+    final dash = productId.indexOf('-');
+    return dash < 0 ? productId : productId.substring(0, dash);
+  }
 
   static Product _p(
     String id,
@@ -148,6 +216,12 @@ abstract final class DemoSeed {
     'target-1': 1.06,
     'heb-1': 0.95,
     'tj-1': 1.10,
+    'wholefoods-1': 1.35,
+    'sprouts-1': 1.12,
+    'costco-1': 0.88,
+    'randalls-1': 1.08,
+    'fiesta-1': 0.90,
+    'cm-1': 1.28,
   };
 
   /// Items a store does NOT carry — forces the optimizer to handle
@@ -156,6 +230,9 @@ abstract final class DemoSeed {
     'aldi-1': {'coffee', 'icecream', 'tofu'},
     'tj-1': {'cereal', 'oj', 'gbeef'},
     'walmart-1': {'tofu'},
+    'wholefoods-1': {'cereal', 'icecream'},
+    'costco-1': {'lettuce', 'tofu', 'tomsauce'},
+    'fiesta-1': {'yogurt', 'coffee'},
   };
 
   /// A few promo prices to make offers meaningful.
@@ -171,25 +248,32 @@ abstract final class DemoSeed {
     final out = <Price>[];
     for (final store in stores) {
       final mult = _storeMultiplier[store.id]!;
-      for (final entry in _basePrices.entries) {
-        if (_notCarried[store.id]?.contains(entry.key) ?? false) continue;
+      for (final product in products) {
+        final baseId = _baseId(product.id);
+        if (_notCarried[store.id]?.contains(baseId) ?? false) continue;
+        final basePrice =
+            (_basePrices[baseId] ?? 2.99) * _variantFactor(product.id);
         // Deterministic per-pair jitter of +-4%.
         final jitter =
-            1 + (((entry.key.hashCode ^ store.id.hashCode) % 9) - 4) / 100;
-        var price = _round(entry.value * mult * jitter);
+            1 + (((product.id.hashCode ^ store.id.hashCode) % 9) - 4) / 100;
+        var price = _round(basePrice * mult * jitter);
         double? regular;
-        if (_promos[store.id]?.contains(entry.key) ?? false) {
+        if ((_promos[store.id]?.contains(baseId) ?? false) &&
+            product.id == baseId) {
           regular = price;
           price = _round(price * 0.78);
         }
-        final product = products.firstWhere((p) => p.id == entry.key);
+        // ~4% of pairs are deterministically out of stock so inventory
+        // awareness is demoable.
+        final inStock = (product.id.hashCode ^ store.id.hashCode) % 23 != 0;
         out.add(
           Price(
-            id: '${store.id}-${entry.key}',
-            productId: entry.key,
+            id: '${store.id}-${product.id}',
+            productId: product.id,
             storeId: store.id,
             price: price,
             regularPrice: regular,
+            inStock: inStock,
             unitPrice: _round(price / product.unitSize),
             validTo: now.add(const Duration(days: 6)),
             updatedAt: now,
@@ -204,7 +288,8 @@ abstract final class DemoSeed {
 
   /// Synthetic but plausible 90-day price history.
   static List<PricePoint> priceHistory(String productId) {
-    final base = _basePrices[productId] ?? 2.99;
+    final base =
+        (_basePrices[_baseId(productId)] ?? 2.99) * _variantFactor(productId);
     final now = DateTime.now();
     return [
       for (var d = 90; d >= 0; d -= 3)
