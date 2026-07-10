@@ -1,0 +1,87 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Flutter: Pub Get",
+      "type": "shell",
+      "command": "flutter pub get",
+      "problemMatcher": [],
+      "group": "build"
+    },
+    {
+      "label": "Flutter: Analyze",
+      "type": "shell",
+      "command": "flutter analyze",
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Flutter: Test",
+      "type": "shell",
+      "command": "flutter test",
+      "problemMatcher": [],
+      "group": { "kind": "test", "isDefault": true }
+    },
+    {
+      "label": "Flutter: Test with Coverage",
+      "type": "shell",
+      "command": "flutter test --coverage",
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Flutter: Run (Chrome)",
+      "type": "shell",
+      "command": "flutter run -d chrome",
+      "problemMatcher": [],
+      "isBackground": true
+    },
+    {
+      "label": "Flutter: Run (Android)",
+      "type": "shell",
+      "command": "flutter run -d android",
+      "problemMatcher": [],
+      "isBackground": true
+    },
+    {
+      "label": "Flutter: Build Web",
+      "type": "shell",
+      "command": "flutter build web",
+      "problemMatcher": [],
+      "group": "build"
+    },
+    {
+      "label": "Flutter: Build APK",
+      "type": "shell",
+      "command": "flutter build apk",
+      "problemMatcher": [],
+      "group": "build"
+    },
+    {
+      "label": "Flutter: Clean",
+      "type": "shell",
+      "command": "flutter clean",
+      "problemMatcher": []
+    },
+    {
+      "label": "Dart: Format",
+      "type": "shell",
+      "command": "dart format .",
+      "problemMatcher": []
+    },
+    {
+      "label": "Build Runner: Build",
+      "type": "shell",
+      "command": "dart run build_runner build --delete-conflicting-outputs",
+      "problemMatcher": [],
+      "group": "build"
+    },
+    {
+      "label": "Build Runner: Watch",
+      "type": "shell",
+      "command": "dart run build_runner watch --delete-conflicting-outputs",
+      "problemMatcher": [],
+      "isBackground": true
+    }
+  ]
+}

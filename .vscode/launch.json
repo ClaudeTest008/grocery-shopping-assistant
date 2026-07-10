@@ -1,0 +1,45 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Flutter: Web (Chrome)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "chrome",
+      "flutterMode": "debug"
+    },
+    {
+      "name": "Flutter: Android Emulator",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "emulator",
+      "flutterMode": "debug"
+    },
+    {
+      "name": "Flutter: Connected Android Device",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "android",
+      "flutterMode": "debug"
+    },
+    {
+      "name": "Flutter: iOS Simulator",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "ios",
+      "flutterMode": "debug"
+    },
+    {
+      "name": "Flutter: Profile Mode",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "profile"
+    },
+    {
+      "name": "Flutter: Release Mode",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "release"
+    }
+  ]
+}

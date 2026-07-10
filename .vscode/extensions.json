@@ -1,0 +1,28 @@
+{
+  "recommendations": [
+    // Core — required for Flutter development
+    "Dart-Code.dart-code",
+    "Dart-Code.flutter",
+
+    // Code quality & readability
+    "usernamehw.errorlens",
+    "aaron-bond.better-comments",
+    "streetsidesoftware.code-spell-checker",
+
+    // Git
+    "eamodio.gitlens",
+
+    // Docs & config file support
+    "yzhang.markdown-all-in-one",
+    "tamasfe.even-better-toml",
+    "redhat.vscode-yaml",
+
+    // Flutter productivity
+    "Nash.awesome-flutter-snippets",
+    "alexisvt.flutter-snippets",
+    "jeroen-meijer.pubspec-assist",
+
+    // Riverpod (project uses flutter_riverpod)
+    "robert-brunhage.flutter-riverpod-snippets"
+  ]
+}
