@@ -5,14 +5,18 @@ import 'package:flutter/material.dart';
 abstract final class AppTheme {
   static const seed = Color(0xFF2E7D32);
 
-  static ThemeData light() => _build(Brightness.light);
-  static ThemeData dark() => _build(Brightness.dark);
+  static ThemeData light({bool highContrast = false}) =>
+      _build(Brightness.light, highContrast);
+  static ThemeData dark({bool highContrast = false}) =>
+      _build(Brightness.dark, highContrast);
 
-  static ThemeData _build(Brightness brightness) {
+  static ThemeData _build(Brightness brightness, [bool highContrast = false]) {
     final scheme = ColorScheme.fromSeed(
       seedColor: seed,
       brightness: brightness,
       dynamicSchemeVariant: DynamicSchemeVariant.fidelity,
+      // Accessibility: user-selectable high-contrast scheme.
+      contrastLevel: highContrast ? 1.0 : 0.0,
     );
     final base = ThemeData(colorScheme: scheme, useMaterial3: true);
 

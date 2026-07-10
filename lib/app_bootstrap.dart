@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
+import 'core/observability/telemetry.dart';
 
 /// Owns the ProviderScope key so the whole app — every provider, every
 /// cached AsyncValue — can be rebuilt from scratch. Used by "Reset demo
@@ -24,6 +25,10 @@ class _AppBootstrapState extends State<AppBootstrap> {
 
   @override
   Widget build(BuildContext context) {
-    return ProviderScope(key: _scopeKey, child: const GroceryApp());
+    return ProviderScope(
+      key: _scopeKey,
+      observers: const [TelemetryProviderObserver()],
+      child: const GroceryApp(),
+    );
   }
 }

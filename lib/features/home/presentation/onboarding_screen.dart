@@ -11,8 +11,7 @@ const _seenOnboardingKey = 'seen_onboarding';
 /// First-run flag, seeded from Hive so onboarding shows exactly once
 /// (and again after a demo reset wipes storage).
 final seenOnboardingProvider = StateProvider<bool>(
-  (ref) =>
-      ref.watch(localStoreProvider).prefs.get(_seenOnboardingKey) == true,
+  (ref) => ref.watch(localStoreProvider).prefs.get(_seenOnboardingKey) == true,
 );
 
 class OnboardingScreen extends ConsumerStatefulWidget {
@@ -100,8 +99,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(32),
                             decoration: BoxDecoration(
-                              color: context.colors.primaryContainer
-                                  .withValues(alpha: 0.5),
+                              color: context.colors.primaryContainer.withValues(
+                                alpha: 0.5,
+                              ),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -115,8 +115,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         Text(
                           title,
                           textAlign: TextAlign.center,
-                          style: context.text.headlineSmall
-                              ?.copyWith(fontWeight: FontWeight.w800),
+                          style: context.text.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -159,9 +160,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   onPressed: last
                       ? _finish
                       : () => _controller.nextPage(
-                            duration: const Duration(milliseconds: 350),
-                            curve: Curves.easeOutCubic,
-                          ),
+                          duration: const Duration(milliseconds: 350),
+                          curve: Curves.easeOutCubic,
+                        ),
                   child: Text(last ? 'Start shopping smarter' : 'Next'),
                 ),
               ),

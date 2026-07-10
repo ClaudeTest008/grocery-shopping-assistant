@@ -21,6 +21,17 @@ class PriceTag extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final hasDeal = originalPrice != null && originalPrice! > price;
+    return Semantics(
+      label: hasDeal
+          ? '${Formatters.currency(price, code: currency)}, '
+                'reduced from ${Formatters.currency(originalPrice!, code: currency)}'
+          : Formatters.currency(price, code: currency),
+      excludeSemantics: true,
+      child: _row(theme, hasDeal),
+    );
+  }
+
+  Widget _row(ThemeData theme, bool hasDeal) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.baseline,

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/observability/telemetry.dart';
 import '../../../core/services/location_service.dart';
 import '../../coupons/data/coupon_repositories.dart';
 import '../../products/data/product_repositories.dart';
@@ -43,15 +44,22 @@ final optimizationProvider = FutureProvider.family<OptimizationResult, String>((
       .pricesForProducts(productIds);
   final coupons = await ref.watch(couponRepositoryProvider).available();
 
-  return BasketOptimizer(
-    fuelCostPerKm: prefs.fuelCostPerKm,
-    multiStoreThreshold: prefs.multiStoreThreshold,
-    valueOfTimePerHour: prefs.valueOfTimePerHour,
-  ).optimize(
-    items: pending,
-    stores: stores,
-    pricesByProduct: prices,
-    home: home,
-    clippedCoupons: coupons.where((c) => c.clipped).toList(),
-  );
+  final result =
+      BasketOptimizer(
+        fuelCostPerKm: prefs.fuelCostPerKm,
+        multiStoreThreshold: prefs.multiStoreThreshold,
+        valueOfTimePerHour: prefs.valueOfTimePerHour,
+      ).optimize(
+        items: pending,
+        stores: stores,
+        pricesByProduct: prices,
+        home: home,
+        clippedCoupons: coupons.where((c) => c.clipped).toList(),
+      );
+  Telemetry.logEvent('optimize_run', {
+    'items': pending.length,
+    'options': result.options.length,
+    'multi_store_recommended': (result.recommended?.visits.length ?? 0) > 1,
+  });
+  return result;
 });

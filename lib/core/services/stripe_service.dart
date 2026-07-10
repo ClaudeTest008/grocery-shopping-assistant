@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config/app_config.dart';
 
@@ -41,8 +42,22 @@ abstract final class StripeService {
 
     final messenger = ScaffoldMessenger.of(context);
     try {
+      // The edge function requires a signed-in Supabase session.
+      final session = Supabase.instance.client.auth.currentSession;
+      if (session == null) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Sign in to upgrade')),
+        );
+        return;
+      }
       final response = await Dio().post<Map<String, dynamic>>(
         '${AppConfig.supabaseUrl}/functions/v1/stripe-checkout',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer ${session.accessToken}',
+            'apikey': AppConfig.supabaseAnonKey,
+          },
+        ),
       );
       final clientSecret = response.data?['clientSecret'] as String?;
       if (clientSecret == null) {

@@ -16,8 +16,8 @@ class GroceryApp extends ConsumerWidget {
     return MaterialApp.router(
       title: AppConfig.appName,
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
+      theme: AppTheme.light(highContrast: prefs.highContrast),
+      darkTheme: AppTheme.dark(highContrast: prefs.highContrast),
       themeMode: switch (prefs.themeMode) {
         'light' => ThemeMode.light,
         'dark' => ThemeMode.dark,
