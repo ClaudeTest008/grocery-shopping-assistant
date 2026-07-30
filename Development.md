@@ -237,6 +237,12 @@ Local data on desktop lives in
 - **`Nuget.exe not found, trying to download`** during the first build is
   normal: `firebase_core`'s Windows plugin fetches the Firebase C++ SDK.
   It needs network access on the first build only.
+- **`error C2338: ... STL1011 ... <experimental/coroutine> ... deprecated`**
+  → `permission_handler_windows` has not migrated to the C++20
+  `<coroutine>` header, and MSVC 14.51+ makes that a hard error.
+  `windows/CMakeLists.txt` already defines
+  `_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS` to keep newer
+  toolchains building; remove it once the plugin is updated.
 - **Native edits appear to do nothing** → C++ is not hot-reloadable; stop
   and relaunch.
 - **App starts then exits immediately** → run from a terminal

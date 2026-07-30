@@ -32,6 +32,14 @@ set(CMAKE_CXX_FLAGS_PROFILE "${CMAKE_CXX_FLAGS_RELEASE}")
 # Use Unicode for all projects.
 add_definitions(-DUNICODE -D_UNICODE)
 
+# permission_handler_windows still includes <experimental/coroutine>.
+# MSVC 14.51+ (Visual Studio 2022 17.14 / 2026) turns that into a hard
+# error (STL1011) rather than a warning, which breaks the build on newer
+# toolchains — including GitHub's windows-latest runner. Silence it here
+# until the plugin migrates to the C++20 <coroutine> header. Applies to
+# every target added below, plugins included.
+add_definitions(-D_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS)
+
 # Compilation settings that should be applied to most targets.
 #
 # Be cautious about adding new options here, as plugins use this function by
