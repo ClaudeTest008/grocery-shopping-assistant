@@ -193,6 +193,38 @@ Still open (tracked in Roadmap): `pending_ops` offline write queue,
 realtime client subscriptions, pagination, password reset, full
 Semantics coverage, offline tile packs, road-distance routing.
 
+## Addendum 2 — Windows Desktop platform (2026-07-30)
+
+The audit above recorded "Windows/desktop: **Not implemented**". The
+project is now a four-target Flutter app: **Android, iOS, Web, Windows**.
+
+Two findings came out of *running* the app rather than building it — the
+first time it had ever been executed rather than compiled:
+
+1. **Persisted data failed to load on the second launch, on every
+   platform.** Hive decodes stored maps as `Map<dynamic, dynamic>` at
+   every nesting level; `Map<String, dynamic>.from()` converts only the
+   outermost one, so the `as Map<String, dynamic>` casts inside generated
+   `fromJson` threw for any nested object or list-of-objects. Shopping
+   lists, receipts, meal plans and preferences were all affected. Fixed
+   with a recursive `LocalStore.normalizeJsonMap`, pinned by round-trip
+   regression tests. Builds, `flutter analyze` and the widget tests could
+   never have caught this — none of them round-trip through Hive.
+2. The `Telemetry` handler added in Milestone 5 is what surfaced it,
+   which is the first evidence that the observability layer earns its
+   keep.
+
+Windows-specific plugin gaps are handled by
+`lib/core/platform/platform_support.dart` (capability matrix, unit
+tested) rather than by removing features — see the limitations table in
+[../Development.md](../Development.md).
+
+Still open from the original audit: `pending_ops` offline write queue,
+realtime client subscriptions, pagination, password reset, full Semantics
+coverage, offline map tiles, road-distance routing. New tech debt:
+`cached_network_image` is declared in `pubspec.yaml` but imported
+nowhere.
+
 ## Priority findings (feed into roadmap)
 
 1. **Map is the weakest feature by far (3/10)** and needs a key-free tile source to ever demo well.
