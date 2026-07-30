@@ -17,11 +17,16 @@ class PreferencesRepository {
   static const _key = 'user_preferences';
 
   UserPreferences load() {
-    final raw = _store.prefs.get(_key);
-    if (raw is Map) {
-      return UserPreferences.fromJson(Map<String, dynamic>.from(raw));
+    // Deep-normalized: `dietaryRestrictions` / `favoriteStoreIds` come
+    // back from Hive as List<dynamic> inside a Map<dynamic, dynamic>.
+    final json = _store.getJsonMap(_store.prefs, _key);
+    if (json == null) return const UserPreferences();
+    try {
+      return UserPreferences.fromJson(json);
+    } catch (_) {
+      // Never let a malformed or older-schema blob brick startup.
+      return const UserPreferences();
     }
-    return const UserPreferences();
   }
 
   Future<void> save(UserPreferences prefs) async {
