@@ -6,6 +6,7 @@ import 'core/config/app_config.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'features/profile/data/preferences_repository.dart';
+import 'features/shopping_lists/data/shopping_list_repositories.dart';
 
 /// Flutter omits [PointerDeviceKind.mouse] from drag devices by default,
 /// which leaves desktop users unable to drag horizontal carousels or the
@@ -30,6 +31,8 @@ class GroceryApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final prefs = ref.watch(preferencesProvider);
     final router = ref.watch(routerProvider);
+    // Keeps the offline outbox listening for the connection to return.
+    ref.watch(pendingOpsSyncProvider);
     return MaterialApp.router(
       title: AppConfig.appName,
       debugShowCheckedModeBanner: false,

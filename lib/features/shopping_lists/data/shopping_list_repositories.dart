@@ -5,8 +5,12 @@ import 'package:uuid/uuid.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/demo/demo_collection.dart';
 import '../../../core/demo/demo_seed.dart';
+import '../../../core/errors/failures.dart';
+import '../../../core/observability/telemetry.dart';
+import '../../../core/services/connectivity_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/storage/local_store.dart';
+import '../../../core/storage/pending_ops.dart';
 import '../domain/shopping_list.dart';
 import '../domain/shopping_list_repository.dart';
 
@@ -149,9 +153,13 @@ class DemoShoppingListRepository implements ShoppingListRepository {
 }
 
 class SupabaseShoppingListRepository implements ShoppingListRepository {
-  SupabaseShoppingListRepository(this._client);
+  SupabaseShoppingListRepository(this._client, [this._pending]);
+
+  /// Marks a queued "item checked/unchecked" write.
+  static const kindCheckOff = 'check_off';
 
   final SupabaseClient _client;
+  final PendingOps? _pending;
 
   String get _userId => _client.requireUserId;
 
@@ -241,8 +249,21 @@ class SupabaseShoppingListRepository implements ShoppingListRepository {
         'notes': item.notes,
       });
 
+  /// The one write that routinely happens with no signal: ticking items
+  /// off while standing in the aisle. If the server is unreachable the
+  /// change is queued instead of thrown away — the UI has already moved
+  /// on, so a silent failure here means the list is quietly wrong.
   @override
-  Future<void> updateItem(ShoppingItem item) => _client
+  Future<void> updateItem(ShoppingItem item) async {
+    try {
+      await _writeItem(item);
+    } on Object catch (error) {
+      if (!_looksOffline(error)) rethrow;
+      await _pending?.enqueue(kindCheckOff, item.toJson());
+    }
+  }
+
+  Future<void> _writeItem(ShoppingItem item) => _client
       .from('shopping_items')
       .update({
         'name': item.name,
@@ -253,6 +274,35 @@ class SupabaseShoppingListRepository implements ShoppingListRepository {
       })
       .eq('id', item.id);
 
+  /// Replays queued check-offs. Anything still unreachable stays queued.
+  Future<int> drainPending() async =>
+      await _pending?.drain((op) async {
+        if (op.kind != kindCheckOff) return;
+        await _writeItem(ShoppingItem.fromJson(op.payload));
+      }) ??
+      0;
+
+  /// Transport-level problems are worth retrying; a row the server
+  /// actively rejected is not — replaying that would just fail forever.
+  ///
+  /// Matched by name rather than by type because the underlying
+  /// exception differs per platform (SocketException on mobile/desktop,
+  /// a failed XMLHttpRequest on web) and importing `dart:io` to catch
+  /// the first would break the web build.
+  static bool _looksOffline(Object error) {
+    if (error is NetworkFailure) return true;
+    // PostgREST reports transport failures with no status code.
+    if (error is PostgrestException && error.code == null) return true;
+    final text = error.toString().toLowerCase();
+    return text.contains('socketexception') ||
+        text.contains('clientexception') ||
+        text.contains('failed host lookup') ||
+        text.contains('connection closed') ||
+        text.contains('connection refused') ||
+        text.contains('network is unreachable') ||
+        text.contains('xmlhttprequest');
+  }
+
   @override
   Future<void> removeItem(String listId, String itemId) =>
       _client.from('shopping_items').delete().eq('id', itemId);
@@ -262,5 +312,22 @@ final shoppingListRepositoryProvider = Provider<ShoppingListRepository>((ref) {
   if (AppConfig.isDemoMode) {
     return DemoShoppingListRepository(ref.watch(localStoreProvider));
   }
-  return SupabaseShoppingListRepository(ref.watch(supabaseClientProvider));
+  return SupabaseShoppingListRepository(
+    ref.watch(supabaseClientProvider),
+    ref.watch(pendingOpsProvider),
+  );
+});
+
+/// Flushes queued check-offs as soon as the connection comes back.
+/// Kept alive by the app shell.
+final pendingOpsSyncProvider = Provider<void>((ref) {
+  ref.listen(isOnlineProvider, (previous, next) async {
+    if (next.value != true) return;
+    final repo = ref.read(shoppingListRepositoryProvider);
+    if (repo is! SupabaseShoppingListRepository) return;
+    final applied = await repo.drainPending();
+    if (applied > 0) {
+      Telemetry.logEvent('pending_ops_drained', {'count': applied});
+    }
+  });
 });
