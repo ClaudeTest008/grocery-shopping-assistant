@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,6 +6,22 @@ import 'core/config/app_config.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'features/profile/data/preferences_repository.dart';
+
+/// Flutter omits [PointerDeviceKind.mouse] from drag devices by default,
+/// which leaves desktop users unable to drag horizontal carousels or the
+/// onboarding pager. Allowing mouse drags makes those surfaces behave the
+/// way desktop users expect, without affecting touch platforms.
+class _DesktopScrollBehavior extends MaterialScrollBehavior {
+  const _DesktopScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => const {
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.trackpad,
+    PointerDeviceKind.stylus,
+  };
+}
 
 class GroceryApp extends ConsumerWidget {
   const GroceryApp({super.key});
@@ -24,6 +41,7 @@ class GroceryApp extends ConsumerWidget {
         _ => ThemeMode.system,
       },
       routerConfig: router,
+      scrollBehavior: const _DesktopScrollBehavior(),
       builder: (context, child) {
         // Accessibility: user-controlled text scaling on top of the
         // system setting, clamped to keep layouts usable.

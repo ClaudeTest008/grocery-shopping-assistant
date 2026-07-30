@@ -4,13 +4,16 @@ import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config/app_config.dart';
+import '../platform/platform_support.dart';
 
 /// Thin wrapper around flutter_stripe: SDK init and a single "present the
 /// upgrade paywall" entry point. No-op (with an explanatory dialog) when
 /// Stripe isn't configured for this build.
 abstract final class StripeService {
   static Future<void> init() async {
-    if (!AppConfig.hasStripe) return;
+    // flutter_stripe has no desktop implementation; touching the SDK
+    // there throws before any UI can explain why.
+    if (!AppConfig.hasStripe || !PlatformSupport.hasPaymentSheet) return;
     try {
       Stripe.publishableKey = AppConfig.stripePublishableKey;
       await Stripe.instance.applySettings();
@@ -20,14 +23,19 @@ abstract final class StripeService {
   }
 
   static Future<void> presentPaywall(BuildContext context) async {
-    if (!AppConfig.hasStripe) {
+    if (!AppConfig.hasStripe || !PlatformSupport.hasPaymentSheet) {
       await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Payments unavailable'),
-          content: const Text(
-            'This build isn\'t configured for payments. Upgrading to '
-            'Premium isn\'t available in demo mode.',
+          content: Text(
+            !PlatformSupport.hasPaymentSheet
+                ? 'The payment sheet is not supported on '
+                      '${PlatformSupport.platformName}. Upgrade to Premium '
+                      'from the Android, iOS or web app — your account '
+                      'unlocks everywhere.'
+                : 'This build isn\'t configured for payments. Upgrading to '
+                      'Premium isn\'t available in demo mode.',
           ),
           actions: [
             TextButton(

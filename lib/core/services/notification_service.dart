@@ -4,6 +4,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
+import '../platform/platform_support.dart';
+
 /// Firebase Cloud Messaging wrapper.
 ///
 /// Init is fully guarded: without google-services.json /
@@ -19,6 +21,16 @@ abstract final class NotificationService {
   static Stream<RemoteMessage> get onMessage => _foreground.stream;
 
   static Future<void> init() async {
+    // firebase_messaging ships no Windows/Linux implementation. The
+    // in-app notification inbox still works everywhere; only push
+    // delivery is platform-gated.
+    if (!PlatformSupport.hasPushMessaging) {
+      debugPrint(
+        'Push messaging unavailable on ${PlatformSupport.platformName}; '
+        'in-app notifications still work.',
+      );
+      return;
+    }
     try {
       await Firebase.initializeApp();
       final messaging = FirebaseMessaging.instance;

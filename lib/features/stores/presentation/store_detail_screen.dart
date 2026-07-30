@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -26,15 +27,26 @@ class StoreDetailScreen extends ConsumerWidget {
 
   final String storeId;
 
-  Future<void> _directions(Store store) async {
+  Future<void> _directions(BuildContext context, Store store) async {
     final uri = Uri.parse(
       'https://www.google.com/maps/dir/?api=1&destination=${store.lat},${store.lng}',
     );
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (context.mounted) {
+        context.showSnack('Could not open directions', error: true);
+      }
+    }
   }
 
-  Future<void> _call(String phone) async {
-    await launchUrl(Uri.parse('tel:$phone'));
+  /// Desktop rarely has a `tel:` handler registered, so fall back to
+  /// putting the number on the clipboard instead of failing silently.
+  Future<void> _call(BuildContext context, String phone) async {
+    final launched = await launchUrl(Uri.parse('tel:$phone'));
+    if (launched || !context.mounted) return;
+    await Clipboard.setData(ClipboardData(text: phone));
+    if (context.mounted) {
+      context.showSnack('No dialler available — $phone copied to clipboard');
+    }
   }
 
   @override
@@ -105,7 +117,7 @@ class StoreDetailScreen extends ConsumerWidget {
                           children: [
                             Expanded(
                               child: FilledButton.icon(
-                                onPressed: () => _directions(store),
+                                onPressed: () => _directions(context, store),
                                 icon: const Icon(Icons.directions_outlined),
                                 label: const Text('Directions'),
                               ),
@@ -114,7 +126,7 @@ class StoreDetailScreen extends ConsumerWidget {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: OutlinedButton.icon(
-                                  onPressed: () => _call(store.phone!),
+                                  onPressed: () => _call(context, store.phone!),
                                   icon: const Icon(Icons.call_outlined),
                                   label: const Text('Call'),
                                 ),

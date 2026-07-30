@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/ai/ai_services.dart';
+import '../../../core/platform/platform_support.dart';
 import '../../../shared/extensions/context_extensions.dart';
 import '../../authentication/data/auth_repositories.dart';
 import '../data/receipt_repositories.dart';
@@ -71,6 +72,18 @@ class _ReceiptScanScreenState extends ConsumerState<ReceiptScanScreen> {
       final file = await ImagePicker().pickImage(source: source);
       if (file == null) {
         if (mounted) setState(() => _stage = _Stage.pickOptions);
+        return;
+      }
+      // No on-device OCR on desktop/web: skip straight to the editable
+      // form rather than round-tripping into a MissingPluginException.
+      if (!PlatformSupport.hasOcr) {
+        _startManualEntry();
+        if (mounted) {
+          context.showSnack(
+            'Add the receipt lines below — text recognition is not '
+            'available on ${PlatformSupport.platformName}.',
+          );
+        }
         return;
       }
       final recognizer = TextRecognizer(script: TextRecognitionScript.latin);
@@ -265,28 +278,50 @@ class _PickOptions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _OptionCard(
-              icon: Icons.photo_camera_outlined,
-              label: 'Take photo',
-              onTap: onCamera,
-            ),
-            const SizedBox(height: 16),
-            _OptionCard(
-              icon: Icons.photo_library_outlined,
-              label: 'Choose from gallery',
-              onTap: onGallery,
-            ),
-            const SizedBox(height: 24),
-            TextButton(
-              onPressed: onManual,
-              child: const Text('Enter manually'),
-            ),
-          ],
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Camera capture needs a mobile camera; desktop and web
+              // pick an existing file instead.
+              if (PlatformSupport.hasCamera) ...[
+                _OptionCard(
+                  icon: Icons.photo_camera_outlined,
+                  label: 'Take photo',
+                  onTap: onCamera,
+                ),
+                const SizedBox(height: 16),
+              ],
+              _OptionCard(
+                icon: Icons.photo_library_outlined,
+                label: PlatformSupport.hasCamera
+                    ? 'Choose from gallery'
+                    : 'Choose an image file',
+                onTap: onGallery,
+              ),
+              const SizedBox(height: 24),
+              TextButton(
+                onPressed: onManual,
+                child: const Text('Enter manually'),
+              ),
+              if (!PlatformSupport.hasOcr) ...[
+                const SizedBox(height: 16),
+                Text(
+                  'Automatic text recognition is not available on '
+                  '${PlatformSupport.platformName}. Pick an image to fill '
+                  'the date and store, then add the lines yourself — or '
+                  'enter everything manually.',
+                  textAlign: TextAlign.center,
+                  style: context.text.bodySmall?.copyWith(
+                    color: context.colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
