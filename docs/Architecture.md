@@ -144,6 +144,26 @@ provider failures, and `logEvent` product analytics — console-only in
 demo, `analytics` table inserts when Supabase is configured. Sentry or
 Crashlytics plug into `Telemetry.recordError` in one place.
 
+## Platform capabilities
+
+Targets: **Android, iOS, Web, Windows Desktop**.
+
+Not every plugin covers every platform. Instead of scattering
+`Platform.isX` checks (or crashing with `MissingPluginException`),
+[`PlatformSupport`](../lib/core/platform/platform_support.dart) is the
+single source of truth for what the current platform can do, and features
+degrade gracefully when the answer is no:
+
+- barcode scanning falls back to a numeric entry form,
+- receipt OCR falls back to the manual editor,
+- camera capture falls back to the native file picker,
+- the payment sheet and push messaging are skipped with an explanation.
+
+It uses `defaultTargetPlatform` rather than `dart:io`'s `Platform`
+because importing `dart:io` breaks the web build. The matrix is unit
+tested (`test/core/platform_support_test.dart`) by overriding
+`debugDefaultTargetPlatformOverride`.
+
 ## Platform notes
 
 - `MainActivity` extends `FlutterFragmentActivity` and themes are
@@ -151,5 +171,10 @@ Crashlytics plug into `Telemetry.recordError` in one place.
 - The map needs no API keys on any platform.
 - Firebase Messaging initializes defensively; without
   `google-services.json` the app runs with push disabled.
-- Web (demo) builds carry no secrets; native-only plugins (ML Kit OCR,
-  Stripe sheet) are runtime-guarded with graceful fallbacks.
+- Web (demo) builds carry no secrets.
+- Windows: the runner opens centred at 1280×800, enforces a DPI-scaled
+  640×560 minimum, carries real version metadata, and follows the Windows
+  light/dark title-bar setting. Hive boxes live under
+  `Documents\GroceryShoppingAssistant\`. A `MaterialScrollBehavior`
+  override adds mouse-drag scrolling, which Flutter omits by default on
+  desktop.

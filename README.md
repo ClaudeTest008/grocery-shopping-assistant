@@ -43,7 +43,7 @@ Option B  Aldi + Walmart                $38.04   (+4 min drive)
 
 ## Tech stack
 
-Flutter (Android · iOS · Web) · Riverpod 3 · GoRouter · Material 3 ·
+Flutter (Android · iOS · Web · Windows Desktop) · Riverpod 3 · GoRouter · Material 3 ·
 Supabase (PostgreSQL, Auth, RLS, Realtime, Edge Functions) · Firebase
 Messaging · flutter_map (OpenStreetMap) · Hive · Freezed · Dio ·
 fl_chart · Google ML Kit · mobile_scanner · speech_to_text · Stripe ·
@@ -58,6 +58,16 @@ flutter pub get
 dart run build_runner build
 flutter run          # runs in demo mode — no backend needed
 ```
+
+On Windows, one command starts the whole local environment (packages,
+codegen, then desktop **and** Chrome side by side):
+
+```bat
+dev
+```
+
+See [Development.md](Development.md) for the full workspace guide,
+developer scripts and desktop platform notes.
 
 **Demo mode**: with no `--dart-define` configuration the app boots
 against a seeded local dataset (6 Austin stores, 26 products, live-ish
