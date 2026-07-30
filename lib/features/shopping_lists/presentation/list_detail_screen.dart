@@ -5,6 +5,7 @@ import 'package:speech_to_text/speech_to_text.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/ai/ai_services.dart';
+import '../../../core/platform/platform_support.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/extensions/context_extensions.dart';
 import '../../../shared/widgets/async_value_widget.dart';
@@ -103,7 +104,17 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
       },
     );
     if (!available) {
-      if (mounted) context.showSnack('Voice input unavailable', error: true);
+      if (mounted) {
+        // speech_to_text_windows works, but only once the OS speech
+        // stack is switched on — point there instead of a dead end.
+        context.showSnack(
+          PlatformSupport.isWindows
+              ? 'Voice input unavailable — enable Windows Settings › '
+                    'Privacy & security › Speech.'
+              : 'Voice input unavailable',
+          error: true,
+        );
+      }
       return;
     }
     setState(() => _listening = true);

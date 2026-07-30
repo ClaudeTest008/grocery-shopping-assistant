@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 
 import '../config/app_config.dart';
 import '../errors/failures.dart';
+import '../platform/platform_support.dart';
 
 /// Simple lat/lng pair so domain code never imports geolocator.
 /// Distance is pure-Dart haversine — usable in unit tests and isolates.
@@ -36,7 +37,13 @@ class LocationService {
   Future<GeoPoint> currentPosition() async {
     if (AppConfig.isDemoMode) return demoLocation;
 
+    // Desktop has no per-app permission prompt — location is a global
+    // Windows setting the app cannot deep-link to (geolocator's
+    // openLocationSettings is unimplemented there). Falling back keeps
+    // stores, distances and the optimizer usable instead of dead-ending
+    // the whole screen on an error the user cannot act on from here.
     if (!await Geolocator.isLocationServiceEnabled()) {
+      if (PlatformSupport.isDesktop) return demoLocation;
       throw const PermissionFailure('Location services disabled');
     }
     var permission = await Geolocator.checkPermission();
@@ -45,6 +52,7 @@ class LocationService {
     }
     if (permission == LocationPermission.denied ||
         permission == LocationPermission.deniedForever) {
+      if (PlatformSupport.isDesktop) return demoLocation;
       throw const PermissionFailure('Location permission denied');
     }
     final pos = await Geolocator.getCurrentPosition();

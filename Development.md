@@ -192,8 +192,9 @@ gracefully. Nothing is removed on the platforms that do support it.
 | Payment sheet (`flutter_stripe`) | ❌ | Paywall explains upgrades happen on mobile/web; the account unlocks everywhere |
 | Push notifications (`firebase_messaging`) | ❌ | Push is skipped; the in-app notification inbox works normally |
 | Phone links (`tel:`) | ⚠️ | No dialler registered → number is copied to the clipboard instead |
-| Speech to text | ✅ | Works via `speech_to_text_windows`; enable Speech in Windows Settings → Privacy |
-| Location | ✅ | `geolocator_windows` (WinRT). `openLocationSettings()` is unimplemented — unused here |
+| Speech to text | ✅ | Works via `speech_to_text_windows`; needs Windows Settings → Privacy & security → Speech enabled (the app says so if it is off) |
+| Location | ✅ | `geolocator_windows` (WinRT). No per-app prompt: it follows Windows Settings → Privacy → Location. If it is off the app falls back to the demo location rather than dead-ending |
+| OAuth sign-in (Google/Apple) | ⚠️ | An unpackaged desktop build registers no custom URI scheme, so external-browser OAuth cannot return to the app. Use email/password. Irrelevant in demo mode, which needs no backend |
 | Maps, storage, auth, AI, optimizer, charts | ✅ | Fully functional |
 
 Everything else — the basket optimizer, map, lists, pantry, meal planner,
