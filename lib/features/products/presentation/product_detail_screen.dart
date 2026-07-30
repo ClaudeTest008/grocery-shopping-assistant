@@ -12,6 +12,7 @@ import '../../stores/data/store_repositories.dart';
 import '../../stores/domain/store.dart';
 import '../data/product_repositories.dart';
 import '../domain/price.dart';
+import '../domain/price_verdict.dart';
 import '../domain/product.dart';
 
 final _productProvider = FutureProvider.family<Product?, String>(
@@ -137,25 +138,46 @@ class _PricesSection extends ConsumerWidget {
             child: Text('No prices available.'),
           );
         }
-        final sorted = [...prices]..sort((a, b) => a.price.compareTo(b.price));
+        // In-stock rows first, each group cheapest-first. "Cheapest"
+        // must mean cheapest you can actually buy — the optimizer already
+        // refuses to route to an out-of-stock price, so badging one here
+        // would contradict the app's own recommendation.
+        final sorted = [...prices]
+          ..sort((a, b) {
+            if (a.inStock != b.inStock) return a.inStock ? -1 : 1;
+            return a.price.compareTo(b.price);
+          });
+        final cheapestInStock = sorted.where((p) => p.inStock).firstOrNull;
+
         return Column(
           children: [
-            for (var i = 0; i < sorted.length; i++)
+            for (final price in sorted)
               ListTile(
-                leading: const Icon(Icons.storefront_outlined),
-                title: Text(storeNames[sorted[i].storeId] ?? sorted[i].storeId),
-                subtitle: sorted[i].unitPrice != null
-                    ? Text(
-                        Formatters.unitPrice(
-                          sorted[i].unitPrice!,
-                          product.unit,
-                        ),
-                      )
-                    : null,
+                leading: Icon(
+                  price.inStock
+                      ? Icons.storefront_outlined
+                      : Icons.remove_shopping_cart_outlined,
+                  color: price.inStock ? null : context.colors.outline,
+                ),
+                title: Text(
+                  storeNames[price.storeId] ?? price.storeId,
+                  style: price.inStock
+                      ? null
+                      : TextStyle(color: context.colors.onSurfaceVariant),
+                ),
+                subtitle: Text(
+                  [
+                    if (price.unitPrice != null)
+                      Formatters.unitPrice(price.unitPrice!, product.unit),
+                    if (!price.inStock) 'Out of stock',
+                    if (price.updatedAt != null)
+                      'updated ${Formatters.relativeDays(price.updatedAt!).toLowerCase()}',
+                  ].join(' · '),
+                ),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (i == 0)
+                    if (identical(price, cheapestInStock))
                       Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: Chip(
@@ -167,10 +189,13 @@ class _PricesSection extends ConsumerWidget {
                           visualDensity: VisualDensity.compact,
                         ),
                       ),
-                    PriceTag(
-                      price: sorted[i].price,
-                      originalPrice: sorted[i].regularPrice,
-                      currency: sorted[i].currency,
+                    Opacity(
+                      opacity: price.inStock ? 1 : 0.5,
+                      child: PriceTag(
+                        price: price.price,
+                        originalPrice: price.regularPrice,
+                        currency: price.currency,
+                      ),
                     ),
                   ],
                 ),
@@ -207,11 +232,25 @@ class _PriceHistorySection extends ConsumerWidget {
         final highest = prices.reduce((a, b) => a > b ? a : b);
         final average = prices.reduce((a, b) => a + b) / prices.length;
 
+        // Compare today's best buyable price against its own history so
+        // the chart draws a conclusion instead of leaving the reader to.
+        final best = (ref.watch(_pricesProvider(productId)).value ?? const [])
+            .where((p) => p.inStock)
+            .fold<double?>(
+              null,
+              (min, p) => min == null || p.price < min ? p.price : min,
+            );
+        final verdict = best == null ? null : sorted.verdictFor(best);
+
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (verdict != null) ...[
+                _VerdictBanner(verdict: verdict),
+                const SizedBox(height: 16),
+              ],
               SizedBox(
                 height: 180,
                 child: LineChart(
@@ -297,6 +336,86 @@ class _Stat extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Turns the history chart into an answer. Colour and icon carry the
+/// same message as the words, so the meaning survives both a glance and
+/// a screen reader.
+class _VerdictBanner extends StatelessWidget {
+  const _VerdictBanner({required this.verdict});
+
+  final PriceVerdict verdict;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final (background, foreground, icon) = switch (verdict.standing) {
+      PriceStanding.lowest => (
+        colors.primaryContainer,
+        colors.onPrimaryContainer,
+        Icons.trending_down_rounded,
+      ),
+      PriceStanding.below => (
+        colors.primaryContainer.withValues(alpha: 0.6),
+        colors.onPrimaryContainer,
+        Icons.trending_down_rounded,
+      ),
+      PriceStanding.typical => (
+        colors.surfaceContainerHigh,
+        colors.onSurface,
+        Icons.trending_flat_rounded,
+      ),
+      PriceStanding.above => (
+        colors.errorContainer.withValues(alpha: 0.5),
+        colors.onErrorContainer,
+        Icons.trending_up_rounded,
+      ),
+      PriceStanding.highest => (
+        colors.errorContainer,
+        colors.onErrorContainer,
+        Icons.trending_up_rounded,
+      ),
+    };
+
+    return Semantics(
+      label: '${verdict.headline}. ${verdict.explanation}',
+      excludeSemantics: true,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: foreground),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    verdict.headline,
+                    style: context.text.titleSmall?.copyWith(
+                      color: foreground,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    verdict.explanation,
+                    style: context.text.bodySmall?.copyWith(color: foreground),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

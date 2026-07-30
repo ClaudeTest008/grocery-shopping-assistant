@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +10,7 @@ import '../../../shared/extensions/context_extensions.dart';
 import '../../../shared/widgets/async_value_widget.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../maps/presentation/map_providers.dart';
+import '../../profile/data/preferences_repository.dart';
 import '../domain/basket_optimizer.dart';
 import 'shopping_lists_providers.dart';
 
@@ -173,6 +176,27 @@ class _OptionCard extends ConsumerWidget {
                 ),
               ],
             ),
+            // A screen called "Cheapest way to shop" has to show the
+            // payoff, not just the price.
+            if (option.savingsVsBaseline > 0.01) ...[
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Icon(Icons.savings_rounded, size: 16, color: colors.primary),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Saves ${Formatters.currency(option.savingsVsBaseline)} '
+                      'vs your nearest store',
+                      style: context.text.labelLarge?.copyWith(
+                        color: colors.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 8),
             Wrap(
               spacing: 12,
@@ -292,10 +316,22 @@ class _OptionCard extends ConsumerWidget {
 
   Future<void> _suggestSubstitutes(BuildContext context, WidgetRef ref) async {
     final messenger = ScaffoldMessenger.of(context);
+    // These are multi-second network calls; without immediate feedback
+    // the button looks broken and gets tapped repeatedly.
+    _showThinking(context, 'Finding substitutes…');
     try {
       final subs = await ref
           .read(aiServicesProvider)
-          .suggestSubstitutions(option.unavailableItems);
+          .suggestSubstitutions(
+            option.unavailableItems,
+            // Asking for someone's dietary needs and then ignoring them
+            // is worse than never asking.
+            dietaryRestrictions: ref
+                .read(preferencesProvider)
+                .dietaryRestrictions,
+          );
+      if (!context.mounted) return;
+      Navigator.pop(context); // dismiss the thinking dialog
       if (!context.mounted) return;
       await showDialog<void>(
         context: context,
@@ -333,14 +369,41 @@ class _OptionCard extends ConsumerWidget {
         ),
       );
     } catch (e) {
+      if (context.mounted) Navigator.pop(context);
       messenger.showSnackBar(
         SnackBar(content: Text('Could not fetch substitutes: $e')),
       );
     }
   }
 
+  /// Blocking "working on it" dialog. Callers pop it before showing the
+  /// result, and in their catch block.
+  void _showThinking(BuildContext context, String message) {
+    unawaited(
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => AlertDialog(
+          content: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2.5),
+              ),
+              const SizedBox(width: 16),
+              Expanded(child: Text(message)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _explainWithAi(BuildContext context, WidgetRef ref) async {
     final messenger = ScaffoldMessenger.of(context);
+    _showThinking(context, 'Thinking it through…');
     try {
       final explanation = await ref
           .read(aiServicesProvider)
@@ -353,6 +416,8 @@ class _OptionCard extends ConsumerWidget {
             totalCost: option.totalCost,
             recommended: option.recommended,
           );
+      if (!context.mounted) return;
+      Navigator.pop(context);
       if (!context.mounted) return;
       await showDialog<void>(
         context: context,
@@ -368,6 +433,7 @@ class _OptionCard extends ConsumerWidget {
         ),
       );
     } catch (e) {
+      if (context.mounted) Navigator.pop(context);
       messenger.showSnackBar(
         SnackBar(content: Text('AI explanation failed: $e')),
       );

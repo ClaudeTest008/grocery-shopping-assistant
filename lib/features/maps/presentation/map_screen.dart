@@ -634,6 +634,40 @@ class _TripBanner extends StatelessWidget {
   final ValueChanged<int> onSelect;
   final VoidCallback onClose;
 
+  /// Hands the whole optimized run to the phone's navigation app, in the
+  /// order the optimizer worked out. Without this the app's most
+  /// expensive computation ends as a drawing.
+  Future<void> _startTrip(BuildContext context) async {
+    final stops = trip.selected.visits;
+    if (stops.isEmpty) return;
+
+    final destination = stops.last;
+    final waypoints = stops
+        .take(stops.length - 1)
+        .map((v) => '${v.store.lat},${v.store.lng}')
+        .join('|');
+
+    final uri = Uri.parse(
+      'https://www.google.com/maps/dir/?api=1'
+      '&destination=${destination.store.lat},${destination.store.lng}'
+      '${waypoints.isEmpty ? '' : '&waypoints=$waypoints'}',
+    );
+
+    try {
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched && context.mounted) {
+        context.showSnack('Could not open navigation', error: true);
+      }
+    } catch (_) {
+      if (context.mounted) {
+        context.showSnack('Could not open navigation', error: true);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final option = trip.selected;
@@ -677,19 +711,40 @@ class _TripBanner extends StatelessWidget {
                     color: context.colors.onSurfaceVariant,
                   ),
                 ),
+                if (option.savingsVsBaseline > 0.01)
+                  Text(
+                    'Saves ${Formatters.currency(option.savingsVsBaseline)} '
+                    'vs your nearest store',
+                    style: context.text.bodySmall?.copyWith(
+                      color: context.colors.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
+                Row(
                   children: [
-                    for (var i = 0; i < trip.result.options.length; i++)
-                      ChoiceChip(
-                        label: Text(
-                          '${String.fromCharCode(65 + i)} · '
-                          '${Formatters.currency(trip.result.options[i].totalCost)}',
-                        ),
-                        selected: i == trip.selectedIndex,
-                        onSelected: (_) => onSelect(i),
+                    Expanded(
+                      child: Wrap(
+                        spacing: 8,
+                        children: [
+                          for (var i = 0; i < trip.result.options.length; i++)
+                            ChoiceChip(
+                              label: Text(
+                                '${String.fromCharCode(65 + i)} · '
+                                '${Formatters.currency(trip.result.options[i].totalCost)}',
+                              ),
+                              selected: i == trip.selectedIndex,
+                              onSelected: (_) => onSelect(i),
+                            ),
+                        ],
                       ),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton.icon(
+                      onPressed: () => _startTrip(context),
+                      icon: const Icon(Icons.navigation_rounded, size: 18),
+                      label: const Text('Start trip'),
+                    ),
                   ],
                 ),
               ],

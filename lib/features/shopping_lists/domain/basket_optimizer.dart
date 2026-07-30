@@ -85,11 +85,28 @@ class BasketOptimizer {
       }
     }
 
+    // What the shopper would most likely have done without the app:
+    // drive to the nearest single store. `candidates` arrives sorted by
+    // distance. If the nearest store cannot supply anything, fall back
+    // to the cheapest single store so the comparison stays meaningful.
+    final nearestId = candidates.first.id;
+    final baseline =
+        options
+            .where(
+              (o) =>
+                  o.visits.length == 1 && o.visits.first.store.id == nearestId,
+            )
+            .firstOrNull ??
+        bestSingle;
+
     final annotated = [
       for (final o in options.take(6))
         o.copyWith(
           recommended: identical(o, recommended),
           explanation: _explain(o, bestSingle, recommended),
+          savingsVsBaseline: baseline == null || identical(o, baseline)
+              ? 0
+              : _r(baseline.totalCost - o.totalCost),
         ),
     ];
 
@@ -353,6 +370,7 @@ class BasketOption {
     required this.travelTime,
     required this.totalCost,
     this.timeCost = 0,
+    this.savingsVsBaseline = 0,
     this.unavailableItems = const [],
     this.recommended = false,
     this.explanation = '',
@@ -371,24 +389,33 @@ class BasketOption {
 
   /// itemsTotal - couponSavings + travelCost + timeCost. The honest number.
   final double totalCost;
+
+  /// How much cheaper this trip is than simply driving to the nearest
+  /// store — the payoff the shopper actually gets for using the app.
+  /// Zero for the baseline itself, negative if an option costs more.
+  final double savingsVsBaseline;
   final List<String> unavailableItems;
   final bool recommended;
   final String explanation;
 
-  BasketOption copyWith({bool? recommended, String? explanation}) =>
-      BasketOption(
-        visits: visits,
-        itemsTotal: itemsTotal,
-        couponSavings: couponSavings,
-        travelKm: travelKm,
-        travelCost: travelCost,
-        travelTime: travelTime,
-        timeCost: timeCost,
-        totalCost: totalCost,
-        unavailableItems: unavailableItems,
-        recommended: recommended ?? this.recommended,
-        explanation: explanation ?? this.explanation,
-      );
+  BasketOption copyWith({
+    bool? recommended,
+    String? explanation,
+    double? savingsVsBaseline,
+  }) => BasketOption(
+    visits: visits,
+    itemsTotal: itemsTotal,
+    couponSavings: couponSavings,
+    travelKm: travelKm,
+    travelCost: travelCost,
+    travelTime: travelTime,
+    timeCost: timeCost,
+    totalCost: totalCost,
+    savingsVsBaseline: savingsVsBaseline ?? this.savingsVsBaseline,
+    unavailableItems: unavailableItems,
+    recommended: recommended ?? this.recommended,
+    explanation: explanation ?? this.explanation,
+  );
 }
 
 class OptimizationResult {

@@ -264,6 +264,42 @@ void main() {
       expect(threeStop.visits[1].store.id, 'B');
     });
 
+    test('reports savings against the nearest store, not the best one', () {
+      // storeA is nearest but dearer; the payoff is what the shopper
+      // gains over just driving to A like they always do.
+      final result = const BasketOptimizer(multiStoreThreshold: 0).optimize(
+        items: [item('milk')],
+        stores: [storeA, storeB],
+        pricesByProduct: {
+          'milk': [price('milk', 'A', 9.00), price('milk', 'B', 2.00)],
+        },
+        home: home,
+      );
+
+      final chosen = result.recommended!;
+      expect(chosen.visits.single.store.id, 'B');
+      expect(chosen.savingsVsBaseline, greaterThan(6));
+
+      // The baseline compares against itself, so it claims nothing.
+      final baseline = result.options.firstWhere(
+        (o) => o.visits.length == 1 && o.visits.first.store.id == 'A',
+      );
+      expect(baseline.savingsVsBaseline, 0);
+    });
+
+    test('never invents savings when the nearest store is already best', () {
+      final result = const BasketOptimizer().optimize(
+        items: [item('milk')],
+        stores: [storeA, storeB],
+        pricesByProduct: {
+          'milk': [price('milk', 'A', 2.00), price('milk', 'B', 9.00)],
+        },
+        home: home,
+      );
+
+      expect(result.recommended!.savingsVsBaseline, 0);
+    });
+
     test('empty input yields empty result', () {
       final result = const BasketOptimizer().optimize(
         items: [],
