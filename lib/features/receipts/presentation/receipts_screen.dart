@@ -53,13 +53,21 @@ class ReceiptsScreen extends ConsumerWidget {
                         ),
                       ),
                       onDismissed: (_) async {
-                        await ref
-                            .read(receiptRepositoryProvider)
-                            .remove(receipt.id);
+                        final repo = ref.read(receiptRepositoryProvider);
+                        await repo.remove(receipt.id);
                         ref.invalidate(receiptsProvider);
+                        Haptics.light();
                         if (context.mounted) {
-                          context.showSnack(
-                            'Removed receipt from ${receipt.storeName ?? 'store'}',
+                          context.showUndoSnack(
+                            'Removed receipt from '
+                            '${receipt.storeName ?? 'store'}',
+                            onUndo: () async {
+                              // Receipts feed the spending charts, so an
+                              // accidental swipe would silently distort
+                              // months of analytics.
+                              await repo.add(receipt);
+                              ref.invalidate(receiptsProvider);
+                            },
                           );
                         }
                       },

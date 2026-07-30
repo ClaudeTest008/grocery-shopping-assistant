@@ -104,6 +104,36 @@ class _ListCard extends ConsumerWidget {
 
   final ShoppingList list;
 
+  Future<bool> _confirmDelete(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Delete "${list.name}"?'),
+        content: Text(
+          list.items.isEmpty
+              ? 'This list will be permanently removed.'
+              : 'This list and its ${list.items.length} items will be '
+                    'permanently removed.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+              foregroundColor: Theme.of(ctx).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    return confirmed ?? false;
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final repo = ref.read(shoppingListRepositoryProvider);
@@ -127,12 +157,20 @@ class _ListCard extends ConsumerWidget {
                     ),
                   ),
                   PopupMenuButton<String>(
+                    tooltip: 'List actions',
                     onSelected: (action) async {
                       switch (action) {
                         case 'duplicate':
                           await repo.duplicate(list.id);
+                          if (context.mounted) {
+                            context.showSnack('Duplicated ${list.name}');
+                          }
                         case 'delete':
+                          // A list plus its items is expensive to
+                          // reconstruct, so confirm rather than offer undo.
+                          if (!await _confirmDelete(context)) return;
                           await repo.delete(list.id);
+                          Haptics.light();
                       }
                       ref.invalidate(shoppingListsProvider);
                     },

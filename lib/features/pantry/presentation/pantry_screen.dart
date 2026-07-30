@@ -136,10 +136,20 @@ class _PantryList extends ConsumerWidget {
               item: item,
               onTap: () => PantryScreen._openSheet(context, existing: item),
               onDismissed: () async {
-                await ref.read(pantryRepositoryProvider).remove(item.id);
+                final repo = ref.read(pantryRepositoryProvider);
+                await repo.remove(item.id);
                 ref.invalidate(pantryItemsProvider);
+                Haptics.light();
                 if (context.mounted) {
-                  context.showSnack('Removed ${item.name}');
+                  context.showUndoSnack(
+                    'Removed ${item.name}',
+                    onUndo: () async {
+                      // The item is unchanged, so re-adding restores it
+                      // exactly — same id, same expiry, same location.
+                      await repo.upsert(item);
+                      ref.invalidate(pantryItemsProvider);
+                    },
+                  );
                 }
               },
             ),

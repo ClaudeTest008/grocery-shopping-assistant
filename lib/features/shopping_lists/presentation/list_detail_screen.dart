@@ -382,10 +382,23 @@ class _ItemTile extends ConsumerWidget {
       onDismissed: (_) async {
         await repo.removeItem(item.listId, item.id);
         onChanged();
+        Haptics.light();
+        if (context.mounted) {
+          context.showUndoSnack(
+            'Removed ${item.name}',
+            onUndo: () async {
+              await repo.addItem(item.listId, item);
+              onChanged();
+            },
+          );
+        }
       },
       child: CheckboxListTile(
         value: item.checked,
         onChanged: (checked) async {
+          // Ticking items off is the single most repeated action in the
+          // app; the tick should feel physical.
+          Haptics.selection();
           await repo.updateItem(item.copyWith(checked: checked ?? false));
           onChanged();
         },
