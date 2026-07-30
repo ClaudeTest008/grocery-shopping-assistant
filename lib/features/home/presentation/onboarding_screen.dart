@@ -96,7 +96,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         TweenAnimationBuilder<double>(
                           key: ValueKey(i),
                           tween: Tween(begin: 0.7, end: 1),
-                          duration: const Duration(milliseconds: 500),
+                          // Zero duration when the OS asks for reduced
+                          // motion: content appears without the pop.
+                          duration: MediaQuery.disableAnimationsOf(context)
+                              ? Duration.zero
+                              : const Duration(milliseconds: 500),
                           curve: Curves.easeOutBack,
                           builder: (_, scale, child) =>
                               Transform.scale(scale: scale, child: child),

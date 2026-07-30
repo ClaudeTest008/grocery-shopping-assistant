@@ -57,6 +57,11 @@ class _MapScreenState extends ConsumerState<MapScreen>
   // -- Animated camera ----------------------------------------------------
 
   void _animateTo(LatLng dest, double zoom) {
+    // Respect the OS "reduce motion" setting: jump instead of gliding.
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _mapController.move(dest, zoom);
+      return;
+    }
     _cameraAnimation?.dispose();
     final camera = _mapController.camera;
     final latTween = Tween(begin: camera.center.latitude, end: dest.latitude);
