@@ -19,8 +19,12 @@ Option B  Aldi + Walmart                $38.04   (+4 min drive)
 ## Features
 
 - **Basket optimizer** — the core engine. Single vs multi-store trip
-  analysis with fuel cost, travel time, coupon savings, and honest
-  explanations of *why* a recommendation wins.
+  analysis with fuel cost, travel time, coupon savings, stock awareness
+  and honest explanations of *why* a recommendation wins — including
+  what it saves against just driving to your nearest store.
+- **Price verdict** — "Lowest in 90 days", "12% below usual": every
+  product says whether today's price is actually good, from its own
+  recorded history.
 - **Shopping lists** — create, duplicate, voice input, barcode add,
   AI-generated lists ("dinners for 4 under $60").
 - **Products** — search, categories, nutrition, unit prices, price

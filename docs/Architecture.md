@@ -136,6 +136,32 @@ future work: they slot in behind the same trip overlay without touching
 optimizer or repository code (see docs/Scaling.md for routing-matrix
 integration).
 
+## Offline outbox
+
+`lib/core/storage/pending_ops.dart` is a durable Hive-backed queue for
+writes that could not reach the server. Only the check-off path enqueues
+today — that is the write most likely to happen with no signal, standing
+between steel shelves — and `pendingOpsSyncProvider` drains it in order
+when connectivity returns, keeping anything that still fails.
+
+It is an outbox, not a sync engine: replaying last-write-wins on a
+single boolean needs no conflict resolution, and building a general one
+before a second write path needs it would be speculative.
+
+## Price intelligence
+
+`lib/features/products/domain/price_verdict.dart` is pure Dart over the
+price history the repository already returns. It answers "is this a good
+price right now" descriptively — lowest / below / typical / above /
+highest, with a plain-language explanation — and deliberately does not
+forecast future prices, because the available history is too short and
+too noisy to support a claim about the next sale.
+
+`BasketOption.savingsVsBaseline` measures each trip against driving to
+the *nearest* store, which is what the shopper would have done without
+the app. Comparing against the best option instead would have inflated
+the number.
+
 ## Observability
 
 `Telemetry` (core/observability): global `FlutterError` +
