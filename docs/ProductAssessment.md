@@ -1,4 +1,16 @@
-# Product Assessment — 2026-07-30
+# Product Assessment — 2026-07-30 (updated for RC-1)
+
+> **Release-candidate addendum.** After this assessment was written, the
+> RC phase closed both store blockers and re-verified the app: AI now
+> routes through `ai-proxy` by default (no key in the binary, input caps
+> + per-user quota), in-app account deletion with cascading removal
+> shipped, privacy/terms/consent/export/feedback exist, accessibility
+> guidelines run as CI tests on four screens, and performance is
+> measured (optimizer 1.60ms/run benchmarked; Windows first frame 768ms
+> debug). A 15-agent adversarial review of those fixes confirmed 13
+> defects — including a genuine blocker in the deletion flow — all
+> fixed and re-verified. Updated scores: Security 8, Accessibility 7,
+> Production Readiness 8, Testing 8. See CHANGELOG.md and docs/Beta.md.
 
 Assessed against the working tree at the end of the commercial-grade
 phase. Every score below is justified by code, tests or CI output, not
