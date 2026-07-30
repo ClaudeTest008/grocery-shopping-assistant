@@ -2,6 +2,27 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Flutter: Windows Desktop",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "windows",
+      "flutterMode": "debug"
+    },
+    {
+      "name": "Flutter: Windows Desktop (Profile)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "windows",
+      "flutterMode": "profile"
+    },
+    {
+      "name": "Flutter: Windows Desktop (Release)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "windows",
+      "flutterMode": "release"
+    },
+    {
       "name": "Flutter: Web (Chrome)",
       "request": "launch",
       "type": "dart",
@@ -40,6 +61,24 @@
       "request": "launch",
       "type": "dart",
       "flutterMode": "release"
+    },
+    {
+      "name": "Flutter: Test (current file)",
+      "request": "launch",
+      "type": "dart",
+      "program": "${file}"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Start Development (Windows + Chrome)",
+      "configurations": ["Flutter: Windows Desktop", "Flutter: Web (Chrome)"],
+      "stopAll": true,
+      "preLaunchTask": "Flutter: Pub Get",
+      "presentation": {
+        "group": "1-dev",
+        "order": 1
+      }
     }
   ]
 }

@@ -30,6 +30,24 @@
       "group": "test"
     },
     {
+      "label": "Verify (format + analyze + test)",
+      "detail": "Everything CI checks, in one task.",
+      "type": "shell",
+      "command": "pwsh -NoProfile -File scripts/verify.ps1",
+      "windows": {
+        "command": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1"
+      },
+      "problemMatcher": [],
+      "group": { "kind": "test", "isDefault": false }
+    },
+    {
+      "label": "Flutter: Run (Windows)",
+      "type": "shell",
+      "command": "flutter run -d windows",
+      "problemMatcher": [],
+      "isBackground": true
+    },
+    {
       "label": "Flutter: Run (Chrome)",
       "type": "shell",
       "command": "flutter run -d chrome",
@@ -44,16 +62,44 @@
       "isBackground": true
     },
     {
+      "label": "Start Development",
+      "detail": "pub get, then run Windows desktop and Chrome side by side.",
+      "dependsOrder": "sequence",
+      "dependsOn": ["Flutter: Pub Get", "Dev: Windows + Chrome"],
+      "problemMatcher": [],
+      "group": { "kind": "build", "isDefault": true }
+    },
+    {
+      "label": "Dev: Windows + Chrome",
+      "dependsOrder": "parallel",
+      "dependsOn": ["Flutter: Run (Windows)", "Flutter: Run (Chrome)"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Flutter: Build Windows",
+      "type": "shell",
+      "command": "flutter build windows --release",
+      "problemMatcher": [],
+      "group": "build"
+    },
+    {
+      "label": "Flutter: Clean Windows Build",
+      "detail": "Drops build/windows so the next build reconfigures CMake from scratch.",
+      "type": "shell",
+      "command": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"if (Test-Path build/windows) { Remove-Item -Recurse -Force build/windows; Write-Host 'Removed build/windows' } else { Write-Host 'build/windows already clean' }\"",
+      "problemMatcher": []
+    },
+    {
       "label": "Flutter: Build Web",
       "type": "shell",
-      "command": "flutter build web",
+      "command": "flutter build web --release",
       "problemMatcher": [],
       "group": "build"
     },
     {
       "label": "Flutter: Build APK",
       "type": "shell",
-      "command": "flutter build apk",
+      "command": "flutter build apk --release",
       "problemMatcher": [],
       "group": "build"
     },
