@@ -77,12 +77,15 @@ class SupabaseAuthRepository implements AuthRepository {
     }
     // A user cannot remove their own auth record, so a service-role edge
     // function does it; every owned table cascades from public.users.
-    final response = await _client.functions.invoke(
-      'delete-account',
-      headers: {'Authorization': 'Bearer ${session.accessToken}'},
-    );
-    if (response.status != 200) {
-      throw const ServerFailure('Account deletion failed — try again');
+    // functions.invoke throws FunctionException on any non-2xx, so the
+    // failure path is the catch, not a status check.
+    try {
+      await _client.functions.invoke(
+        'delete-account',
+        headers: {'Authorization': 'Bearer ${session.accessToken}'},
+      );
+    } on sb.FunctionException catch (e) {
+      throw ServerFailure('Account deletion failed — try again', e);
     }
     await _client.auth.signOut();
   }

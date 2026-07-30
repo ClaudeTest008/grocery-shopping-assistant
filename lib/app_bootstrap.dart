@@ -14,14 +14,36 @@ class AppBootstrap extends StatefulWidget {
     context.findAncestorStateOfType<_AppBootstrapState>()?._restart();
   }
 
+  /// Restart without a BuildContext. Needed by flows whose own widget is
+  /// unmounted mid-operation — account deletion triggers the router's
+  /// sign-out redirect before the flow finishes, so its context dies
+  /// under it.
+  static void restartGlobal() => _AppBootstrapState._instance?._restart();
+
   @override
   State<AppBootstrap> createState() => _AppBootstrapState();
 }
 
 class _AppBootstrapState extends State<AppBootstrap> {
+  static _AppBootstrapState? _instance;
+
   Key _scopeKey = UniqueKey();
 
-  void _restart() => setState(() => _scopeKey = UniqueKey());
+  @override
+  void initState() {
+    super.initState();
+    _instance = this;
+  }
+
+  @override
+  void dispose() {
+    if (identical(_instance, this)) _instance = null;
+    super.dispose();
+  }
+
+  void _restart() {
+    if (mounted) setState(() => _scopeKey = UniqueKey());
+  }
 
   @override
   Widget build(BuildContext context) {

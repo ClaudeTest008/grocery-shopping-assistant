@@ -31,9 +31,10 @@ to be read, not to be skimmed past.
 
 With an account, the app records a small number of product events
 (e.g. "an optimization ran", "onboarding completed") and error reports.
-Error text is truncated and redacted before it is stored. Demo mode
-sends nothing. There is no advertising, no third-party analytics SDK,
-and no sale of data of any kind.
+Error text is truncated to a short summary before it is stored, and all
+analytics rows — including error reports — are deleted with your account.
+Demo mode sends nothing. There is no advertising, no third-party
+analytics SDK, and no sale of data of any kind.
 
 ## AI features
 
@@ -46,8 +47,8 @@ and nothing is sent anywhere.
 
 ## Your controls
 
-- **Export my data** (Settings → Account & data) — a complete JSON copy
-  of everything the app knows.
+- **Export my data** (Settings → Account & data) — a JSON copy of your
+  lists, pantry, receipts, current-week meal plan and preferences.
 - **Delete account** (Settings → Account & data) — permanently removes
   your account and all server-side data, immediately, via cascading
   deletion. In demo mode it erases all local data.

@@ -3,12 +3,12 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app_bootstrap.dart';
 import '../../../core/config/app_config.dart';
+import '../../../core/errors/failures.dart';
 import '../../../core/observability/telemetry.dart';
 import '../../../core/platform/platform_support.dart';
 import '../../../core/storage/local_store.dart';
@@ -96,16 +96,24 @@ class AccountAndDataSection extends ConsumerWidget {
   /// identically on all four platforms with zero new permissions.
   Future<void> _exportData(BuildContext context, WidgetRef ref) async {
     final messenger = ScaffoldMessenger.of(context);
+    // Read every provider before the first await: WidgetRef throws if
+    // used after this widget unmounts, and the user can navigate away
+    // while the repositories load.
+    final listRepo = ref.read(shoppingListRepositoryProvider);
+    final pantryRepo = ref.read(pantryRepositoryProvider);
+    final receiptRepo = ref.read(receiptRepositoryProvider);
+    final mealPlanRepo = ref.read(mealPlanRepositoryProvider);
+    final preferences = ref.read(preferencesProvider);
     try {
-      final lists = await ref.read(shoppingListRepositoryProvider).lists();
-      final pantry = await ref.read(pantryRepositoryProvider).items();
-      final receipts = await ref.read(receiptRepositoryProvider).receipts();
+      final lists = await listRepo.lists();
+      final pantry = await pantryRepo.items();
+      final receipts = await receiptRepo.receipts();
       final monday = DateTime.now().subtract(
         Duration(days: DateTime.now().weekday - 1),
       );
-      final plan = await ref
-          .read(mealPlanRepositoryProvider)
-          .forWeek(DateTime(monday.year, monday.month, monday.day));
+      final plan = await mealPlanRepo.forWeek(
+        DateTime(monday.year, monday.month, monday.day),
+      );
 
       final export = const JsonEncoder.withIndent('  ').convert({
         'exported_at': DateTime.now().toIso8601String(),
@@ -113,8 +121,9 @@ class AccountAndDataSection extends ConsumerWidget {
         'shopping_lists': [for (final l in lists) l.toJson()],
         'pantry': [for (final p in pantry) p.toJson()],
         'receipts': [for (final r in receipts) r.toJson()],
-        'meal_plan': plan?.toJson(),
-        'preferences': ref.read(preferencesProvider).toJson(),
+        // Plans are stored one row per week; this is the current one.
+        'meal_plan_current_week': plan?.toJson(),
+        'preferences': preferences.toJson(),
       });
 
       await Clipboard.setData(ClipboardData(text: export));
@@ -141,7 +150,9 @@ class AccountAndDataSection extends ConsumerWidget {
       ..writeln('Mode: ${AppConfig.isDemoMode ? 'demo' : 'connected'}');
     if (errors.isNotEmpty) {
       body.writeln('Recent errors (${errors.length}):');
-      for (final e in errors.take(3)) {
+      // Newest first — the crash the user is writing about is the last
+      // one recorded, not the first.
+      for (final e in errors.reversed.take(3)) {
         body.writeln('- $e');
       }
     }
@@ -206,15 +217,22 @@ class AccountAndDataSection extends ConsumerWidget {
     if (confirmed != true || !context.mounted) return;
 
     final messenger = ScaffoldMessenger.of(context);
+    // Everything after the first await must not need this widget:
+    // deleteAccount() emits the signedOut auth event, the router
+    // redirects, and this Settings screen unmounts mid-flow. Capture
+    // dependencies now and finish with context-free calls.
+    final auth = ref.read(authRepositoryProvider);
+    final store = ref.read(localStoreProvider);
     try {
       Telemetry.logEvent('account_deleted', {'demo': AppConfig.isDemoMode});
-      await ref.read(authRepositoryProvider).deleteAccount();
-      await ref.read(localStoreProvider).wipe();
-      if (context.mounted) {
-        // Full rebuild: providers, caches, auth state, onboarding flag.
-        AppBootstrap.restart(context);
-        context.go('/');
-      }
+      await auth.deleteAccount();
+      await store.wipe();
+      // Full rebuild: providers, caches, auth state, onboarding flag.
+      // The router lands on sign-in by itself once auth state is gone.
+      AppBootstrap.restartGlobal();
+    } on Failure catch (e) {
+      Telemetry.recordError(e, StackTrace.current);
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
     } catch (e) {
       Telemetry.recordError(e, StackTrace.current);
       messenger.showSnackBar(

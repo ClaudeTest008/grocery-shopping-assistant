@@ -23,6 +23,15 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
+  // TextSpan recognizers must be owned and disposed by their State;
+  // creating them inline in build leaks one pair per rebuild.
+  late final TapGestureRecognizer _termsRecognizer = TapGestureRecognizer()
+    ..onTap = () =>
+        launchUrl(Uri.parse(termsUrl), mode: LaunchMode.externalApplication);
+  late final TapGestureRecognizer _privacyRecognizer = TapGestureRecognizer()
+    ..onTap = () =>
+        launchUrl(Uri.parse(privacyUrl), mode: LaunchMode.externalApplication);
+
   bool _isSignUp = false;
   bool _isSubmitting = false;
 
@@ -30,6 +39,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _termsRecognizer.dispose();
+    _privacyRecognizer.dispose();
     super.dispose();
   }
 
@@ -134,11 +145,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                               color: colors.primary,
                               decoration: TextDecoration.underline,
                             ),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () => launchUrl(
-                                Uri.parse(termsUrl),
-                                mode: LaunchMode.externalApplication,
-                              ),
+                            recognizer: _termsRecognizer,
                           ),
                           const TextSpan(text: ' and the '),
                           TextSpan(
@@ -147,11 +154,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                               color: colors.primary,
                               decoration: TextDecoration.underline,
                             ),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () => launchUrl(
-                                Uri.parse(privacyUrl),
-                                mode: LaunchMode.externalApplication,
-                              ),
+                            recognizer: _privacyRecognizer,
                           ),
                           const TextSpan(text: '.'),
                         ],

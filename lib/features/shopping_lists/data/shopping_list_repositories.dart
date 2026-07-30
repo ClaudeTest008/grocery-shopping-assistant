@@ -11,6 +11,7 @@ import '../../../core/services/connectivity_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/storage/local_store.dart';
 import '../../../core/storage/pending_ops.dart';
+import '../../authentication/data/auth_repositories.dart';
 import '../domain/shopping_list.dart';
 import '../domain/shopping_list_repository.dart';
 
@@ -274,11 +275,37 @@ class SupabaseShoppingListRepository implements ShoppingListRepository {
       })
       .eq('id', item.id);
 
-  /// Replays queued check-offs. Anything still unreachable stays queued.
+  /// Replays queued check-offs.
+  ///
+  /// Two hard-won rules encoded here:
+  /// - Only transport failures keep an op queued. Anything else — a
+  ///   payload an older app version wrote that no longer parses, a row
+  ///   the server rejects — is dropped, because retrying it forever
+  ///   would wedge every later op behind a poison pill.
+  /// - The replay writes ONLY the `checked` column. Replaying the whole
+  ///   queued snapshot would overwrite name/quantity/notes edits the
+  ///   user made online after reconnecting.
   Future<int> drainPending() async =>
       await _pending?.drain((op) async {
         if (op.kind != kindCheckOff) return;
-        await _writeItem(ShoppingItem.fromJson(op.payload));
+        final String id;
+        final bool checked;
+        try {
+          id = op.payload['id'] as String;
+          checked = op.payload['checked'] as bool? ?? false;
+        } catch (_) {
+          return; // unparseable: dropped by returning normally
+        }
+        try {
+          await _client
+              .from('shopping_items')
+              .update({'checked': checked})
+              .eq('id', id);
+        } on Object catch (error) {
+          if (_looksOffline(error)) rethrow; // still offline: keep queued
+          // Server actively rejected it (row deleted, permission):
+          // dropping is correct; retrying would fail forever.
+        }
       }) ??
       0;
 
@@ -329,5 +356,13 @@ final pendingOpsSyncProvider = Provider<void>((ref) {
     if (applied > 0) {
       Telemetry.logEvent('pending_ops_drained', {'count': applied});
     }
+  });
+
+  // The outbox is device-scoped, not user-scoped: ops queued under one
+  // account must never replay under the next sign-in, so sign-out
+  // clears them.
+  ref.listen(authStateProvider, (previous, next) async {
+    final signedOut = previous?.value != null && next.value == null;
+    if (signedOut) await ref.read(pendingOpsProvider).clear();
   });
 });

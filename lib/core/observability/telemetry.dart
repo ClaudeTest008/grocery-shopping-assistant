@@ -15,8 +15,10 @@ abstract final class Telemetry {
   static bool _installed = false;
 
   /// Ring buffer of recent error summaries, attached to beta feedback so
-  /// a "it crashed earlier" report arrives with evidence. Redacted and
-  /// capped; never contains stack traces or payloads.
+  /// a "it crashed earlier" report arrives with evidence. Entries are
+  /// length-truncated (300 chars, no stack traces); truncation is not
+  /// content scrubbing, so the feedback email shows the user exactly
+  /// what would be sent before they choose to send it.
   static final List<String> _recentErrors = [];
   static const _recentErrorsCap = 10;
 
@@ -52,7 +54,12 @@ abstract final class Telemetry {
     bool fatal = false,
   }) {
     // Integration point: Sentry.captureException / Crashlytics.recordError.
-    debugPrint('[telemetry] ${fatal ? 'FATAL' : 'error'}: $error');
+    // Release builds log only the truncated form — full error text can
+    // echo user data (a Postgrest error quoting a row, a note in a URL).
+    debugPrint(
+      '[telemetry] ${fatal ? 'FATAL' : 'error'}: '
+      '${kDebugMode ? error : redact(error)}',
+    );
     _recentErrors.add('${fatal ? 'FATAL ' : ''}${redact(error)}');
     if (_recentErrors.length > _recentErrorsCap) _recentErrors.removeAt(0);
     if (kDebugMode && stack != null) debugPrintStack(stackTrace: stack);
