@@ -68,6 +68,24 @@ class SupabaseAuthRepository implements AuthRepository {
 
   @override
   Future<void> signOut() => _client.auth.signOut();
+
+  @override
+  Future<void> deleteAccount() async {
+    final session = _client.auth.currentSession;
+    if (session == null) {
+      throw const AuthFailure('Sign in again to delete your account');
+    }
+    // A user cannot remove their own auth record, so a service-role edge
+    // function does it; every owned table cascades from public.users.
+    final response = await _client.functions.invoke(
+      'delete-account',
+      headers: {'Authorization': 'Bearer ${session.accessToken}'},
+    );
+    if (response.status != 200) {
+      throw const ServerFailure('Account deletion failed — try again');
+    }
+    await _client.auth.signOut();
+  }
 }
 
 /// Demo mode: a single local user, always signed in after any auth
@@ -111,6 +129,12 @@ class DemoAuthRepository implements AuthRepository {
 
   @override
   Future<void> signOut() async => _set(null);
+
+  @override
+  Future<void> deleteAccount() async {
+    // Demo "account" is purely local; the caller wipes local storage.
+    _set(null);
+  }
 
   void _set(AppUser? u) {
     _current = u;

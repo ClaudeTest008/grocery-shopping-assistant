@@ -1,10 +1,14 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../../core/errors/failures.dart';
 import '../../../core/utils/validators.dart';
 import '../../../shared/extensions/context_extensions.dart';
+import '../../settings/presentation/account_section.dart'
+    show privacyUrl, termsUrl;
 import '../data/auth_repositories.dart';
 
 class SignInScreen extends ConsumerStatefulWidget {
@@ -114,6 +118,46 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                           : 'Sign in to continue',
                       textAlign: TextAlign.center,
                       style: context.text.bodyMedium?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // Store policies require informed consent at the
+                    // point of account creation, not buried in settings.
+                    Text.rich(
+                      TextSpan(
+                        text: 'By continuing you agree to the ',
+                        children: [
+                          TextSpan(
+                            text: 'Terms of use',
+                            style: TextStyle(
+                              color: colors.primary,
+                              decoration: TextDecoration.underline,
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () => launchUrl(
+                                Uri.parse(termsUrl),
+                                mode: LaunchMode.externalApplication,
+                              ),
+                          ),
+                          const TextSpan(text: ' and the '),
+                          TextSpan(
+                            text: 'Privacy policy',
+                            style: TextStyle(
+                              color: colors.primary,
+                              decoration: TextDecoration.underline,
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () => launchUrl(
+                                Uri.parse(privacyUrl),
+                                mode: LaunchMode.externalApplication,
+                              ),
+                          ),
+                          const TextSpan(text: '.'),
+                        ],
+                      ),
+                      textAlign: TextAlign.center,
+                      style: context.text.bodySmall?.copyWith(
                         color: colors.onSurfaceVariant,
                       ),
                     ),

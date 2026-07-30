@@ -19,11 +19,13 @@ abstract final class AppConfig {
     'STRIPE_PUBLISHABLE_KEY',
   );
 
-  /// One of: `anthropic`, `openai`, `mock`.
-  static const llmProvider = String.fromEnvironment(
-    'LLM_PROVIDER',
-    defaultValue: 'mock',
-  );
+  /// One of: `proxy`, `anthropic`, `openai`, `mock`.
+  ///
+  /// Left unset, a Supabase-configured build routes AI through the
+  /// `ai-proxy` edge function (no key in the client, web-safe) and a
+  /// demo build uses the deterministic mock. `anthropic`/`openai` embed
+  /// [llmApiKey] in the binary — development only, never distribute.
+  static const llmProvider = String.fromEnvironment('LLM_PROVIDER');
   static const llmApiKey = String.fromEnvironment('LLM_API_KEY');
   static const llmModel = String.fromEnvironment('LLM_MODEL');
 

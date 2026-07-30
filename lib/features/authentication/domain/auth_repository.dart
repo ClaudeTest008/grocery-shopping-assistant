@@ -14,4 +14,8 @@ abstract interface class AuthRepository {
   Future<void> signInWithApple();
 
   Future<void> signOut();
+
+  /// Permanently deletes the account and every piece of server-side
+  /// data. Irreversible; callers own the confirmation UX.
+  Future<void> deleteAccount();
 }

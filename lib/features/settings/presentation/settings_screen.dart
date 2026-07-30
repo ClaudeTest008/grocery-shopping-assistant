@@ -9,6 +9,7 @@ import '../../../shared/extensions/context_extensions.dart';
 import '../../../shared/widgets/section_header.dart';
 import '../../profile/data/preferences_repository.dart';
 import '../../profile/domain/user_preferences.dart';
+import 'account_section.dart';
 
 Future<void> _resetDemo(BuildContext context, WidgetRef ref) async {
   final confirmed = await showDialog<bool>(
@@ -260,8 +261,12 @@ class SettingsScreen extends ConsumerWidget {
                   notifier.update(prefs.copyWith(valueOfTimePerHour: v)),
             ),
           ),
+          const AccountAndDataSection(),
           const SectionHeader(title: 'About'),
-          const ListTile(title: Text('Version'), trailing: Text('1.0.0')),
+          ListTile(
+            title: const Text('Version'),
+            trailing: Text(ref.watch(appVersionProvider).value ?? '…'),
+          ),
           if (AppConfig.isDemoMode) ...[
             ListTile(
               leading: Icon(

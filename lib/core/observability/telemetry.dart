@@ -14,6 +14,14 @@ import '../config/app_config.dart';
 abstract final class Telemetry {
   static bool _installed = false;
 
+  /// Ring buffer of recent error summaries, attached to beta feedback so
+  /// a "it crashed earlier" report arrives with evidence. Redacted and
+  /// capped; never contains stack traces or payloads.
+  static final List<String> _recentErrors = [];
+  static const _recentErrorsCap = 10;
+
+  static List<String> get recentErrors => List.unmodifiable(_recentErrors);
+
   /// Installs global handlers for framework and platform errors.
   static void installErrorHandlers() {
     if (_installed) return;
@@ -45,6 +53,8 @@ abstract final class Telemetry {
   }) {
     // Integration point: Sentry.captureException / Crashlytics.recordError.
     debugPrint('[telemetry] ${fatal ? 'FATAL' : 'error'}: $error');
+    _recentErrors.add('${fatal ? 'FATAL ' : ''}${redact(error)}');
+    if (_recentErrors.length > _recentErrorsCap) _recentErrors.removeAt(0);
     if (kDebugMode && stack != null) debugPrintStack(stackTrace: stack);
     _tryInsert('app_error', {'error': redact(error), 'fatal': fatal});
   }
