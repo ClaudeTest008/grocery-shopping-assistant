@@ -228,6 +228,7 @@ class _FavoriteStoresSheet extends ConsumerWidget {
               ),
               child: AsyncValueWidget<List<Store>>(
                 value: storesAsync,
+                onRetry: () => ref.invalidate(nearbyStoresProvider),
                 data: (stores) => ListView(
                   shrinkWrap: true,
                   children: [

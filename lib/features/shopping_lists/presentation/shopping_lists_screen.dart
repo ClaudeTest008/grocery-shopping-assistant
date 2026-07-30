@@ -137,71 +137,74 @@ class _ListCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final repo = ref.read(shoppingListRepositoryProvider);
-    return Card(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () => context.push('/lists/${list.id}'),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      list.name,
-                      style: context.text.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
+    // Name, progress text and the progress bar describe one thing.
+    return MergeSemantics(
+      child: Card(
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => context.push('/lists/${list.id}'),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        list.name,
+                        style: context.text.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
-                  ),
-                  PopupMenuButton<String>(
-                    tooltip: 'List actions',
-                    onSelected: (action) async {
-                      switch (action) {
-                        case 'duplicate':
-                          await repo.duplicate(list.id);
-                          if (context.mounted) {
-                            context.showSnack('Duplicated ${list.name}');
-                          }
-                        case 'delete':
-                          // A list plus its items is expensive to
-                          // reconstruct, so confirm rather than offer undo.
-                          if (!await _confirmDelete(context)) return;
-                          await repo.delete(list.id);
-                          Haptics.light();
-                      }
-                      ref.invalidate(shoppingListsProvider);
-                    },
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(
-                        value: 'duplicate',
-                        child: Text('Duplicate'),
-                      ),
-                      PopupMenuItem(value: 'delete', child: Text('Delete')),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '${list.checkedCount}/${list.items.length} items'
-                '${list.budget != null ? '  ·  budget ${Formatters.currency(list.budget!)}' : ''}',
-                style: context.text.bodySmall?.copyWith(
-                  color: context.colors.onSurfaceVariant,
+                    PopupMenuButton<String>(
+                      tooltip: 'List actions',
+                      onSelected: (action) async {
+                        switch (action) {
+                          case 'duplicate':
+                            await repo.duplicate(list.id);
+                            if (context.mounted) {
+                              context.showSnack('Duplicated ${list.name}');
+                            }
+                          case 'delete':
+                            // A list plus its items is expensive to
+                            // reconstruct, so confirm rather than offer undo.
+                            if (!await _confirmDelete(context)) return;
+                            await repo.delete(list.id);
+                            Haptics.light();
+                        }
+                        ref.invalidate(shoppingListsProvider);
+                      },
+                      itemBuilder: (_) => const [
+                        PopupMenuItem(
+                          value: 'duplicate',
+                          child: Text('Duplicate'),
+                        ),
+                        PopupMenuItem(value: 'delete', child: Text('Delete')),
+                      ],
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: list.progress,
-                  minHeight: 6,
-                  backgroundColor: context.colors.surfaceContainerHighest,
+                const SizedBox(height: 4),
+                Text(
+                  '${list.checkedCount}/${list.items.length} items'
+                  '${list.budget != null ? '  ·  budget ${Formatters.currency(list.budget!)}' : ''}',
+                  style: context.text.bodySmall?.copyWith(
+                    color: context.colors.onSurfaceVariant,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: list.progress,
+                    minHeight: 6,
+                    backgroundColor: context.colors.surfaceContainerHighest,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -96,219 +96,227 @@ class _OptionCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
     final storeNames = option.visits.map((v) => v.store.name).join(' + ');
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: option.recommended
-            ? BorderSide(color: colors.primary, width: 2)
-            : BorderSide.none,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 14,
-                  backgroundColor: option.recommended
-                      ? colors.primary
-                      : colors.surfaceContainerHighest,
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      color: option.recommended
-                          ? colors.onPrimary
-                          : colors.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    storeNames,
-                    style: context.text.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                if (option.recommended)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colors.primaryContainer,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      'Recommended',
-                      style: context.text.labelSmall?.copyWith(
-                        color: colors.onPrimaryContainer,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  Formatters.currency(option.totalCost),
-                  style: context.text.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 3),
-                  child: Text(
-                    'all-in total',
-                    style: context.text.bodySmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            // A screen called "Cheapest way to shop" has to show the
-            // payoff, not just the price.
-            if (option.savingsVsBaseline > 0.01) ...[
-              const SizedBox(height: 6),
+    // The label, stores, total, savings and explanation are one
+    // recommendation and should be announced as one.
+    return MergeSemantics(
+      child: Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: option.recommended
+              ? BorderSide(color: colors.primary, width: 2)
+              : BorderSide.none,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Row(
                 children: [
-                  Icon(Icons.savings_rounded, size: 16, color: colors.primary),
-                  const SizedBox(width: 6),
+                  CircleAvatar(
+                    radius: 14,
+                    backgroundColor: option.recommended
+                        ? colors.primary
+                        : colors.surfaceContainerHighest,
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        color: option.recommended
+                            ? colors.onPrimary
+                            : colors.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Saves ${Formatters.currency(option.savingsVsBaseline)} '
-                      'vs your nearest store',
-                      style: context.text.labelLarge?.copyWith(
-                        color: colors.primary,
+                      storeNames,
+                      style: context.text.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
-                ],
-              ),
-            ],
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 12,
-              runSpacing: 4,
-              children: [
-                _Fact(
-                  icon: Icons.shopping_bag_outlined,
-                  text: 'Items ${Formatters.currency(option.itemsTotal)}',
-                ),
-                if (option.couponSavings > 0)
-                  _Fact(
-                    icon: Icons.local_offer_outlined,
-                    text:
-                        'Coupons −${Formatters.currency(option.couponSavings)}',
-                  ),
-                _Fact(
-                  icon: Icons.directions_car_outlined,
-                  text:
-                      '${Formatters.distanceKm(option.travelKm)} · ${Formatters.duration(option.travelTime)} · ${Formatters.currency(option.travelCost)}',
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(option.explanation, style: context.text.bodyMedium),
-            const SizedBox(height: 12),
-            // Per-store breakdown.
-            for (final visit in option.visits) ...[
-              Container(
-                width: double.infinity,
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: colors.surfaceContainerHigh.withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${visit.store.name} — ${Formatters.currency(visit.subtotal)}',
-                      style: context.text.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
+                  if (option.recommended)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    for (final line in visit.items)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 1),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                '${line.item.name} ×${_qty(line.item.quantity)}',
-                                style: context.text.bodySmall,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            Text(
-                              Formatters.currency(line.lineTotal),
-                              style: context.text.bodySmall?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
+                      decoration: BoxDecoration(
+                        color: colors.primaryContainer,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        'Recommended',
+                        style: context.text.labelSmall?.copyWith(
+                          color: colors.onPrimaryContainer,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
-                  ],
-                ),
+                    ),
+                ],
               ),
-            ],
-            if (option.unavailableItems.isNotEmpty)
+              const SizedBox(height: 12),
               Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Expanded(
+                  Text(
+                    Formatters.currency(option.totalCost),
+                    style: context.text.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 3),
                     child: Text(
-                      'Not available: ${option.unavailableItems.join(', ')}',
+                      'all-in total',
                       style: context.text.bodySmall?.copyWith(
-                        color: colors.error,
+                        color: colors.onSurfaceVariant,
                       ),
                     ),
                   ),
-                  TextButton(
-                    onPressed: () => _suggestSubstitutes(context, ref),
-                    child: const Text('Substitutes'),
+                ],
+              ),
+              // A screen called "Cheapest way to shop" has to show the
+              // payoff, not just the price.
+              if (option.savingsVsBaseline > 0.01) ...[
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.savings_rounded,
+                      size: 16,
+                      color: colors.primary,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Saves ${Formatters.currency(option.savingsVsBaseline)} '
+                        'vs your nearest store',
+                        style: context.text.labelLarge?.copyWith(
+                          color: colors.primary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 12,
+                runSpacing: 4,
+                children: [
+                  _Fact(
+                    icon: Icons.shopping_bag_outlined,
+                    text: 'Items ${Formatters.currency(option.itemsTotal)}',
+                  ),
+                  if (option.couponSavings > 0)
+                    _Fact(
+                      icon: Icons.local_offer_outlined,
+                      text:
+                          'Coupons −${Formatters.currency(option.couponSavings)}',
+                    ),
+                  _Fact(
+                    icon: Icons.directions_car_outlined,
+                    text:
+                        '${Formatters.distanceKm(option.travelKm)} · ${Formatters.duration(option.travelTime)} · ${Formatters.currency(option.travelCost)}',
                   ),
                 ],
               ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: FilledButton.tonalIcon(
-                    onPressed: () {
-                      ref.read(tripOverlayProvider.notifier).state =
-                          TripOverlay(result: result, selectedIndex: index);
-                      context.push('/map');
-                    },
-                    icon: const Icon(Icons.map_rounded, size: 18),
-                    label: const Text('View on map'),
+              const SizedBox(height: 12),
+              Text(option.explanation, style: context.text.bodyMedium),
+              const SizedBox(height: 12),
+              // Per-store breakdown.
+              for (final visit in option.visits) ...[
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: colors.surfaceContainerHigh.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => _explainWithAi(context, ref),
-                    icon: const Icon(Icons.auto_awesome_rounded, size: 18),
-                    label: const Text('Ask AI why'),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${visit.store.name} — ${Formatters.currency(visit.subtotal)}',
+                        style: context.text.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      for (final line in visit.items)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 1),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  '${line.item.name} ×${_qty(line.item.quantity)}',
+                                  style: context.text.bodySmall,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Text(
+                                Formatters.currency(line.lineTotal),
+                                style: context.text.bodySmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ],
-            ),
-          ],
+              if (option.unavailableItems.isNotEmpty)
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Not available: ${option.unavailableItems.join(', ')}',
+                        style: context.text.bodySmall?.copyWith(
+                          color: colors.error,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => _suggestSubstitutes(context, ref),
+                      child: const Text('Substitutes'),
+                    ),
+                  ],
+                ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: FilledButton.tonalIcon(
+                      onPressed: () {
+                        ref.read(tripOverlayProvider.notifier).state =
+                            TripOverlay(result: result, selectedIndex: index);
+                        context.push('/map');
+                      },
+                      icon: const Icon(Icons.map_rounded, size: 18),
+                      label: const Text('View on map'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _explainWithAi(context, ref),
+                      icon: const Icon(Icons.auto_awesome_rounded, size: 18),
+                      label: const Text('Ask AI why'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

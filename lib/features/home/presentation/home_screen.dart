@@ -77,57 +77,61 @@ class _BudgetCard extends ConsumerWidget {
     final spend = ref.watch(_monthSpendProvider).value ?? 0;
     final budget = ref.watch(preferencesProvider).monthlyBudget;
     final over = budget != null && spend > budget;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      child: Card(
-        color: context.colors.primaryContainer.withValues(alpha: 0.5),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () => context.push('/insights'),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Spent this month',
-                  style: context.text.labelLarge?.copyWith(
-                    color: context.colors.onSurfaceVariant,
+    // Without merging, a screen reader reads "Spent this month", "$243",
+    // "$57 left of $300" as three unrelated fragments.
+    return MergeSemantics(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+        child: Card(
+          color: context.colors.primaryContainer.withValues(alpha: 0.5),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => context.push('/insights'),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Spent this month',
+                    style: context.text.labelLarge?.copyWith(
+                      color: context.colors.onSurfaceVariant,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  Formatters.currency(spend),
-                  style: context.text.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
+                  const SizedBox(height: 4),
+                  Text(
+                    Formatters.currency(spend),
+                    style: context.text.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                ),
-                if (budget != null) ...[
-                  const SizedBox(height: 12),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: (spend / budget).clamp(0.0, 1.0),
-                      minHeight: 8,
-                      color: over ? context.colors.error : null,
-                      backgroundColor: context.colors.surface.withValues(
-                        alpha: 0.6,
+                  if (budget != null) ...[
+                    const SizedBox(height: 12),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: (spend / budget).clamp(0.0, 1.0),
+                        minHeight: 8,
+                        color: over ? context.colors.error : null,
+                        backgroundColor: context.colors.surface.withValues(
+                          alpha: 0.6,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    over
-                        ? '${Formatters.currency(spend - budget)} over your ${Formatters.currency(budget)} budget'
-                        : '${Formatters.currency(budget - spend)} left of ${Formatters.currency(budget)}',
-                    style: context.text.bodySmall?.copyWith(
-                      color: over
-                          ? context.colors.error
-                          : context.colors.onSurfaceVariant,
+                    const SizedBox(height: 6),
+                    Text(
+                      over
+                          ? '${Formatters.currency(spend - budget)} over your ${Formatters.currency(budget)} budget'
+                          : '${Formatters.currency(budget - spend)} left of ${Formatters.currency(budget)}',
+                      style: context.text.bodySmall?.copyWith(
+                        color: over
+                            ? context.colors.error
+                            : context.colors.onSurfaceVariant,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
@@ -143,7 +147,37 @@ class _ActiveListCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final lists = ref.watch(shoppingListsProvider).value;
     final list = lists?.firstOrNull;
-    if (list == null) return const SizedBox.shrink();
+    // A brand-new account would otherwise open on a home screen with a
+    // hole where its most important action belongs.
+    if (list == null) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+        child: Card(
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
+            ),
+            leading: CircleAvatar(
+              backgroundColor: context.colors.primaryContainer,
+              child: Icon(
+                Icons.add_shopping_cart_rounded,
+                color: context.colors.onPrimaryContainer,
+              ),
+            ),
+            title: const Text(
+              'Start your first list',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+            subtitle: const Text(
+              'Add what you need and we will find the cheapest trip',
+            ),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: () => context.push('/lists'),
+          ),
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Card(

@@ -130,14 +130,17 @@ class _MapScreenState extends ConsumerState<MapScreen>
               const <Store>[];
           final homePoint = LatLng(home.lat, home.lng);
 
-          // Fit everything once on first load.
+          // Frame the map once on first load. Arriving from "View on
+          // map" the interesting thing is *this trip*, not every store
+          // in the city, so fit the route when one is being shown.
           if (!_didInitialFit && allStores.isNotEmpty) {
             _didInitialFit = true;
+            final focus = tripStores.isNotEmpty ? tripStores : allStores;
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted) {
                 _animateToBounds([
                   homePoint,
-                  for (final s in allStores) LatLng(s.lat, s.lng),
+                  for (final s in focus) LatLng(s.lat, s.lng),
                 ]);
               }
             });

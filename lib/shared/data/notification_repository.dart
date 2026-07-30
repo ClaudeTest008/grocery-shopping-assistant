@@ -105,7 +105,7 @@ class SupabaseNotificationRepository implements NotificationRepository {
 
   final SupabaseClient _client;
 
-  String get _userId => _client.auth.currentUser!.id;
+  String get _userId => _client.requireUserId;
 
   @override
   Future<List<AppNotification>> notifications() async {

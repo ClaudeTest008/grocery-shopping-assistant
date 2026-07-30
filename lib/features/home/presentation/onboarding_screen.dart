@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/observability/telemetry.dart';
 import '../../../core/storage/local_store.dart';
 import '../../../shared/extensions/context_extensions.dart';
 
@@ -55,6 +56,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Future<void> _finish() async {
+    // Where people drop out of onboarding is the first thing worth
+    // knowing about a beta.
+    Telemetry.logEvent('onboarding_complete', {'last_page': _page});
     await ref.read(localStoreProvider).prefs.put(_seenOnboardingKey, true);
     ref.read(seenOnboardingProvider.notifier).state = true;
     if (mounted) context.go('/');

@@ -30,6 +30,14 @@ abstract final class Telemetry {
     };
   }
 
+  /// Error strings can carry whatever the thrower put in them — a row of
+  /// user data, an email in a URL. Cap the length and keep it out of the
+  /// analytics table beyond what is needed to identify the failure.
+  static String redact(Object error) {
+    final text = error.toString();
+    return text.length <= 300 ? text : '${text.substring(0, 300)}…';
+  }
+
   static void recordError(
     Object error,
     StackTrace? stack, {
@@ -38,13 +46,7 @@ abstract final class Telemetry {
     // Integration point: Sentry.captureException / Crashlytics.recordError.
     debugPrint('[telemetry] ${fatal ? 'FATAL' : 'error'}: $error');
     if (kDebugMode && stack != null) debugPrintStack(stackTrace: stack);
-    _tryInsert('app_error', {
-      'error': error.toString().substring(
-        0,
-        error.toString().length.clamp(0, 500),
-      ),
-      'fatal': fatal,
-    });
+    _tryInsert('app_error', {'error': redact(error), 'fatal': fatal});
   }
 
   /// Product analytics event (screen views, feature usage).

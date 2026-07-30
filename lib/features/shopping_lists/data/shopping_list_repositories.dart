@@ -153,7 +153,7 @@ class SupabaseShoppingListRepository implements ShoppingListRepository {
 
   final SupabaseClient _client;
 
-  String get _userId => _client.auth.currentUser!.id;
+  String get _userId => _client.requireUserId;
 
   static const _select = '*, shopping_items(*)';
 

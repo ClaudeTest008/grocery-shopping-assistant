@@ -39,7 +39,7 @@ class SupabaseCouponRepository implements CouponRepository {
 
   final SupabaseClient _client;
 
-  String get _userId => _client.auth.currentUser!.id;
+  String get _userId => _client.requireUserId;
 
   @override
   Future<List<Coupon>> available() async {

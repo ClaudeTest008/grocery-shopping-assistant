@@ -40,7 +40,7 @@ class SupabaseMealPlanRepository implements MealPlanRepository {
 
   final SupabaseClient _client;
 
-  String get _userId => _client.auth.currentUser!.id;
+  String get _userId => _client.requireUserId;
 
   @override
   Future<MealPlan?> forWeek(DateTime weekStart) async {

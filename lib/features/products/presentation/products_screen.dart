@@ -143,8 +143,11 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                 }
                 return GridView.builder(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
+                  // Column count follows the width, so a desktop window
+                  // or tablet fills the space instead of showing two
+                  // stretched phone-sized cards.
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 240,
                     mainAxisSpacing: 12,
                     crossAxisSpacing: 12,
                     childAspectRatio: 0.78,
