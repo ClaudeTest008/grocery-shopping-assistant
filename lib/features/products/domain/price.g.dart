@@ -44,6 +44,7 @@ _PricePoint _$PricePointFromJson(Map<String, dynamic> json) => _PricePoint(
   recordedAt: DateTime.parse(json['recorded_at'] as String),
   price: (json['price'] as num).toDouble(),
   storeId: json['store_id'] as String?,
+  source: json['source'] as String?,
 );
 
 Map<String, dynamic> _$PricePointToJson(_PricePoint instance) =>
@@ -51,4 +52,5 @@ Map<String, dynamic> _$PricePointToJson(_PricePoint instance) =>
       'recorded_at': instance.recordedAt.toIso8601String(),
       'price': instance.price,
       'store_id': instance.storeId,
+      'source': instance.source,
     };

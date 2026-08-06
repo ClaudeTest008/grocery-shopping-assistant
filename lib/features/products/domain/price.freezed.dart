@@ -316,7 +316,11 @@ as DateTime?,
 /// @nodoc
 mixin _$PricePoint {
 
- DateTime get recordedAt; double get price; String? get storeId;
+ DateTime get recordedAt; double get price; String? get storeId;/// Provenance: 'catalog' (price feed / seed), 'receipt' (a receipt
+/// the user scanned), 'community' (a price the user reported).
+/// Null on rows written before provenance existed — treated as
+/// catalog data.
+ String? get source;
 /// Create a copy of PricePoint
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -329,16 +333,16 @@ $PricePointCopyWith<PricePoint> get copyWith => _$PricePointCopyWithImpl<PricePo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PricePoint&&(identical(other.recordedAt, recordedAt) || other.recordedAt == recordedAt)&&(identical(other.price, price) || other.price == price)&&(identical(other.storeId, storeId) || other.storeId == storeId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PricePoint&&(identical(other.recordedAt, recordedAt) || other.recordedAt == recordedAt)&&(identical(other.price, price) || other.price == price)&&(identical(other.storeId, storeId) || other.storeId == storeId)&&(identical(other.source, source) || other.source == source));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,recordedAt,price,storeId);
+int get hashCode => Object.hash(runtimeType,recordedAt,price,storeId,source);
 
 @override
 String toString() {
-  return 'PricePoint(recordedAt: $recordedAt, price: $price, storeId: $storeId)';
+  return 'PricePoint(recordedAt: $recordedAt, price: $price, storeId: $storeId, source: $source)';
 }
 
 
@@ -349,7 +353,7 @@ abstract mixin class $PricePointCopyWith<$Res>  {
   factory $PricePointCopyWith(PricePoint value, $Res Function(PricePoint) _then) = _$PricePointCopyWithImpl;
 @useResult
 $Res call({
- DateTime recordedAt, double price, String? storeId
+ DateTime recordedAt, double price, String? storeId, String? source
 });
 
 
@@ -366,11 +370,12 @@ class _$PricePointCopyWithImpl<$Res>
 
 /// Create a copy of PricePoint
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? recordedAt = null,Object? price = null,Object? storeId = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? recordedAt = null,Object? price = null,Object? storeId = freezed,Object? source = freezed,}) {
   return _then(_self.copyWith(
 recordedAt: null == recordedAt ? _self.recordedAt : recordedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,price: null == price ? _self.price : price // ignore: cast_nullable_to_non_nullable
 as double,storeId: freezed == storeId ? _self.storeId : storeId // ignore: cast_nullable_to_non_nullable
+as String?,source: freezed == source ? _self.source : source // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -456,10 +461,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( DateTime recordedAt,  double price,  String? storeId)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( DateTime recordedAt,  double price,  String? storeId,  String? source)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PricePoint() when $default != null:
-return $default(_that.recordedAt,_that.price,_that.storeId);case _:
+return $default(_that.recordedAt,_that.price,_that.storeId,_that.source);case _:
   return orElse();
 
 }
@@ -477,10 +482,10 @@ return $default(_that.recordedAt,_that.price,_that.storeId);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( DateTime recordedAt,  double price,  String? storeId)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( DateTime recordedAt,  double price,  String? storeId,  String? source)  $default,) {final _that = this;
 switch (_that) {
 case _PricePoint():
-return $default(_that.recordedAt,_that.price,_that.storeId);case _:
+return $default(_that.recordedAt,_that.price,_that.storeId,_that.source);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -497,10 +502,10 @@ return $default(_that.recordedAt,_that.price,_that.storeId);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( DateTime recordedAt,  double price,  String? storeId)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( DateTime recordedAt,  double price,  String? storeId,  String? source)?  $default,) {final _that = this;
 switch (_that) {
 case _PricePoint() when $default != null:
-return $default(_that.recordedAt,_that.price,_that.storeId);case _:
+return $default(_that.recordedAt,_that.price,_that.storeId,_that.source);case _:
   return null;
 
 }
@@ -512,12 +517,17 @@ return $default(_that.recordedAt,_that.price,_that.storeId);case _:
 @JsonSerializable()
 
 class _PricePoint implements PricePoint {
-  const _PricePoint({required this.recordedAt, required this.price, this.storeId});
+  const _PricePoint({required this.recordedAt, required this.price, this.storeId, this.source});
   factory _PricePoint.fromJson(Map<String, dynamic> json) => _$PricePointFromJson(json);
 
 @override final  DateTime recordedAt;
 @override final  double price;
 @override final  String? storeId;
+/// Provenance: 'catalog' (price feed / seed), 'receipt' (a receipt
+/// the user scanned), 'community' (a price the user reported).
+/// Null on rows written before provenance existed — treated as
+/// catalog data.
+@override final  String? source;
 
 /// Create a copy of PricePoint
 /// with the given fields replaced by the non-null parameter values.
@@ -532,16 +542,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PricePoint&&(identical(other.recordedAt, recordedAt) || other.recordedAt == recordedAt)&&(identical(other.price, price) || other.price == price)&&(identical(other.storeId, storeId) || other.storeId == storeId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PricePoint&&(identical(other.recordedAt, recordedAt) || other.recordedAt == recordedAt)&&(identical(other.price, price) || other.price == price)&&(identical(other.storeId, storeId) || other.storeId == storeId)&&(identical(other.source, source) || other.source == source));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,recordedAt,price,storeId);
+int get hashCode => Object.hash(runtimeType,recordedAt,price,storeId,source);
 
 @override
 String toString() {
-  return 'PricePoint(recordedAt: $recordedAt, price: $price, storeId: $storeId)';
+  return 'PricePoint(recordedAt: $recordedAt, price: $price, storeId: $storeId, source: $source)';
 }
 
 
@@ -552,7 +562,7 @@ abstract mixin class _$PricePointCopyWith<$Res> implements $PricePointCopyWith<$
   factory _$PricePointCopyWith(_PricePoint value, $Res Function(_PricePoint) _then) = __$PricePointCopyWithImpl;
 @override @useResult
 $Res call({
- DateTime recordedAt, double price, String? storeId
+ DateTime recordedAt, double price, String? storeId, String? source
 });
 
 
@@ -569,11 +579,12 @@ class __$PricePointCopyWithImpl<$Res>
 
 /// Create a copy of PricePoint
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? recordedAt = null,Object? price = null,Object? storeId = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? recordedAt = null,Object? price = null,Object? storeId = freezed,Object? source = freezed,}) {
   return _then(_PricePoint(
 recordedAt: null == recordedAt ? _self.recordedAt : recordedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,price: null == price ? _self.price : price // ignore: cast_nullable_to_non_nullable
 as double,storeId: freezed == storeId ? _self.storeId : storeId // ignore: cast_nullable_to_non_nullable
+as String?,source: freezed == source ? _self.source : source // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

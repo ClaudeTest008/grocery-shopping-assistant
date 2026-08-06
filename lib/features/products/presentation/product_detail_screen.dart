@@ -2,7 +2,9 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:uuid/uuid.dart';
 
+import '../../../core/observability/telemetry.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/extensions/context_extensions.dart';
 import '../../../shared/widgets/async_value_widget.dart';
@@ -10,8 +12,10 @@ import '../../../shared/widgets/price_tag.dart';
 import '../../../shared/widgets/section_header.dart';
 import '../../stores/data/store_repositories.dart';
 import '../../stores/domain/store.dart';
+import '../data/price_observation_repository.dart';
 import '../data/product_repositories.dart';
 import '../domain/price.dart';
+import '../domain/price_observation.dart';
 import '../domain/price_verdict.dart';
 import '../domain/product.dart';
 
@@ -21,9 +25,25 @@ final _productProvider = FutureProvider.family<Product?, String>(
 final _pricesProvider = FutureProvider.family<List<Price>, String>(
   (ref, id) => ref.watch(productRepositoryProvider).pricesFor(id),
 );
-final _priceHistoryProvider = FutureProvider.family<List<PricePoint>, String>(
-  (ref, id) => ref.watch(productRepositoryProvider).priceHistory(id),
-);
+
+/// Catalog history merged with the user's own observations (receipt
+/// lines, reported prices) so real data shows up the moment it exists.
+/// Observation failures never blank the chart — catalog history still
+/// renders.
+final _priceHistoryProvider = FutureProvider.family<List<PricePoint>, String>((
+  ref,
+  id,
+) async {
+  final catalog = await ref.watch(productRepositoryProvider).priceHistory(id);
+  var observed = const <PricePoint>[];
+  try {
+    observed = await ref
+        .watch(priceObservationRepositoryProvider)
+        .observationsFor(id);
+  } catch (_) {}
+  return [...catalog, ...observed]
+    ..sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
+});
 final _alternativesProvider = FutureProvider.family<List<Product>, String>(
   (ref, id) => ref.watch(productRepositoryProvider).alternatives(id),
 );
@@ -52,7 +72,11 @@ class ProductDetailScreen extends ConsumerWidget {
               _Header(product: product),
               const SectionHeader(title: 'Prices near you'),
               _PricesSection(product: product),
-              const SectionHeader(title: 'Price history'),
+              SectionHeader(
+                title: 'Price history',
+                actionLabel: 'Report a price',
+                onAction: () => _reportPrice(context, ref, product),
+              ),
               _PriceHistorySection(productId: productId),
               if (product.nutrition != null &&
                   product.nutrition!.isNotEmpty) ...[
@@ -66,6 +90,97 @@ class ProductDetailScreen extends ConsumerWidget {
         },
       ),
     );
+  }
+
+  /// Community price submission: the shopper is standing in front of the
+  /// shelf and knows the real price better than any feed. Their report
+  /// lands in their own history immediately; on connected builds it also
+  /// queues for review into the shared catalog.
+  Future<void> _reportPrice(
+    BuildContext context,
+    WidgetRef ref,
+    Product product,
+  ) async {
+    final observations = ref.read(priceObservationRepositoryProvider);
+    final stores = ref.read(nearbyStoresProvider).value ?? const <Store>[];
+    final priceCtrl = TextEditingController();
+    String? storeId;
+
+    final submitted = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Report a price for ${product.name}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: priceCtrl,
+              autofocus: true,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Price you saw',
+                prefixText: r'$ ',
+              ),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String?>(
+              initialValue: storeId,
+              decoration: const InputDecoration(labelText: 'Store'),
+              items: [
+                const DropdownMenuItem(child: Text('Not sure')),
+                for (final s in stores)
+                  DropdownMenuItem(value: s.id, child: Text(s.name)),
+              ],
+              onChanged: (v) => storeId = v,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Submit'),
+          ),
+        ],
+      ),
+    );
+
+    final price = double.tryParse(priceCtrl.text.trim().replaceAll(',', '.'));
+    priceCtrl.dispose();
+    if (submitted != true) return;
+    if (price == null || price <= 0 || price >= 10000) {
+      if (context.mounted) {
+        context.showSnack('Enter a price like 3.49', error: true);
+      }
+      return;
+    }
+    try {
+      await observations.record(
+        PriceObservation(
+          id: const Uuid().v4(),
+          productId: product.id,
+          storeId: storeId,
+          price: price,
+          source: 'community',
+          observedAt: DateTime.now(),
+        ),
+      );
+      Telemetry.logEvent('price_reported', {'has_store': storeId != null});
+      ref.invalidate(_priceHistoryProvider(product.id));
+      if (context.mounted) {
+        context.showSnack('Thanks — added to your price history');
+      }
+    } catch (e) {
+      Telemetry.recordError(e, StackTrace.current);
+      if (context.mounted) {
+        context.showSnack('Could not save the price — try again', error: true);
+      }
+    }
   }
 }
 
@@ -305,6 +420,22 @@ class _PriceHistorySection extends ConsumerWidget {
                   _Stat(label: 'Highest', value: highest),
                 ],
               ),
+              // Provenance: tell the user when their own real data is in
+              // the chart — it is the difference between a demo and a
+              // product that learns from their shopping.
+              if (sorted.any(
+                (p) => p.source == 'receipt' || p.source == 'community',
+              ))
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    'Includes ${sorted.where((p) => p.source == 'receipt' || p.source == 'community').length} '
+                    'prices from your receipts and reports.',
+                    style: context.text.bodySmall?.copyWith(
+                      color: context.colors.onSurfaceVariant,
+                    ),
+                  ),
+                ),
             ],
           ),
         );

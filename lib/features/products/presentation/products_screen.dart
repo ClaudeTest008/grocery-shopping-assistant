@@ -5,9 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/observability/telemetry.dart';
 import '../../../shared/extensions/context_extensions.dart';
 import '../../../shared/widgets/async_value_widget.dart';
 import '../../../shared/widgets/empty_state.dart';
+import '../data/open_food_facts_client.dart';
 import '../data/product_repositories.dart';
 import '../domain/product.dart';
 
@@ -71,9 +73,28 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
     if (!mounted) return;
     if (product != null) {
       await context.push('/products/${product.id}');
-    } else {
-      context.showSnack('Product not found', error: true);
+      return;
     }
+    // Not in the price catalog — identify it via Open Food Facts so the
+    // scan still answers "what is this?" instead of dead-ending.
+    final external = await ref
+        .read(openFoodFactsClientProvider)
+        .byBarcode(barcode);
+    Telemetry.logEvent('barcode_external_lookup', {'found': external != null});
+    if (!mounted) return;
+    if (external == null) {
+      context.showSnack('Barcode not in the catalog — try searching by name');
+      return;
+    }
+    final query = external.name;
+    context.showSnack(
+      '${external.label} — identified via Open Food Facts, '
+      'not in the price catalog yet',
+    );
+    // Prefill the search with the identified name: the closest catalog
+    // matches are usually the same product from local chains.
+    _searchController.text = query;
+    _onSearchChanged(query);
   }
 
   @override

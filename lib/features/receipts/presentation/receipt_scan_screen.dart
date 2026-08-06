@@ -7,12 +7,16 @@ import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/ai/ai_services.dart';
+import '../../../core/observability/telemetry.dart';
 import '../../../core/platform/platform_support.dart';
 import '../../../shared/extensions/context_extensions.dart';
 import '../../authentication/data/auth_repositories.dart';
+import '../../products/data/price_observation_repository.dart';
+import '../../products/data/product_repositories.dart';
 import '../data/receipt_repositories.dart';
 import '../domain/receipt.dart';
 import '../domain/receipt_parser.dart';
+import '../domain/receipt_price_recorder.dart';
 
 enum _Stage { pickOptions, processing, confirm }
 
@@ -151,10 +155,29 @@ class _ReceiptScanScreenState extends ConsumerState<ReceiptScanScreen> {
 
   Future<void> _save() async {
     setState(() => _saving = true);
+    final receipt = _buildReceipt();
+    // Read before awaits: this screen pops right after saving.
+    final products = ref.read(productRepositoryProvider);
+    final observations = ref.read(priceObservationRepositoryProvider);
     try {
-      await ref.read(receiptRepositoryProvider).add(_buildReceipt());
+      await ref.read(receiptRepositoryProvider).add(receipt);
+      // Live data: matched lines become real price-history points.
+      final recorded = await ReceiptPriceRecorder.record(
+        receipt,
+        products: products,
+        observations: observations,
+      );
+      Telemetry.logEvent('receipt_prices_recorded', {
+        'items': receipt.items.length,
+        'recorded': recorded,
+      });
       if (mounted) {
-        context.showSnack('Receipt saved');
+        context.showSnack(
+          recorded > 0
+              ? 'Receipt saved — $recorded price'
+                    '${recorded == 1 ? '' : 's'} added to your history'
+              : 'Receipt saved',
+        );
         Navigator.of(context).pop();
       }
     } catch (_) {

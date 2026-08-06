@@ -5,11 +5,13 @@ import 'package:speech_to_text/speech_to_text.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/ai/ai_services.dart';
+import '../../../core/observability/telemetry.dart';
 import '../../../core/platform/platform_support.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/extensions/context_extensions.dart';
 import '../../../shared/widgets/async_value_widget.dart';
 import '../../../shared/widgets/empty_state.dart';
+import '../../products/data/open_food_facts_client.dart';
 import '../../products/data/product_repositories.dart';
 import '../data/shopping_list_repositories.dart';
 import '../domain/shopping_list.dart';
@@ -73,7 +75,37 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
         .read(productRepositoryProvider)
         .byBarcode(barcode);
     if (product == null) {
-      if (mounted) context.showSnack('No product found for that barcode');
+      // Not in the catalog: identify via Open Food Facts and add as a
+      // plain item — the scan already happened, don't waste it.
+      final external = await ref
+          .read(openFoodFactsClientProvider)
+          .byBarcode(barcode);
+      Telemetry.logEvent('barcode_external_lookup', {
+        'found': external != null,
+      });
+      if (!mounted) return;
+      if (external == null) {
+        context.showSnack(
+          'Barcode not in the catalog — type the item name instead',
+        );
+        return;
+      }
+      await ref
+          .read(shoppingListRepositoryProvider)
+          .addItem(
+            widget.listId,
+            ShoppingItem(
+              id: _uuid.v4(),
+              listId: widget.listId,
+              name: external.label,
+            ),
+          );
+      _refresh();
+      if (mounted) {
+        context.showSnack(
+          'Added ${external.label} — identified via Open Food Facts',
+        );
+      }
       return;
     }
     await ref

@@ -43,6 +43,12 @@ abstract class PricePoint with _$PricePoint {
     required DateTime recordedAt,
     required double price,
     String? storeId,
+
+    /// Provenance: 'catalog' (price feed / seed), 'receipt' (a receipt
+    /// the user scanned), 'community' (a price the user reported).
+    /// Null on rows written before provenance existed — treated as
+    /// catalog data.
+    String? source,
   }) = _PricePoint;
 
   factory PricePoint.fromJson(Map<String, dynamic> json) =>

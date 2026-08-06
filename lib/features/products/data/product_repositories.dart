@@ -170,8 +170,11 @@ class SupabaseProductRepository implements ProductRepository {
 
   @override
   Future<List<String>> categories() async {
-    final rows = await _client.from('products').select('category');
-    return rows.map((r) => r['category'] as String).toSet().toList()..sort();
+    // Server-side distinct: selecting every row dedupes fine at demo
+    // scale but silently truncates at PostgREST's max_rows once a real
+    // catalog exceeds it.
+    final rows = await _client.rpc<List<dynamic>>('product_categories');
+    return rows.cast<String>();
   }
 }
 

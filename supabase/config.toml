@@ -54,5 +54,11 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.price-alerts]
-# Invoked by scheduler with service key, not end users.
+# Invoked by the scheduler; authenticated by the x-cron-secret header
+# (CRON_SECRET secret), enforced fail-closed in the function body.
+verify_jwt = false
+
+[functions.stripe-webhook]
+# Called by Stripe; authenticated by the webhook signature
+# (STRIPE_WEBHOOK_SECRET), enforced in the function body.
 verify_jwt = false
