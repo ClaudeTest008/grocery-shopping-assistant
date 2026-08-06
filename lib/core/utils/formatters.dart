@@ -1,11 +1,15 @@
 import 'package:intl/intl.dart';
 
 abstract final class Formatters {
-  static String currency(num amount, {String code = 'USD'}) =>
-      NumberFormat.simpleCurrency(name: code).format(amount);
+  /// Set once at boot (and on country switch) from the selected
+  /// country — every unlabeled amount in the app renders in it.
+  static String defaultCurrency = 'USD';
 
-  /// `$2.49 / lb`, `$0.12 / oz`
-  static String unitPrice(num amount, String unit, {String code = 'USD'}) =>
+  static String currency(num amount, {String? code}) =>
+      NumberFormat.simpleCurrency(name: code ?? defaultCurrency).format(amount);
+
+  /// `€2.49 / kg`, `$0.12 / oz`
+  static String unitPrice(num amount, String unit, {String? code}) =>
       '${currency(amount, code: code)} / $unit';
 
   static String date(DateTime d) => DateFormat.yMMMd().format(d);

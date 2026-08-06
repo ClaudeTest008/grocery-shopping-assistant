@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/ai/ai_services.dart';
+import '../../../core/demo/demo_seed.dart';
 import '../../../core/observability/telemetry.dart';
 import '../../../core/platform/platform_support.dart';
 import '../../../shared/extensions/context_extensions.dart';
@@ -101,10 +102,9 @@ class _ReceiptScanScreenState extends ConsumerState<ReceiptScanScreen> {
         await recognizer.close();
       }
       final user = ref.read(currentUserProvider);
-      final receipt = const ReceiptParser().parse(
-        text,
-        userId: user?.id ?? 'demo-user',
-      );
+      final receipt = ReceiptParser(
+        dmyDates: DemoSeed.country.dmyDates,
+      ).parse(text, userId: user?.id ?? 'demo-user');
       _loadReceipt(receipt);
       if (mounted) setState(() => _stage = _Stage.confirm);
     } catch (_) {

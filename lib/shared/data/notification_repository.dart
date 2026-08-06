@@ -51,14 +51,14 @@ class DemoNotificationRepository implements NotificationRepository {
       n(
         NotificationType.priceDrop,
         'Price drop: Chicken Breast',
-        'Now \$2.57/lb at Kroger — 22% below its 90-day average.',
+        '22% below its 90-day average at a store near you.',
         '/products/chicken',
         2,
       ),
       n(
         NotificationType.couponExpiring,
         'Coupon expires tomorrow',
-        '50c off Peanut Butter at Walmart is about to expire.',
+        'A clipped coupon is about to expire.',
         '/coupons',
         6,
       ),

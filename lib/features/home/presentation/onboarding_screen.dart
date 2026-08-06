@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/demo/demo_seed.dart';
 import '../../../core/observability/telemetry.dart';
 import '../../../core/platform/platform_support.dart';
 import '../../../core/storage/local_store.dart';
 import '../../../shared/extensions/context_extensions.dart';
+import '../../../shared/widgets/country_picker.dart';
 
 const _seenOnboardingKey = 'seen_onboarding';
 
@@ -78,15 +80,30 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            Align(
-              alignment: Alignment.topRight,
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: TextButton(
-                  onPressed: _finish,
-                  child: const Text('Skip'),
+            Row(
+              children: [
+                // Country first: everything the walkthrough promises
+                // (stores, prices, names) depends on it.
+                Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: TextButton.icon(
+                    onPressed: () => showCountryPicker(context),
+                    icon: Text(
+                      DemoSeed.country.flag,
+                      style: const TextStyle(fontSize: 18),
+                    ),
+                    label: Text(DemoSeed.country.name),
+                  ),
                 ),
-              ),
+                const Spacer(),
+                Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: TextButton(
+                    onPressed: _finish,
+                    child: const Text('Skip'),
+                  ),
+                ),
+              ],
             ),
             Expanded(
               child: PageView.builder(

@@ -11,6 +11,12 @@ _Product _$ProductFromJson(Map<String, dynamic> json) => _Product(
   name: json['name'] as String,
   brand: json['brand'] as String?,
   barcode: json['barcode'] as String?,
+  barcodes: (json['barcodes'] as List<dynamic>?)
+      ?.map((e) => e as String)
+      .toList(),
+  countries: (json['countries'] as List<dynamic>?)
+      ?.map((e) => e as String)
+      .toList(),
   category: json['category'] as String,
   unit: json['unit'] as String? ?? 'ea',
   unitSize: (json['unit_size'] as num?)?.toDouble() ?? 1.0,
@@ -26,6 +32,8 @@ Map<String, dynamic> _$ProductToJson(_Product instance) => <String, dynamic>{
   'name': instance.name,
   'brand': instance.brand,
   'barcode': instance.barcode,
+  'barcodes': instance.barcodes,
+  'countries': instance.countries,
   'category': instance.category,
   'unit': instance.unit,
   'unit_size': instance.unitSize,

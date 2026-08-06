@@ -28,12 +28,12 @@ class DemoReceiptRepository implements ReceiptRepository {
     const uuid = Uuid();
     final now = DateTime.now();
     final out = <Receipt>[];
-    const storeRotation = ['aldi-1', 'heb-1', 'walmart-1', 'kroger-1'];
-    const storeNames = ['Aldi', 'H-E-B', 'Walmart', 'Kroger'];
+    // Rotate through the selected country's own stores.
+    final rotation = DemoSeed.stores.take(4).toList();
     const categories = ['produce', 'dairy', 'meat', 'pantry', 'frozen'];
     for (var week = 12; week >= 1; week--) {
       final receiptId = uuid.v4();
-      final storeIdx = week % storeRotation.length;
+      final storeIdx = week % rotation.length;
       // Deterministic weekly variation: $45-$75.
       final total = 45 + (week * 7919) % 31.0;
       final itemCount = 4;
@@ -51,8 +51,8 @@ class DemoReceiptRepository implements ReceiptRepository {
         Receipt(
           id: receiptId,
           userId: DemoSeed.demoUserId,
-          storeId: storeRotation[storeIdx],
-          storeName: storeNames[storeIdx],
+          storeId: rotation[storeIdx].id,
+          storeName: rotation[storeIdx].name,
           total: double.parse(total.toStringAsFixed(2)),
           purchasedAt: now.subtract(Duration(days: week * 7)),
           items: items,

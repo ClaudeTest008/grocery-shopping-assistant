@@ -11,11 +11,18 @@ abstract class Store with _$Store {
     required String id,
     required String name,
 
-    /// Chain identifier: aldi, walmart, kroger...
+    /// Chain identifier: mercadona, lidl, kroger... — meaningful only
+    /// within a country (Carrefour ES and Carrefour FR are separate
+    /// datasets that happen to share an id).
     required String chain,
     required String address,
     required double lat,
     required double lng,
+
+    /// ISO 3166-1 alpha-2; null on rows created before countries existed
+    /// (treated as the legacy US dataset).
+    String? country,
+    String? city,
     String? logoUrl,
     String? phone,
 

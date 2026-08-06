@@ -8,11 +8,13 @@ import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/demo/demo_seed.dart';
 import '../../../core/observability/telemetry.dart';
 import '../../../core/services/location_service.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/extensions/context_extensions.dart';
 import '../../../shared/widgets/async_value_widget.dart';
+import '../../../shared/widgets/country_picker.dart';
 import '../../offers/data/offer_repositories.dart';
 import '../../offers/domain/offer.dart';
 import '../../profile/data/preferences_repository.dart';
@@ -20,7 +22,11 @@ import '../../stores/data/store_repositories.dart';
 import '../../stores/domain/store.dart';
 import 'map_providers.dart';
 
-const _austin = LatLng(30.2672, -97.7431);
+/// No hardcoded map bounds anywhere: the fallback centre is the
+/// selected country's demo city, and the camera fits whatever stores
+/// actually load.
+LatLng get _fallbackCenter =>
+    LatLng(DemoSeed.country.lat, DemoSeed.country.lng);
 
 /// Key-free interactive map (OpenStreetMap / CARTO tiles via
 /// flutter_map): animated camera, chain-colored markers with clustering,
@@ -124,7 +130,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
     final storesAsync = ref.watch(nearbyStoresProvider);
     final home =
         ref.watch(currentLocationProvider).value ??
-        const GeoPoint(30.2672, -97.7431);
+        GeoPoint(DemoSeed.country.lat, DemoSeed.country.lng);
     final favorites = ref.watch(preferencesProvider).favoriteStoreIds;
     final trip = ref.watch(tripOverlayProvider);
     final isDark = context.theme.brightness == Brightness.dark;
@@ -161,7 +167,9 @@ class _MapScreenState extends ConsumerState<MapScreen>
               FlutterMap(
                 mapController: _mapController,
                 options: MapOptions(
-                  initialCenter: allStores.isEmpty ? _austin : homePoint,
+                  initialCenter: allStores.isEmpty
+                      ? _fallbackCenter
+                      : homePoint,
                   initialZoom: 12,
                   maxZoom: 19,
                   onMapReady: () {
@@ -824,6 +832,16 @@ class _FloatingControls extends StatelessWidget {
               tooltip: 'Show all stores',
               onPressed: onFitAll,
               child: const Icon(Icons.fit_screen_rounded),
+            ),
+            const SizedBox(height: 8),
+            FloatingActionButton.small(
+              heroTag: 'map-country',
+              tooltip: 'Change country',
+              onPressed: () => showCountryPicker(context),
+              child: Text(
+                DemoSeed.country.flag,
+                style: const TextStyle(fontSize: 20),
+              ),
             ),
           ],
         ),

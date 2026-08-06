@@ -47,10 +47,13 @@ class SupabaseStoreRepository implements StoreRepository {
   Future<List<Store>> nearby(GeoPoint location, {double radiusKm = 25}) async {
     try {
       // Bounding-box prefilter in SQL, precise sort client-side.
+      // Country narrows the query so countries load independently —
+      // a Lisbon user never downloads the Berlin dataset.
       final latDelta = radiusKm / 111.0;
       final rows = await _client
           .from('stores')
           .select()
+          .eq('country', DemoSeed.country.code)
           .gte('lat', location.lat - latDelta)
           .lte('lat', location.lat + latDelta);
       await _store.putJsonList(_cacheKey, rows);

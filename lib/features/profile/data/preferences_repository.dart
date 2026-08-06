@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/app_config.dart';
+import '../../../core/demo/demo_seed.dart';
 import '../../../core/storage/local_store.dart';
 import '../domain/user_preferences.dart';
 
@@ -16,16 +17,23 @@ class PreferencesRepository {
 
   static const _key = 'user_preferences';
 
+  /// Fresh installs (and post-wipe country switches) start with the
+  /// selected country's conventions instead of US ones.
+  UserPreferences _countryDefaults() => UserPreferences(
+    currency: DemoSeed.country.currency,
+    units: DemoSeed.country.units,
+  );
+
   UserPreferences load() {
     // Deep-normalized: `dietaryRestrictions` / `favoriteStoreIds` come
     // back from Hive as List<dynamic> inside a Map<dynamic, dynamic>.
     final json = _store.getJsonMap(_store.prefs, _key);
-    if (json == null) return const UserPreferences();
+    if (json == null) return _countryDefaults();
     try {
       return UserPreferences.fromJson(json);
     } catch (_) {
       // Never let a malformed or older-schema blob brick startup.
-      return const UserPreferences();
+      return _countryDefaults();
     }
   }
 

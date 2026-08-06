@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/ai/ai_services.dart';
+import '../../../core/demo/demo_seed.dart';
 import '../../../core/observability/telemetry.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/extensions/context_extensions.dart';
@@ -181,7 +182,11 @@ class _OptionCard extends ConsumerWidget {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 3),
                     child: Text(
-                      'all-in total',
+                      // Honest totals must say what the total includes;
+                      // that answer differs by country (data, not code).
+                      DemoSeed.country.pricesIncludeVat
+                          ? 'all-in total · VAT incl.'
+                          : 'all-in total · before tax',
                       style: context.text.bodySmall?.copyWith(
                         color: colors.onSurfaceVariant,
                       ),

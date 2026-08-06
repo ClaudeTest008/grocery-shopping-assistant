@@ -3,6 +3,25 @@
 All notable changes, newest first. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com).
 
+## Unreleased — globalization
+
+- **Nine countries, one codebase**: Spain, Portugal, France, Germany,
+  Italy, Netherlands, Belgium, Ireland — and the US as just one more
+  entry. Country is data (`CountryConfig`): chains, demo city,
+  currency, VAT, units, date order, price level.
+- Choose your country at onboarding, in Settings, or on the map;
+  automatic detection from the device locale on first launch.
+- Per-country demo datasets: real chain names (Mercadona, Continente,
+  E.Leclerc, Edeka, Esselunga, Albert Heijn, Colruyt, Tesco…), euro
+  prices with honest VAT labeling, product names in the local
+  language, metric units.
+- Receipts parse European formats: €/£, DD/MM dates, IVA/MwSt/BTW/TVA
+  keywords, all supported chains recognized.
+- Map works anywhere: no hardcoded bounds, fallback centre follows
+  your country, countries load independently.
+- Adding a country requires configuration + translations only — the
+  registry tests prove every entry generates a full working dataset.
+
 ## 1.0.0-rc.2 — 2026-08-06 (beta validation)
 
 ### Real data

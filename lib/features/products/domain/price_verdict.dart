@@ -1,3 +1,4 @@
+import '../../../core/utils/formatters.dart';
 import 'price.dart';
 
 /// Where a price sits against its own recent history.
@@ -69,7 +70,9 @@ class PriceVerdict {
           'low as ${_money(lowest)}, so it may be worth waiting.',
   };
 
-  static String _money(double v) => '\$${v.toStringAsFixed(2)}';
+  // Renders in the selected country's currency — a verdict about a
+  // Madrid price must not talk in dollars.
+  static String _money(double v) => Formatters.currency(v);
 }
 
 extension PriceHistoryStats on List<PricePoint> {

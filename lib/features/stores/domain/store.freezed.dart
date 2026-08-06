@@ -15,8 +15,12 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Store {
 
- String get id; String get name;/// Chain identifier: aldi, walmart, kroger...
- String get chain; String get address; double get lat; double get lng; String? get logoUrl; String? get phone;/// Weekday (1=Mon..7=Sun, as strings) -> "08:00-21:00" or "closed".
+ String get id; String get name;/// Chain identifier: mercadona, lidl, kroger... — meaningful only
+/// within a country (Carrefour ES and Carrefour FR are separate
+/// datasets that happen to share an id).
+ String get chain; String get address; double get lat; double get lng;/// ISO 3166-1 alpha-2; null on rows created before countries existed
+/// (treated as the legacy US dataset).
+ String? get country; String? get city; String? get logoUrl; String? get phone;/// Weekday (1=Mon..7=Sun, as strings) -> "08:00-21:00" or "closed".
  Map<String, String>? get openingHours;/// Filled in client-side from user location; not persisted.
  double? get distanceKm;
 /// Create a copy of Store
@@ -31,16 +35,16 @@ $StoreCopyWith<Store> get copyWith => _$StoreCopyWithImpl<Store>(this as Store, 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Store&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.chain, chain) || other.chain == chain)&&(identical(other.address, address) || other.address == address)&&(identical(other.lat, lat) || other.lat == lat)&&(identical(other.lng, lng) || other.lng == lng)&&(identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl)&&(identical(other.phone, phone) || other.phone == phone)&&const DeepCollectionEquality().equals(other.openingHours, openingHours)&&(identical(other.distanceKm, distanceKm) || other.distanceKm == distanceKm));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Store&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.chain, chain) || other.chain == chain)&&(identical(other.address, address) || other.address == address)&&(identical(other.lat, lat) || other.lat == lat)&&(identical(other.lng, lng) || other.lng == lng)&&(identical(other.country, country) || other.country == country)&&(identical(other.city, city) || other.city == city)&&(identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl)&&(identical(other.phone, phone) || other.phone == phone)&&const DeepCollectionEquality().equals(other.openingHours, openingHours)&&(identical(other.distanceKm, distanceKm) || other.distanceKm == distanceKm));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,chain,address,lat,lng,logoUrl,phone,const DeepCollectionEquality().hash(openingHours),distanceKm);
+int get hashCode => Object.hash(runtimeType,id,name,chain,address,lat,lng,country,city,logoUrl,phone,const DeepCollectionEquality().hash(openingHours),distanceKm);
 
 @override
 String toString() {
-  return 'Store(id: $id, name: $name, chain: $chain, address: $address, lat: $lat, lng: $lng, logoUrl: $logoUrl, phone: $phone, openingHours: $openingHours, distanceKm: $distanceKm)';
+  return 'Store(id: $id, name: $name, chain: $chain, address: $address, lat: $lat, lng: $lng, country: $country, city: $city, logoUrl: $logoUrl, phone: $phone, openingHours: $openingHours, distanceKm: $distanceKm)';
 }
 
 
@@ -51,7 +55,7 @@ abstract mixin class $StoreCopyWith<$Res>  {
   factory $StoreCopyWith(Store value, $Res Function(Store) _then) = _$StoreCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, String chain, String address, double lat, double lng, String? logoUrl, String? phone, Map<String, String>? openingHours, double? distanceKm
+ String id, String name, String chain, String address, double lat, double lng, String? country, String? city, String? logoUrl, String? phone, Map<String, String>? openingHours, double? distanceKm
 });
 
 
@@ -68,7 +72,7 @@ class _$StoreCopyWithImpl<$Res>
 
 /// Create a copy of Store
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? chain = null,Object? address = null,Object? lat = null,Object? lng = null,Object? logoUrl = freezed,Object? phone = freezed,Object? openingHours = freezed,Object? distanceKm = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? chain = null,Object? address = null,Object? lat = null,Object? lng = null,Object? country = freezed,Object? city = freezed,Object? logoUrl = freezed,Object? phone = freezed,Object? openingHours = freezed,Object? distanceKm = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -76,7 +80,9 @@ as String,chain: null == chain ? _self.chain : chain // ignore: cast_nullable_to
 as String,address: null == address ? _self.address : address // ignore: cast_nullable_to_non_nullable
 as String,lat: null == lat ? _self.lat : lat // ignore: cast_nullable_to_non_nullable
 as double,lng: null == lng ? _self.lng : lng // ignore: cast_nullable_to_non_nullable
-as double,logoUrl: freezed == logoUrl ? _self.logoUrl : logoUrl // ignore: cast_nullable_to_non_nullable
+as double,country: freezed == country ? _self.country : country // ignore: cast_nullable_to_non_nullable
+as String?,city: freezed == city ? _self.city : city // ignore: cast_nullable_to_non_nullable
+as String?,logoUrl: freezed == logoUrl ? _self.logoUrl : logoUrl // ignore: cast_nullable_to_non_nullable
 as String?,phone: freezed == phone ? _self.phone : phone // ignore: cast_nullable_to_non_nullable
 as String?,openingHours: freezed == openingHours ? _self.openingHours : openingHours // ignore: cast_nullable_to_non_nullable
 as Map<String, String>?,distanceKm: freezed == distanceKm ? _self.distanceKm : distanceKm // ignore: cast_nullable_to_non_nullable
@@ -165,10 +171,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String chain,  String address,  double lat,  double lng,  String? logoUrl,  String? phone,  Map<String, String>? openingHours,  double? distanceKm)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String chain,  String address,  double lat,  double lng,  String? country,  String? city,  String? logoUrl,  String? phone,  Map<String, String>? openingHours,  double? distanceKm)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Store() when $default != null:
-return $default(_that.id,_that.name,_that.chain,_that.address,_that.lat,_that.lng,_that.logoUrl,_that.phone,_that.openingHours,_that.distanceKm);case _:
+return $default(_that.id,_that.name,_that.chain,_that.address,_that.lat,_that.lng,_that.country,_that.city,_that.logoUrl,_that.phone,_that.openingHours,_that.distanceKm);case _:
   return orElse();
 
 }
@@ -186,10 +192,10 @@ return $default(_that.id,_that.name,_that.chain,_that.address,_that.lat,_that.ln
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String chain,  String address,  double lat,  double lng,  String? logoUrl,  String? phone,  Map<String, String>? openingHours,  double? distanceKm)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String chain,  String address,  double lat,  double lng,  String? country,  String? city,  String? logoUrl,  String? phone,  Map<String, String>? openingHours,  double? distanceKm)  $default,) {final _that = this;
 switch (_that) {
 case _Store():
-return $default(_that.id,_that.name,_that.chain,_that.address,_that.lat,_that.lng,_that.logoUrl,_that.phone,_that.openingHours,_that.distanceKm);case _:
+return $default(_that.id,_that.name,_that.chain,_that.address,_that.lat,_that.lng,_that.country,_that.city,_that.logoUrl,_that.phone,_that.openingHours,_that.distanceKm);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -206,10 +212,10 @@ return $default(_that.id,_that.name,_that.chain,_that.address,_that.lat,_that.ln
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String chain,  String address,  double lat,  double lng,  String? logoUrl,  String? phone,  Map<String, String>? openingHours,  double? distanceKm)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String chain,  String address,  double lat,  double lng,  String? country,  String? city,  String? logoUrl,  String? phone,  Map<String, String>? openingHours,  double? distanceKm)?  $default,) {final _that = this;
 switch (_that) {
 case _Store() when $default != null:
-return $default(_that.id,_that.name,_that.chain,_that.address,_that.lat,_that.lng,_that.logoUrl,_that.phone,_that.openingHours,_that.distanceKm);case _:
+return $default(_that.id,_that.name,_that.chain,_that.address,_that.lat,_that.lng,_that.country,_that.city,_that.logoUrl,_that.phone,_that.openingHours,_that.distanceKm);case _:
   return null;
 
 }
@@ -221,16 +227,22 @@ return $default(_that.id,_that.name,_that.chain,_that.address,_that.lat,_that.ln
 @JsonSerializable()
 
 class _Store extends Store {
-  const _Store({required this.id, required this.name, required this.chain, required this.address, required this.lat, required this.lng, this.logoUrl, this.phone, final  Map<String, String>? openingHours, this.distanceKm}): _openingHours = openingHours,super._();
+  const _Store({required this.id, required this.name, required this.chain, required this.address, required this.lat, required this.lng, this.country, this.city, this.logoUrl, this.phone, final  Map<String, String>? openingHours, this.distanceKm}): _openingHours = openingHours,super._();
   factory _Store.fromJson(Map<String, dynamic> json) => _$StoreFromJson(json);
 
 @override final  String id;
 @override final  String name;
-/// Chain identifier: aldi, walmart, kroger...
+/// Chain identifier: mercadona, lidl, kroger... — meaningful only
+/// within a country (Carrefour ES and Carrefour FR are separate
+/// datasets that happen to share an id).
 @override final  String chain;
 @override final  String address;
 @override final  double lat;
 @override final  double lng;
+/// ISO 3166-1 alpha-2; null on rows created before countries existed
+/// (treated as the legacy US dataset).
+@override final  String? country;
+@override final  String? city;
 @override final  String? logoUrl;
 @override final  String? phone;
 /// Weekday (1=Mon..7=Sun, as strings) -> "08:00-21:00" or "closed".
@@ -260,16 +272,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Store&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.chain, chain) || other.chain == chain)&&(identical(other.address, address) || other.address == address)&&(identical(other.lat, lat) || other.lat == lat)&&(identical(other.lng, lng) || other.lng == lng)&&(identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl)&&(identical(other.phone, phone) || other.phone == phone)&&const DeepCollectionEquality().equals(other._openingHours, _openingHours)&&(identical(other.distanceKm, distanceKm) || other.distanceKm == distanceKm));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Store&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.chain, chain) || other.chain == chain)&&(identical(other.address, address) || other.address == address)&&(identical(other.lat, lat) || other.lat == lat)&&(identical(other.lng, lng) || other.lng == lng)&&(identical(other.country, country) || other.country == country)&&(identical(other.city, city) || other.city == city)&&(identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl)&&(identical(other.phone, phone) || other.phone == phone)&&const DeepCollectionEquality().equals(other._openingHours, _openingHours)&&(identical(other.distanceKm, distanceKm) || other.distanceKm == distanceKm));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,chain,address,lat,lng,logoUrl,phone,const DeepCollectionEquality().hash(_openingHours),distanceKm);
+int get hashCode => Object.hash(runtimeType,id,name,chain,address,lat,lng,country,city,logoUrl,phone,const DeepCollectionEquality().hash(_openingHours),distanceKm);
 
 @override
 String toString() {
-  return 'Store(id: $id, name: $name, chain: $chain, address: $address, lat: $lat, lng: $lng, logoUrl: $logoUrl, phone: $phone, openingHours: $openingHours, distanceKm: $distanceKm)';
+  return 'Store(id: $id, name: $name, chain: $chain, address: $address, lat: $lat, lng: $lng, country: $country, city: $city, logoUrl: $logoUrl, phone: $phone, openingHours: $openingHours, distanceKm: $distanceKm)';
 }
 
 
@@ -280,7 +292,7 @@ abstract mixin class _$StoreCopyWith<$Res> implements $StoreCopyWith<$Res> {
   factory _$StoreCopyWith(_Store value, $Res Function(_Store) _then) = __$StoreCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, String chain, String address, double lat, double lng, String? logoUrl, String? phone, Map<String, String>? openingHours, double? distanceKm
+ String id, String name, String chain, String address, double lat, double lng, String? country, String? city, String? logoUrl, String? phone, Map<String, String>? openingHours, double? distanceKm
 });
 
 
@@ -297,7 +309,7 @@ class __$StoreCopyWithImpl<$Res>
 
 /// Create a copy of Store
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? chain = null,Object? address = null,Object? lat = null,Object? lng = null,Object? logoUrl = freezed,Object? phone = freezed,Object? openingHours = freezed,Object? distanceKm = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? chain = null,Object? address = null,Object? lat = null,Object? lng = null,Object? country = freezed,Object? city = freezed,Object? logoUrl = freezed,Object? phone = freezed,Object? openingHours = freezed,Object? distanceKm = freezed,}) {
   return _then(_Store(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -305,7 +317,9 @@ as String,chain: null == chain ? _self.chain : chain // ignore: cast_nullable_to
 as String,address: null == address ? _self.address : address // ignore: cast_nullable_to_non_nullable
 as String,lat: null == lat ? _self.lat : lat // ignore: cast_nullable_to_non_nullable
 as double,lng: null == lng ? _self.lng : lng // ignore: cast_nullable_to_non_nullable
-as double,logoUrl: freezed == logoUrl ? _self.logoUrl : logoUrl // ignore: cast_nullable_to_non_nullable
+as double,country: freezed == country ? _self.country : country // ignore: cast_nullable_to_non_nullable
+as String?,city: freezed == city ? _self.city : city // ignore: cast_nullable_to_non_nullable
+as String?,logoUrl: freezed == logoUrl ? _self.logoUrl : logoUrl // ignore: cast_nullable_to_non_nullable
 as String?,phone: freezed == phone ? _self.phone : phone // ignore: cast_nullable_to_non_nullable
 as String?,openingHours: freezed == openingHours ? _self._openingHours : openingHours // ignore: cast_nullable_to_non_nullable
 as Map<String, String>?,distanceKm: freezed == distanceKm ? _self.distanceKm : distanceKm // ignore: cast_nullable_to_non_nullable

@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app_bootstrap.dart';
 import '../../../core/config/app_config.dart';
+import '../../../core/demo/demo_seed.dart';
 import '../../../core/storage/local_store.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/extensions/context_extensions.dart';
+import '../../../shared/widgets/country_picker.dart';
 import '../../../shared/widgets/section_header.dart';
 import '../../profile/data/preferences_repository.dart';
 import '../../profile/domain/user_preferences.dart';
@@ -110,6 +112,19 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           const SectionHeader(title: 'Localization'),
+          ListTile(
+            leading: Text(
+              DemoSeed.country.flag,
+              style: const TextStyle(fontSize: 22),
+            ),
+            title: const Text('Country'),
+            subtitle: Text(
+              '${DemoSeed.country.name} — stores and prices for '
+              '${DemoSeed.country.city}',
+            ),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: () => showCountryPicker(context),
+          ),
           ListTile(
             title: const Text('Currency'),
             trailing: DropdownButton<String>(

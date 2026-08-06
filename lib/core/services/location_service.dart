@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../config/app_config.dart';
+import '../demo/demo_seed.dart';
 import '../errors/failures.dart';
 import '../platform/platform_support.dart';
 
@@ -29,9 +30,10 @@ class GeoPoint {
   static double _rad(double deg) => deg * math.pi / 180;
 }
 
-/// Demo-mode home location (Austin, TX) so distance features work
-/// without a real GPS fix.
-const demoLocation = GeoPoint(30.2672, -97.7431);
+/// Demo-mode home location — the selected country's demo city centre,
+/// so distance features work without a real GPS fix anywhere.
+GeoPoint get demoLocation =>
+    GeoPoint(DemoSeed.country.lat, DemoSeed.country.lng);
 
 class LocationService {
   Future<GeoPoint> currentPosition() async {

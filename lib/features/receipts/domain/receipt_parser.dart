@@ -1,39 +1,46 @@
 import 'package:uuid/uuid.dart';
 
+import '../../../core/geo/countries.dart';
 import 'receipt.dart';
 
 /// Heuristic parser turning raw OCR text into a structured [Receipt].
-/// Pure Dart — unit-testable without ML Kit.
+/// Pure Dart — unit-testable without ML Kit. Chain recognition is
+/// generated from the country registry, so a Mercadona or Continente
+/// receipt is recognized the same way an H-E-B one is; currency symbols
+/// cover $/€/£; date order follows the country's convention.
 class ReceiptParser {
-  const ReceiptParser();
+  const ReceiptParser({this.dmyDates = false});
+
+  /// True in countries writing DD/MM/YYYY. Callers pass the selected
+  /// country's convention; the default preserves US behaviour for
+  /// existing tests.
+  final bool dmyDates;
 
   static const _uuid = Uuid();
 
   static final _priceLine = RegExp(
-    r'^(.{2,40}?)\s+\$?(\d{1,4}[.,]\d{2})\s*[A-Z]?$',
+    r'^(.{2,40}?)\s+[$€£]?(\d{1,4}[.,]\d{2})\s*[A-Z]?$',
   );
   static final _totalLine = RegExp(
-    r'(?:total|amount due|balance)\s*:?\s*\$?(\d{1,4}[.,]\d{2})',
+    r'(?:total|amount due|balance|totale|gesamt|totaal|importe)'
+    r'\s*:?\s*[$€£]?(\d{1,4}[.,]\d{2})',
     caseSensitive: false,
   );
   static final _subtotalWords = RegExp(
-    r'subtotal|sub-total|tax|change|cash|credit|debit|tend',
+    r'subtotal|sub-total|tax|change|cash|credit|debit|tend|'
+    r'iva|mwst|btw|tva|contante|zwischensumme',
     caseSensitive: false,
   );
-  static final _date = RegExp(r'(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})');
+  static final _date = RegExp(r'(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{2,4})');
 
-  static const _knownChains = {
-    'aldi': 'Aldi',
-    'walmart': 'Walmart',
+  /// Every chain in every supported country, plus legacy US spellings —
+  /// generated, not hand-maintained.
+  static final Map<String, String> _knownChains = {
+    for (final country in Countries.all)
+      for (final chain in country.chains) chain.name.toLowerCase(): chain.name,
     'wal-mart': 'Walmart',
-    'kroger': 'Kroger',
-    'target': 'Target',
-    'h-e-b': 'H-E-B',
     'heb': 'H-E-B',
     'trader joe': "Trader Joe's",
-    'costco': 'Costco',
-    'safeway': 'Safeway',
-    'publix': 'Publix',
   };
 
   Receipt parse(String ocrText, {required String userId}) {
@@ -102,14 +109,16 @@ class ReceiptParser {
 
   static double _num(String s) => double.parse(s.replaceAll(',', '.'));
 
-  static DateTime? _parseDate(RegExpMatch m) {
+  DateTime? _parseDate(RegExpMatch m) {
     final a = int.parse(m.group(1)!);
     final b = int.parse(m.group(2)!);
     var year = int.parse(m.group(3)!);
     if (year < 100) year += 2000;
-    // US receipts: MM/DD/YYYY.
-    final month = a <= 12 ? a : b;
-    final day = a <= 12 ? b : a;
+    // Country convention first (DD/MM vs MM/DD); when the preferred
+    // reading is impossible (month 25), the other order disambiguates.
+    var day = dmyDates ? a : b;
+    var month = dmyDates ? b : a;
+    if (month > 12 && day <= 12) (day, month) = (month, day);
     if (month > 12 || day > 31) return null;
     final parsed = DateTime(year, month, day);
     return parsed.isAfter(DateTime.now()) ? null : parsed;

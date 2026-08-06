@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'app_bootstrap.dart';
 import 'core/config/app_config.dart';
+import 'core/geo/selected_country.dart';
 import 'core/observability/telemetry.dart';
 import 'core/platform/platform_support.dart';
 import 'core/services/notification_service.dart';
@@ -21,6 +22,9 @@ Future<void> main() async {
   Telemetry.installErrorHandlers();
 
   await LocalStore.init();
+  // Country before anything reads seed data or formats a price:
+  // explicit choice → device locale → fallback.
+  await SelectedCountry.apply(SelectedCountry.resolveInitial(), persist: false);
   await SupabaseService.init();
   // Push + payments degrade gracefully when unconfigured.
   await NotificationService.init();
