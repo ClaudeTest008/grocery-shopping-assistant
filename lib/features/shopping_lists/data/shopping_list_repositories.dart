@@ -131,7 +131,8 @@ class DemoShoppingListRepository implements ShoppingListRepository {
   }
 
   @override
-  Future<void> updateItem(ShoppingItem item) async {
+  Future<void> updateItem(ShoppingItem item, {bool fieldsEdit = false}) async {
+    // Local writes can't go stale, so fieldsEdit changes nothing here.
     final list = await byId(item.listId);
     if (list == null) return;
     await _lists.upsert(
@@ -158,6 +159,10 @@ class SupabaseShoppingListRepository implements ShoppingListRepository {
 
   /// Marks a queued "item checked/unchecked" write.
   static const kindCheckOff = 'check_off';
+
+  /// Marks a queued name/quantity/unit/notes edit; replay writes those
+  /// columns and never `checked` (the mirror of [kindCheckOff]).
+  static const kindItemEdit = 'item_edit';
 
   final SupabaseClient _client;
   final PendingOps? _pending;
@@ -255,12 +260,18 @@ class SupabaseShoppingListRepository implements ShoppingListRepository {
   /// change is queued instead of thrown away — the UI has already moved
   /// on, so a silent failure here means the list is quietly wrong.
   @override
-  Future<void> updateItem(ShoppingItem item) async {
+  Future<void> updateItem(ShoppingItem item, {bool fieldsEdit = false}) async {
     try {
       await _writeItem(item);
     } on Object catch (error) {
       if (!_looksOffline(error)) rethrow;
-      await _pending?.enqueue(kindCheckOff, item.toJson());
+      // The kind decides which columns the replay writes — a queued
+      // checkbox toggle must not resurrect old field values, and a
+      // queued field edit must not be silently reduced to `checked`.
+      await _pending?.enqueue(
+        fieldsEdit ? kindItemEdit : kindCheckOff,
+        item.toJson(),
+      );
     }
   }
 
@@ -292,24 +303,31 @@ class SupabaseShoppingListRepository implements ShoppingListRepository {
     var dropped = 0;
     final completed =
         await _pending?.drain((op) async {
-          if (op.kind != kindCheckOff) {
+          if (op.kind != kindCheckOff && op.kind != kindItemEdit) {
             dropped++;
             return;
           }
           final String id;
-          final bool checked;
+          final Map<String, Object?> columns;
           try {
             id = op.payload['id'] as String;
-            checked = op.payload['checked'] as bool? ?? false;
+            // Replay writes ONLY the columns that op kind owns — the
+            // rest of the queued snapshot may be staler than edits the
+            // user made online after reconnecting.
+            columns = op.kind == kindCheckOff
+                ? {'checked': op.payload['checked'] as bool? ?? false}
+                : {
+                    'name': op.payload['name'] as String,
+                    'quantity': (op.payload['quantity'] as num?)?.toDouble(),
+                    'unit': op.payload['unit'] as String?,
+                    'notes': op.payload['notes'] as String?,
+                  };
           } catch (_) {
             dropped++;
             return; // unparseable: dropped by returning normally
           }
           try {
-            await _client
-                .from('shopping_items')
-                .update({'checked': checked})
-                .eq('id', id);
+            await _client.from('shopping_items').update(columns).eq('id', id);
           } on Object catch (error) {
             if (_looksOffline(error)) rethrow; // still offline: keep queued
             // Server actively rejected it (row deleted, permission):

@@ -441,6 +441,7 @@ class _OptionCard extends ConsumerWidget {
           name: matches.firstOrNull?.name ?? replacement,
           productId: matches.firstOrNull?.id,
         ),
+        fieldsEdit: true,
       );
       ref
         ..invalidate(shoppingListProvider(listId))

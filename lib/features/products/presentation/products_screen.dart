@@ -21,6 +21,10 @@ final _categoriesProvider = FutureProvider<List<String>>(
   (ref) => ref.watch(productRepositoryProvider).categories(),
 );
 
+// Last query the search event fired for: the provider also rebuilds on
+// category toggles and retries, which are not searches.
+String? _lastLoggedQuery;
+
 final _productResultsProvider = FutureProvider<List<Product>>((ref) async {
   final query = ref.watch(_searchQueryProvider);
   final category = ref.watch(_selectedCategoryProvider);
@@ -29,7 +33,8 @@ final _productResultsProvider = FutureProvider<List<Product>>((ref) async {
       .search(query: query, category: category);
   // Result count only — never the query text. Zero-result searches are
   // the catalog's missing-product signal.
-  if (query.length >= 3) {
+  if (query.length >= 3 && query != _lastLoggedQuery) {
+    _lastLoggedQuery = query;
     Telemetry.logEvent('product_search', {'results': results.length});
   }
   return results;

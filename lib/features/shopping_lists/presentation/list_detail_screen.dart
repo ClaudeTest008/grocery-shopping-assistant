@@ -52,21 +52,22 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
   Future<void> _addItem(String name) async {
     final trimmed = name.trim();
     if (trimmed.isEmpty) return;
+    // Read both repos before the awaits: the screen can unmount while
+    // the searches run, and a disposed ref throws.
+    final products = ref.read(productRepositoryProvider);
+    final listsRepo = ref.read(shoppingListRepositoryProvider);
     // Link to a catalog product when the name matches one.
-    final matches = await ref
-        .read(productRepositoryProvider)
-        .search(query: trimmed);
-    await ref
-        .read(shoppingListRepositoryProvider)
-        .addItem(
-          widget.listId,
-          ShoppingItem(
-            id: _uuid.v4(),
-            listId: widget.listId,
-            productId: matches.firstOrNull?.id,
-            name: matches.firstOrNull?.name ?? trimmed,
-          ),
-        );
+    final matches = await products.search(query: trimmed);
+    await listsRepo.addItem(
+      widget.listId,
+      ShoppingItem(
+        id: _uuid.v4(),
+        listId: widget.listId,
+        productId: matches.firstOrNull?.id,
+        name: matches.firstOrNull?.name ?? trimmed,
+      ),
+    );
+    if (!mounted) return;
     _input.clear();
     _refresh();
   }
@@ -74,15 +75,15 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
   Future<void> _addByBarcode() async {
     final barcode = await context.push<String>('/scan');
     if (barcode == null || !mounted) return;
-    final product = await ref
-        .read(productRepositoryProvider)
-        .byBarcode(barcode);
+    // Everything the awaits need, read while the ref is alive.
+    final products = ref.read(productRepositoryProvider);
+    final off = ref.read(openFoodFactsClientProvider);
+    final listsRepo = ref.read(shoppingListRepositoryProvider);
+    final product = await products.byBarcode(barcode);
     if (product == null) {
       // Not in the catalog: identify via Open Food Facts and add as a
       // plain item — the scan already happened, don't waste it.
-      final external = await ref
-          .read(openFoodFactsClientProvider)
-          .byBarcode(barcode);
+      final external = await off.byBarcode(barcode);
       Telemetry.logEvent('barcode_external_lookup', {
         'found': external != null,
       });
@@ -93,36 +94,31 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
         );
         return;
       }
-      await ref
-          .read(shoppingListRepositoryProvider)
-          .addItem(
-            widget.listId,
-            ShoppingItem(
-              id: _uuid.v4(),
-              listId: widget.listId,
-              name: external.label,
-            ),
-          );
+      await listsRepo.addItem(
+        widget.listId,
+        ShoppingItem(
+          id: _uuid.v4(),
+          listId: widget.listId,
+          name: external.label,
+        ),
+      );
+      if (!mounted) return;
       _refresh();
-      if (mounted) {
-        context.showSnack(
-          'Added ${external.label} — identified via Open Food Facts',
-        );
-      }
+      context.showSnack(
+        'Added ${external.label} — identified via Open Food Facts',
+      );
       return;
     }
-    await ref
-        .read(shoppingListRepositoryProvider)
-        .addItem(
-          widget.listId,
-          ShoppingItem(
-            id: _uuid.v4(),
-            listId: widget.listId,
-            productId: product.id,
-            name: product.name,
-          ),
-        );
-    _refresh();
+    await listsRepo.addItem(
+      widget.listId,
+      ShoppingItem(
+        id: _uuid.v4(),
+        listId: widget.listId,
+        productId: product.id,
+        name: product.name,
+      ),
+    );
+    if (mounted) _refresh();
   }
 
   Future<void> _toggleVoice() async {
@@ -439,6 +435,11 @@ class _ItemTile extends ConsumerWidget {
   /// undo included.
   Future<void> _delete(BuildContext context, WidgetRef ref) async {
     final repo = ref.read(shoppingListRepositoryProvider);
+    // The snack outlives this screen (root ScaffoldMessenger, 6s):
+    // pop-then-Undo must not touch the disposed ref/State, so refresh
+    // through the app-level container instead of onChanged.
+    final container = ProviderScope.containerOf(context, listen: false);
+    final listId = item.listId;
     await repo.removeItem(item.listId, item.id);
     onChanged();
     Haptics.light();
@@ -446,8 +447,11 @@ class _ItemTile extends ConsumerWidget {
       context.showUndoSnack(
         'Removed ${item.name}',
         onUndo: () async {
-          await repo.addItem(item.listId, item);
-          onChanged();
+          await repo.addItem(listId, item);
+          container
+            ..invalidate(shoppingListProvider(listId))
+            ..invalidate(shoppingListsProvider)
+            ..invalidate(optimizationProvider(listId));
         },
       );
     }
@@ -575,6 +579,9 @@ class _EditItemSheetState extends ConsumerState<_EditItemSheet> {
               unit: unit.isEmpty ? 'ea' : unit,
               notes: notes.isEmpty ? null : notes,
             ),
+            // Offline, this queues as a field edit — replayed as
+            // fields, not silently reduced to a checkbox write.
+            fieldsEdit: true,
           );
       widget.onChanged();
       if (mounted) Navigator.of(context).pop();

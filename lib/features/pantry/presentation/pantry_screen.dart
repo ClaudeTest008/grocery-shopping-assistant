@@ -139,6 +139,14 @@ class _PantryList extends ConsumerWidget {
               onTap: () => PantryScreen._openSheet(context, existing: item),
               onDismissed: () async {
                 final repo = ref.read(pantryRepositoryProvider);
+                // Undo can fire after this screen is gone (6s snack on
+                // the root messenger) — the disposed ref would throw
+                // AFTER the restore write, leaving the UI stale. Same
+                // pattern as the edit sheet's delete.
+                final container = ProviderScope.containerOf(
+                  context,
+                  listen: false,
+                );
                 await repo.remove(item.id);
                 ref.invalidate(pantryItemsProvider);
                 Haptics.light();
@@ -149,7 +157,7 @@ class _PantryList extends ConsumerWidget {
                       // The item is unchanged, so re-adding restores it
                       // exactly — same id, same expiry, same location.
                       await repo.upsert(item);
-                      ref.invalidate(pantryItemsProvider);
+                      container.invalidate(pantryItemsProvider);
                     },
                   );
                 }
@@ -350,9 +358,14 @@ class _PantryItemSheetState extends ConsumerState<_PantryItemSheet> {
       expiresAt: _expiresAt,
       addedAt: widget.existing?.addedAt ?? DateTime.now(),
     );
+    // The sheet can be barrier-dismissed mid-await; the app-level
+    // container invalidates safely where the disposed ref would throw
+    // (and the catch below would swallow it, leaving the list stale).
+    final repo = ref.read(pantryRepositoryProvider);
+    final container = ProviderScope.containerOf(context, listen: false);
     try {
-      await ref.read(pantryRepositoryProvider).upsert(item);
-      ref.invalidate(pantryItemsProvider);
+      await repo.upsert(item);
+      container.invalidate(pantryItemsProvider);
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
       if (mounted) {
@@ -366,12 +379,13 @@ class _PantryItemSheetState extends ConsumerState<_PantryItemSheet> {
     final item = widget.existing!;
     final repo = ref.read(pantryRepositoryProvider);
     // The sheet is gone by the time the undo fires, so the disposed ref
-    // can't invalidate — the app-level container can.
+    // can't invalidate — the app-level container can. Same for a
+    // barrier-dismiss racing the remove() await.
     final container = ProviderScope.containerOf(context, listen: false);
     setState(() => _saving = true);
     try {
       await repo.remove(item.id);
-      ref.invalidate(pantryItemsProvider);
+      container.invalidate(pantryItemsProvider);
       Haptics.light();
       if (!mounted) return;
       context.showUndoSnack(

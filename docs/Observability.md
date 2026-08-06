@@ -16,7 +16,7 @@ the account.
 | `startup` | `init_ms`, `first_frame_ms`, `mode` (demo/connected), `platform` | Every launch ([main.dart](../lib/main.dart)) — the DAU/WAU anchor event |
 | `session_end` | `seconds` (foreground stretch) | App backgrounded/hidden; force-kill loses the final event (biases short, never long) |
 | `screen_view` | `route` (template, e.g. `/products/:id` — never the concrete URI) | Every navigation ([app_router.dart](../lib/core/router/app_router.dart)) |
-| `auth_success` | `method` (email/google/apple/demo), `new_account` (email only) | Successful sign-in/up; confirmation-pending signups have no session so their event drops by design |
+| `auth_success` | `demo` | The real signed-out→signed-in auth-state transition (central listener in app_router) — recording at the sign-in button would count cancelled OAuth launches and fire before a session exists. Per-provider breakdown deliberately dropped with it. |
 | `list_created` | `has_budget` | Shopping list created |
 | `optimize_run` | `items`, `options`, `multi_store_recommended`, `duration_ms` (fetches + solve) | Basket optimization completes |
 | `trip_started` | `stops` | Optimized route handed to the navigation app — the optimizer-acceptance event |

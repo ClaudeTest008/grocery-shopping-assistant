@@ -103,6 +103,9 @@ class ProductDetailScreen extends ConsumerWidget {
   ) async {
     final observations = ref.read(priceObservationRepositoryProvider);
     final stores = ref.read(nearbyStoresProvider).value ?? const <Store>[];
+    // The dialog + network write outlive this screen easily; the
+    // container invalidates safely where a disposed WidgetRef throws.
+    final container = ProviderScope.containerOf(context, listen: false);
     final priceCtrl = TextEditingController();
     String? storeId;
 
@@ -171,7 +174,7 @@ class ProductDetailScreen extends ConsumerWidget {
         ),
       );
       Telemetry.logEvent('price_reported', {'has_store': storeId != null});
-      ref.invalidate(_priceHistoryProvider(product.id));
+      container.invalidate(_priceHistoryProvider(product.id));
       if (context.mounted) {
         context.showSnack('Thanks — added to your price history');
       }

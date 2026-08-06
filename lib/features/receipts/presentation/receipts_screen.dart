@@ -22,6 +22,9 @@ class ReceiptsScreen extends ConsumerWidget {
     Receipt receipt,
   ) async {
     final repo = ref.read(receiptRepositoryProvider);
+    // Undo may outlive this screen; the app-level container survives
+    // where the widget's ref does not.
+    final container = ProviderScope.containerOf(context, listen: false);
     await repo.remove(receipt.id);
     ref.invalidate(receiptsProvider);
     Haptics.light();
@@ -32,7 +35,7 @@ class ReceiptsScreen extends ConsumerWidget {
           // Receipts feed the spending charts, so an accidental
           // deletion would silently distort months of analytics.
           await repo.add(receipt);
-          ref.invalidate(receiptsProvider);
+          container.invalidate(receiptsProvider);
         },
       );
     }

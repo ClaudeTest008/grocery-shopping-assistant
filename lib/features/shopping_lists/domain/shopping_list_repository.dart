@@ -15,7 +15,11 @@ abstract interface class ShoppingListRepository {
 
   Future<void> addItem(String listId, ShoppingItem item);
 
-  Future<void> updateItem(ShoppingItem item);
+  /// [fieldsEdit] marks a name/quantity/unit/notes edit (vs a checkbox
+  /// toggle). Implementations that queue offline writes replay only the
+  /// columns the caller actually changed — a queued snapshot must never
+  /// clobber newer edits to the other columns.
+  Future<void> updateItem(ShoppingItem item, {bool fieldsEdit = false});
 
   Future<void> removeItem(String listId, String itemId);
 }

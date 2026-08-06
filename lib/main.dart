@@ -56,9 +56,14 @@ Future<void> main() async {
           });
         }
       } else if (state == AppLifecycleState.resumed) {
-        session
-          ..reset()
-          ..start();
+        // Reset only after a logged stretch: inactive→resumed cycles
+        // (permission dialogs, app-switcher peeks) never reach
+        // paused/hidden and must not zero a running session.
+        if (!session.isRunning) {
+          session
+            ..reset()
+            ..start();
+        }
       }
     },
   );

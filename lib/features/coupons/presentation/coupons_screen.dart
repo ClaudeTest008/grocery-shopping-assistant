@@ -79,12 +79,13 @@ class _CouponCard extends ConsumerWidget {
 
   final Coupon coupon;
 
-  Future<void> _toggleClip(WidgetRef ref) async {
-    await ref
-        .read(couponRepositoryProvider)
-        .setClipped(coupon.id, !coupon.clipped);
+  Future<void> _toggleClip(BuildContext context, WidgetRef ref) async {
+    final repo = ref.read(couponRepositoryProvider);
+    // Navigating away mid-write must not throw on the disposed ref.
+    final container = ProviderScope.containerOf(context, listen: false);
+    await repo.setClipped(coupon.id, !coupon.clipped);
     Telemetry.logEvent('coupon_clipped', {'clipped': !coupon.clipped});
-    ref.invalidate(couponsProvider);
+    container.invalidate(couponsProvider);
   }
 
   void _copyCode(BuildContext context) {
@@ -158,7 +159,7 @@ class _CouponCard extends ConsumerWidget {
             ),
             const SizedBox(width: 8),
             FilledButton.tonal(
-              onPressed: () => _toggleClip(ref),
+              onPressed: () => _toggleClip(context, ref),
               child: Text(coupon.clipped ? 'Unclip' : 'Clip'),
             ),
           ],

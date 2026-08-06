@@ -47,7 +47,7 @@ class _FakeListRepository implements ShoppingListRepository {
   Future<void> addItem(String listId, ShoppingItem item) async {}
 
   @override
-  Future<void> updateItem(ShoppingItem item) async {}
+  Future<void> updateItem(ShoppingItem item, {bool fieldsEdit = false}) async {}
 
   @override
   Future<void> removeItem(String listId, String itemId) async {}

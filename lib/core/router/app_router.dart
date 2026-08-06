@@ -26,6 +26,7 @@ import '../../features/shopping_lists/presentation/optimize_screen.dart';
 import '../../features/shopping_lists/presentation/shopping_lists_screen.dart';
 import '../../features/stores/presentation/store_detail_screen.dart';
 import '../../features/stores/presentation/stores_screen.dart';
+import '../config/app_config.dart';
 import '../observability/telemetry.dart';
 
 final _rootKey = GlobalKey<NavigatorState>();
@@ -35,7 +36,16 @@ final routerProvider = Provider<GoRouter>((ref) {
   final authListenable = ValueNotifier(0);
   ref
     ..onDispose(authListenable.dispose)
-    ..listen(authStateProvider, (_, _) => authListenable.value++);
+    ..listen(authStateProvider, (previous, next) {
+      authListenable.value++;
+      // auth_success on the real signed-out→signed-in transition:
+      // recording it at the sign-in button would count OAuth browser
+      // launches (including cancelled ones) and fire before a session
+      // exists to attach the event to.
+      if (previous?.value == null && next.value != null) {
+        Telemetry.logEvent('auth_success', {'demo': AppConfig.isDemoMode});
+      }
+    });
 
   final router = GoRouter(
     navigatorKey: _rootKey,
