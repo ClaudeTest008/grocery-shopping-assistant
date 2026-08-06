@@ -62,6 +62,46 @@ zero external dependencies, and provenance keeps it distinguishable.
 | Instacart / delivery-platform prices | Rejected for now | Marked-up prices that misrepresent shelf prices — would corrupt the "is this a good price" verdicts. |
 | Open Prices (OFF's price project) | Watch | Promising crowdsourced price DB, but coverage is currently too sparse in the target market to serve verdicts from. Re-evaluate for v1.1. |
 
+## Operational characteristics
+
+**Legal.**
+- Open Food Facts: ODbL. We read metadata and attribute in-UI
+  ("identified via Open Food Facts"); we do not currently redistribute
+  a derived database. If OFF-derived rows ever enter the shared
+  catalog, ODbL share-alike applies to that extract — decide then.
+- Receipts: the user's own data, processed on-device (OCR) — no
+  retailer relationship implied. Parsed rows are user content.
+- Community prices: user-generated facts (prices are not
+  copyrightable); moderation gate exists for quality, not rights.
+- CSV imports: only under an agreement with the data owner. Scraping
+  remains rejected (retailer ToS).
+
+**Rate limits.**
+- Open Food Facts asks ≤100 req/min for product lookups; we send one
+  request per unknown-barcode scan (human-paced, orders of magnitude
+  below), identify via User-Agent, and treat failures as "not found"
+  — no retry loops.
+- Inbound: community submissions 200/day/user (DB trigger,
+  server-clock keyed); ai-proxy 60/hr/user (fail-closed).
+
+**Caching.**
+- Prices per product: 6h TTL, offline-fallback-only (network first).
+- Stores: 24h TTL; offers: 1h TTL — same pattern, auth errors rethrow
+  so an expired session is never masked by cache.
+- OFF responses: not cached (each scan is a fresh identification; a
+  hit usually converts into a list item immediately).
+
+**Synchronization & conflict resolution.**
+- Catalog flows one way (operator → Supabase → clients); clients never
+  write catalog tables, so catalog conflicts cannot exist.
+- User data is last-write-wins full-row today, with one exception:
+  offline check-off replay writes ONLY the `checked` column so it can
+  never clobber newer online edits. Multi-device concurrent editing is
+  not advertised; before it is, meal_plans (whole-jsonb upsert) needs
+  per-meal merge or compare-and-swap — tracked in the roadmap.
+- Price observations are immutable append-only rows; "conflict" is
+  resolved by provenance + moderation, not by overwriting.
+
 ## Design rules
 
 - Business logic never knows the source: the optimizer and price
