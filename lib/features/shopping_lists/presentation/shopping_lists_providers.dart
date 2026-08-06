@@ -24,6 +24,9 @@ final optimizationProvider = FutureProvider.family<OptimizationResult, String>((
   ref,
   listId,
 ) async {
+  // Timed from here so the metric covers what the user actually waits
+  // through — price/coupon fetches included, not just the pure solve.
+  final stopwatch = Stopwatch()..start();
   final list = await ref.watch(shoppingListProvider(listId).future);
   if (list == null) {
     return const OptimizationResult(options: [], recommended: null);
@@ -60,6 +63,7 @@ final optimizationProvider = FutureProvider.family<OptimizationResult, String>((
     'items': pending.length,
     'options': result.options.length,
     'multi_store_recommended': (result.recommended?.visits.length ?? 0) > 1,
+    'duration_ms': stopwatch.elapsedMilliseconds,
   });
   return result;
 });

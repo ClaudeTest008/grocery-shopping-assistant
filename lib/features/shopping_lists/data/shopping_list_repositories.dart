@@ -285,29 +285,41 @@ class SupabaseShoppingListRepository implements ShoppingListRepository {
   /// - The replay writes ONLY the `checked` column. Replaying the whole
   ///   queued snapshot would overwrite name/quantity/notes edits the
   ///   user made online after reconnecting.
-  Future<int> drainPending() async =>
-      await _pending?.drain((op) async {
-        if (op.kind != kindCheckOff) return;
-        final String id;
-        final bool checked;
-        try {
-          id = op.payload['id'] as String;
-          checked = op.payload['checked'] as bool? ?? false;
-        } catch (_) {
-          return; // unparseable: dropped by returning normally
-        }
-        try {
-          await _client
-              .from('shopping_items')
-              .update({'checked': checked})
-              .eq('id', id);
-        } on Object catch (error) {
-          if (_looksOffline(error)) rethrow; // still offline: keep queued
-          // Server actively rejected it (row deleted, permission):
-          // dropping is correct; retrying would fail forever.
-        }
-      }) ??
-      0;
+  Future<({int applied, int dropped})> drainPending() async {
+    // The drop paths are deliberate (poison-pill protection), which is
+    // exactly why they must be visible: silent drops read as "sync
+    // works" while data quietly disappears.
+    var dropped = 0;
+    final completed =
+        await _pending?.drain((op) async {
+          if (op.kind != kindCheckOff) {
+            dropped++;
+            return;
+          }
+          final String id;
+          final bool checked;
+          try {
+            id = op.payload['id'] as String;
+            checked = op.payload['checked'] as bool? ?? false;
+          } catch (_) {
+            dropped++;
+            return; // unparseable: dropped by returning normally
+          }
+          try {
+            await _client
+                .from('shopping_items')
+                .update({'checked': checked})
+                .eq('id', id);
+          } on Object catch (error) {
+            if (_looksOffline(error)) rethrow; // still offline: keep queued
+            // Server actively rejected it (row deleted, permission):
+            // dropping is correct; retrying would fail forever.
+            dropped++;
+          }
+        }) ??
+        0;
+    return (applied: completed - dropped, dropped: dropped);
+  }
 
   /// Transport-level problems are worth retrying; a row the server
   /// actively rejected is not — replaying that would just fail forever.
@@ -345,17 +357,31 @@ final shoppingListRepositoryProvider = Provider<ShoppingListRepository>((ref) {
   );
 });
 
-/// Flushes queued check-offs as soon as the connection comes back.
-/// Kept alive by the app shell.
+/// Flushes queued check-offs as soon as the connection comes back —
+/// and once at startup, because ops persisted across an app restart
+/// would otherwise wait for a connectivity *transition* that may never
+/// come (the device was online the whole time). Kept alive by the app
+/// shell.
 final pendingOpsSyncProvider = Provider<void>((ref) {
-  ref.listen(isOnlineProvider, (previous, next) async {
-    if (next.value != true) return;
+  Future<void> drain() async {
     final repo = ref.read(shoppingListRepositoryProvider);
     if (repo is! SupabaseShoppingListRepository) return;
-    final applied = await repo.drainPending();
-    if (applied > 0) {
-      Telemetry.logEvent('pending_ops_drained', {'count': applied});
+    final result = await repo.drainPending();
+    if (result.applied > 0 || result.dropped > 0) {
+      Telemetry.logEvent('pending_ops_drained', {
+        'applied': result.applied,
+        'dropped': result.dropped,
+      });
     }
+  }
+
+  // Startup flush: safe when offline (transport failures keep the
+  // queue intact and the drain stops at the first one).
+  Future.microtask(drain);
+
+  ref.listen(isOnlineProvider, (previous, next) async {
+    if (next.value != true) return;
+    await drain();
   });
 
   // The outbox is device-scoped, not user-scoped: ops queued under one

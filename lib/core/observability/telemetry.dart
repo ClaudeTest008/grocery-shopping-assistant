@@ -48,6 +48,25 @@ abstract final class Telemetry {
     return text.length <= 300 ? text : '${text.substring(0, 300)}…';
   }
 
+  static final _emailPattern = RegExp(r'[\w.+-]+@[\w-]+\.[\w.]+');
+  static final _queryString = RegExp(r'\?[^\s"]+');
+  static final _longDigits = RegExp(r'\d{6,}');
+
+  /// Stronger scrub for text that leaves the device: strips the shapes
+  /// user data actually takes inside error strings — email addresses,
+  /// URL query strings (tokens, search terms) and long digit runs
+  /// (barcodes, phone numbers) — then truncates. The local ring buffer
+  /// keeps [redact]'s milder form because the user reviews it in the
+  /// feedback email before anything is sent.
+  static String scrub(Object error) {
+    final text = error
+        .toString()
+        .replaceAll(_emailPattern, '<email>')
+        .replaceAll(_queryString, '?<redacted>')
+        .replaceAll(_longDigits, '<digits>');
+    return text.length <= 300 ? text : '${text.substring(0, 300)}…';
+  }
+
   static void recordError(
     Object error,
     StackTrace? stack, {
@@ -63,7 +82,13 @@ abstract final class Telemetry {
     _recentErrors.add('${fatal ? 'FATAL ' : ''}${redact(error)}');
     if (_recentErrors.length > _recentErrorsCap) _recentErrors.removeAt(0);
     if (kDebugMode && stack != null) debugPrintStack(stackTrace: stack);
-    _tryInsert('app_error', {'error': redact(error), 'fatal': fatal});
+    // Server-bound copy gets the stronger scrub: emails, query strings
+    // and long digit runs are shapes, not content we need for triage.
+    _tryInsert('app_error', {
+      'error': scrub(error),
+      'type': error.runtimeType.toString(),
+      'fatal': fatal,
+    });
   }
 
   /// Product analytics event (screen views, feature usage).

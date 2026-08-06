@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/observability/telemetry.dart';
 import '../../../core/services/location_service.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/extensions/context_extensions.dart';
@@ -45,6 +46,10 @@ class _MapScreenState extends ConsumerState<MapScreen>
   double _zoom = 12;
   AnimationController? _cameraAnimation;
   bool _didInitialFit = false;
+
+  /// Time from screen construction to the map being interactive — the
+  /// map-render metric the beta watches.
+  final _readyStopwatch = Stopwatch()..start();
 
   @override
   void dispose() {
@@ -159,6 +164,14 @@ class _MapScreenState extends ConsumerState<MapScreen>
                   initialCenter: allStores.isEmpty ? _austin : homePoint,
                   initialZoom: 12,
                   maxZoom: 19,
+                  onMapReady: () {
+                    if (_readyStopwatch.isRunning) {
+                      _readyStopwatch.stop();
+                      Telemetry.logEvent('map_ready', {
+                        'ms': _readyStopwatch.elapsedMilliseconds,
+                      });
+                    }
+                  },
                   onTap: (_, _) => FocusScope.of(context).unfocus(),
                   onPositionChanged: (camera, _) {
                     // Track rotation/zoom for the compass button and

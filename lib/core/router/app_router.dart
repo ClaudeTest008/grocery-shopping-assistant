@@ -26,6 +26,7 @@ import '../../features/shopping_lists/presentation/optimize_screen.dart';
 import '../../features/shopping_lists/presentation/shopping_lists_screen.dart';
 import '../../features/stores/presentation/store_detail_screen.dart';
 import '../../features/stores/presentation/stores_screen.dart';
+import '../observability/telemetry.dart';
 
 final _rootKey = GlobalKey<NavigatorState>();
 
@@ -36,7 +37,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     ..onDispose(authListenable.dispose)
     ..listen(authStateProvider, (_, _) => authListenable.value++);
 
-  return GoRouter(
+  final router = GoRouter(
     navigatorKey: _rootKey,
     initialLocation: '/',
     refreshListenable: authListenable,
@@ -188,6 +189,19 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
+
+  // Screen views: one listener covers every routed screen. Logs the
+  // route TEMPLATE ('/products/:id'), never the concrete URI, so no
+  // user or record IDs reach analytics.
+  var lastLoggedPath = '';
+  router.routerDelegate.addListener(() {
+    final path = router.routerDelegate.currentConfiguration.fullPath;
+    if (path.isEmpty || path == lastLoggedPath) return;
+    lastLoggedPath = path;
+    Telemetry.logEvent('screen_view', {'route': path});
+  });
+
+  return router;
 });
 
 class _ShellScaffold extends StatelessWidget {
