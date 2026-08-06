@@ -62,7 +62,9 @@ Errors: `401` no session, `400` bad body, `503` LLM unconfigured,
 
 ### `POST /stripe-checkout`  (JWT required)
 
-Creates a PaymentIntent for the premium subscription.
+Creates a PaymentIntent for a one-time premium purchase (there is no
+recurring Stripe Subscription — "monthly" is aspirational metadata).
+Fulfillment and refund-revocation happen in `stripe-webhook`.
 
 ```json
 // response

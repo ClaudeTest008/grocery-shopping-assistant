@@ -1,4 +1,22 @@
-# Product Assessment — 2026-07-30 (updated for RC-1)
+# Product Assessment — 2026-07-30 (updated for RC-1 and beta validation)
+
+> **Beta-validation addendum (2026-08-06, rc.2).** The BV phase made
+> the data real and the operation runnable: price provenance on every
+> row, receipts and community reports feeding user-visible price
+> history (moderated promotion into the shared catalog), CSV import,
+> live Open Food Facts barcode fallback (contract verified against the
+> real API), a security pass that found and closed an
+> **entitlement-escalation blocker** (any user could set their own
+> `is_premium`; now service-role-only with a signature-verified Stripe
+> webhook granting *and revoking*), full-funnel observability with a
+> documented no-PII event dictionary, ~25 audited journey/usability
+> fixes across 16 walked journeys, and the complete beta ops kit
+> (tester guide, FAQ, troubleshooting, welcome email, issue template,
+> backup/rollback runbooks). 94 tests, analyze clean, optimizer
+> 1.40 ms/run. Final scores and the closed-beta recommendation:
+> see the Beta Validation Report (final deliverable) and CHANGELOG
+> 1.0.0-rc.2. Scores now: UX 8, Security 8, Reliability 8, Docs 9,
+> Beta Readiness 9, Production Readiness 8, Commercial Readiness 6.
 
 > **Release-candidate addendum.** After this assessment was written, the
 > RC phase closed both store blockers and re-verified the app: AI now
