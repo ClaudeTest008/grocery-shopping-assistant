@@ -275,29 +275,45 @@ reasoning matters more than the decision.
 
 ## 7. Beta release checklist
 
-- [ ] Route LLM traffic through `ai-proxy`; remove the key from the
-      client bundle *(blocker for any configured build)*
-- [ ] Add in-app account deletion *(blocker if shipping to app stores)*
-- [ ] Expand analytics to a funnel: install → onboarding → first list →
-      first optimize → first receipt
-- [ ] Real device screen-reader pass (TalkBack + VoiceOver)
+- [x] Route LLM traffic through `ai-proxy`; remove the key from the
+      client bundle *(done in RC-1: proxy is the default for configured
+      builds)*
+- [x] Add in-app account deletion *(done in RC-1: `delete-account`
+      edge function + cascading FKs + local wipe)*
+- [x] Expand analytics to a funnel *(done in BV: `screen_view` on every
+      route + optimize/receipt/report events — dictionary in
+      docs/Observability.md)*
+- [ ] Real device screen-reader pass (TalkBack + VoiceOver) — needs a
+      human with devices; a11y guideline tests run in CI meanwhile
 - [ ] Capture frame timings on a mid-range Android device
-- [ ] Crash reporting backend behind `Telemetry.recordError`
-- [ ] Privacy policy + data-handling disclosure
-- [ ] Decide the beta's data story: demo-only, or a seeded Supabase
-      project with real RLS
+- [x] Crash reporting backend behind `Telemetry.recordError` *(decision
+      made and documented: in-house analytics-table pipeline with triage
+      SQL for beta; hosted service deferred — docs/Beta.md)*
+- [x] Privacy policy + data-handling disclosure *(RC-1: PRIVACY.md +
+      TERMS.md, consent at sign-in, export + deletion in-app)*
+- [x] Decide the beta's data story *(decided in BV: demo-only instant
+      path + optional connected project; real prices accumulate from
+      receipts/community/CSV — docs/DataProviders.md)*
 
 ## 8. Production release checklist
 
 - [ ] Everything above
-- [ ] Live price ingestion for at least one chain, with freshness SLAs
+- [~] Live price ingestion: pipeline exists (receipts, community with
+      moderation, CSV import with provenance); a retailer *feed* with
+      freshness SLAs still requires a signed API partner
 - [ ] Pagination on products and notifications
-- [ ] Feature flags / kill switch for AI and payments
-- [ ] Stripe webhook setting `users.is_premium`
+- [ ] Feature flags / kill switch for AI and payments *(deliberately
+      rejected until a real need exists — §5)*
+- [x] Stripe webhook setting `users.is_premium` *(done in BV:
+      `stripe-webhook` with signature verification; client self-grant
+      hole closed by column grants)*
 - [ ] Android upload keystore in CI secrets; iOS signing pipeline
 - [ ] Load test the Supabase project at expected concurrency
-- [ ] Rate limiting on `ai-proxy`
-- [ ] Rollback runbook and on-call ownership
+- [x] Rate limiting on `ai-proxy` *(RC-1: 60/hr fail-closed)* and on
+      price submissions *(BV: 200/day server-side)*
+- [x] Rollback runbook *(BV: docs/Deployment.md — apps, functions,
+      migrations, web)*; on-call ownership documented for beta scale in
+      docs/Beta.md support section
 
 ## 9. App Store / Play readiness
 
