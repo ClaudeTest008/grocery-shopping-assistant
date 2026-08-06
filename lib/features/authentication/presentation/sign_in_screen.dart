@@ -34,6 +34,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 
   bool _isSignUp = false;
   bool _isSubmitting = false;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -54,6 +55,26 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
           _emailController.text.trim(),
           _passwordController.text,
         );
+        // Email-confirmation signups leave no session, so the router
+        // redirect below never fires; tell the user what happens next.
+        if (auth.currentUser == null && mounted) {
+          await showDialog<void>(
+            context: context,
+            builder: (dialogContext) => AlertDialog(
+              title: const Text('Almost there — confirm your email'),
+              content: Text(
+                'We sent a link to ${_emailController.text.trim()}. '
+                'Sign in after confirming.',
+              ),
+              actions: [
+                FilledButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
+        }
       } else {
         await auth.signInWithEmail(
           _emailController.text.trim(),
@@ -71,7 +92,70 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     }
   }
 
-  Future<void> _oauth(Future<void> Function() action) async {
+  Future<void> _forgotPassword() async {
+    if (AppConfig.isDemoMode) {
+      context.showSnack('Demo mode — any credentials work');
+      return;
+    }
+    final formKey = GlobalKey<FormState>();
+    final controller = TextEditingController(
+      text: _emailController.text.trim(),
+    );
+    final email = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        void submit() {
+          if (formKey.currentState?.validate() ?? false) {
+            Navigator.pop(dialogContext, controller.text.trim());
+          }
+        }
+
+        return AlertDialog(
+          title: const Text('Reset password'),
+          content: Form(
+            key: formKey,
+            child: TextFormField(
+              controller: controller,
+              autofocus: true,
+              keyboardType: TextInputType.emailAddress,
+              autofillHints: const [AutofillHints.email],
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                prefixIcon: Icon(Icons.mail_outline_rounded),
+              ),
+              validator: Validators.email,
+              onFieldSubmitted: (_) => submit(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(onPressed: submit, child: const Text('Send link')),
+          ],
+        );
+      },
+    );
+    controller.dispose();
+    if (email == null || !mounted) return;
+    setState(() => _isSubmitting = true);
+    final auth = ref.read(authRepositoryProvider);
+    try {
+      // resetPassword lives on the concrete type only; the demo guard
+      // above means Supabase is the only repository that reaches here.
+      if (auth is SupabaseAuthRepository) await auth.resetPassword(email);
+      if (mounted) context.showSnack('Check your email for a reset link');
+    } on AuthFailure catch (e) {
+      if (mounted) context.showSnack(e.message, error: true);
+    } catch (e) {
+      if (mounted) context.showSnack('Something went wrong', error: true);
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  Future<void> _runAuth(Future<void> Function() action) async {
     setState(() => _isSubmitting = true);
     try {
       await action();
@@ -167,9 +251,16 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     if (AppConfig.isDemoMode) ...[
                       const SizedBox(height: 20),
                       FilledButton.tonalIcon(
-                        onPressed: () => ref
-                            .read(authRepositoryProvider)
-                            .signInWithEmail('demo@grocery.app', 'demo'),
+                        onPressed: _isSubmitting
+                            ? null
+                            : () => _runAuth(
+                                () => ref
+                                    .read(authRepositoryProvider)
+                                    .signInWithEmail(
+                                      'demo@grocery.app',
+                                      'demo',
+                                    ),
+                              ),
                         icon: const Icon(Icons.play_arrow_rounded),
                         label: const Text('Explore the demo — no account'),
                       ),
@@ -197,16 +288,37 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _passwordController,
-                      obscureText: true,
+                      obscureText: _obscurePassword,
                       textInputAction: TextInputAction.done,
                       autofillHints: const [AutofillHints.password],
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Password',
-                        prefixIcon: Icon(Icons.lock_outline_rounded),
+                        prefixIcon: const Icon(Icons.lock_outline_rounded),
+                        suffixIcon: IconButton(
+                          tooltip: _obscurePassword
+                              ? 'Show password'
+                              : 'Hide password',
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
+                          onPressed: () => setState(
+                            () => _obscurePassword = !_obscurePassword,
+                          ),
+                        ),
                       ),
                       validator: Validators.password,
                       onFieldSubmitted: (_) => _submit(),
                     ),
+                    if (!_isSignUp)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: _isSubmitting ? null : _forgotPassword,
+                          child: const Text('Forgot password?'),
+                        ),
+                      ),
                     const SizedBox(height: 24),
                     FilledButton(
                       onPressed: _isSubmitting ? null : _submit,
@@ -252,7 +364,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     OutlinedButton.icon(
                       onPressed: _isSubmitting
                           ? null
-                          : () => _oauth(
+                          : () => _runAuth(
                               () => ref
                                   .read(authRepositoryProvider)
                                   .signInWithGoogle(),
@@ -264,7 +376,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     OutlinedButton.icon(
                       onPressed: _isSubmitting
                           ? null
-                          : () => _oauth(
+                          : () => _runAuth(
                               () => ref
                                   .read(authRepositoryProvider)
                                   .signInWithApple(),

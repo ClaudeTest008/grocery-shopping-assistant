@@ -5,12 +5,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/ai/ai_services.dart';
+import '../../../core/observability/telemetry.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/extensions/context_extensions.dart';
 import '../../../shared/widgets/async_value_widget.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../maps/presentation/map_providers.dart';
+import '../../products/data/product_repositories.dart';
 import '../../profile/data/preferences_repository.dart';
+import '../data/shopping_list_repositories.dart';
 import '../domain/basket_optimizer.dart';
 import 'shopping_lists_providers.dart';
 
@@ -31,10 +34,14 @@ class OptimizeScreen extends ConsumerWidget {
         onRetry: () => ref.invalidate(optimizationProvider(listId)),
         data: (optimization) {
           if (optimization.options.isEmpty) {
-            return const EmptyState(
+            return EmptyState(
               icon: Icons.route_rounded,
               title: 'Nothing to optimize',
-              message: 'Add items with known products to compare stores.',
+              message:
+                  'We need store prices to compare trips. Add items by '
+                  'searching the catalog or scanning a barcode.',
+              actionLabel: 'Back to list',
+              onAction: () => context.pop(),
             );
           }
           final options = optimization.options;
@@ -50,6 +57,7 @@ class OptimizeScreen extends ConsumerWidget {
                 label: String.fromCharCode(64 + i), // A, B, C...
                 result: optimization,
                 index: i - 1,
+                listId: listId,
               );
             },
           );
@@ -85,12 +93,14 @@ class _OptionCard extends ConsumerWidget {
     required this.label,
     required this.result,
     required this.index,
+    required this.listId,
   });
 
   final BasketOption option;
   final String label;
   final OptimizationResult result;
   final int index;
+  final String listId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -287,7 +297,7 @@ class _OptionCard extends ConsumerWidget {
                     ),
                     TextButton(
                       onPressed: () => _suggestSubstitutes(context, ref),
-                      child: const Text('Substitutes'),
+                      child: const Text('Find substitutes'),
                     ),
                   ],
                 ),
@@ -355,15 +365,28 @@ class _OptionCard extends ConsumerWidget {
                     contentPadding: EdgeInsets.zero,
                     title: Text('${sub['original']} → ${sub['replacement']}'),
                     subtitle: Text(sub['reason'] as String? ?? ''),
-                    trailing: sub['savings'] != null
-                        ? Text(
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (sub['savings'] != null)
+                          Text(
                             '−${Formatters.currency((sub['savings'] as num).toDouble())}',
                             style: TextStyle(
                               color: Theme.of(ctx).colorScheme.primary,
                               fontWeight: FontWeight.w700,
                             ),
-                          )
-                        : null,
+                          ),
+                        TextButton(
+                          onPressed: () => _useSubstitute(
+                            ctx,
+                            ref,
+                            original: sub['original']?.toString() ?? '',
+                            replacement: sub['replacement']?.toString() ?? '',
+                          ),
+                          child: const Text('Use'),
+                        ),
+                      ],
+                    ),
                   ),
               ],
             ),
@@ -376,10 +399,62 @@ class _OptionCard extends ConsumerWidget {
           ],
         ),
       );
-    } catch (e) {
+    } catch (e, stack) {
+      // Raw exception text leaks internals; log it, tell the user less.
+      Telemetry.recordError(e, stack);
       if (context.mounted) Navigator.pop(context);
       messenger.showSnackBar(
-        SnackBar(content: Text('Could not fetch substitutes: $e')),
+        const SnackBar(
+          content: Text('Could not fetch substitutes — try again.'),
+        ),
+      );
+    }
+  }
+
+  /// Swaps the unavailable list item for the suggested substitute — the
+  /// rename re-links to a catalog product so the optimizer can actually
+  /// price the replacement on the next run.
+  Future<void> _useSubstitute(
+    BuildContext dialogContext,
+    WidgetRef ref, {
+    required String original,
+    required String replacement,
+  }) async {
+    final messenger = ScaffoldMessenger.of(dialogContext);
+    Navigator.pop(dialogContext);
+    if (original.isEmpty || replacement.isEmpty) return;
+    try {
+      final repo = ref.read(shoppingListRepositoryProvider);
+      final list = await repo.byId(listId);
+      final item = list?.items.where((i) => i.name == original).firstOrNull;
+      if (item == null) {
+        messenger.showSnackBar(
+          SnackBar(content: Text('$original is no longer on the list')),
+        );
+        return;
+      }
+      final matches = await ref
+          .read(productRepositoryProvider)
+          .search(query: replacement);
+      await repo.updateItem(
+        item.copyWith(
+          name: matches.firstOrNull?.name ?? replacement,
+          productId: matches.firstOrNull?.id,
+        ),
+      );
+      ref
+        ..invalidate(shoppingListProvider(listId))
+        ..invalidate(shoppingListsProvider)
+        ..invalidate(optimizationProvider(listId));
+      messenger.showSnackBar(
+        SnackBar(content: Text('Replaced $original with $replacement')),
+      );
+    } catch (e, stack) {
+      Telemetry.recordError(e, stack);
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Could not apply the substitute — try again.'),
+        ),
       );
     }
   }
@@ -440,10 +515,13 @@ class _OptionCard extends ConsumerWidget {
           ],
         ),
       );
-    } catch (e) {
+    } catch (e, stack) {
+      Telemetry.recordError(e, stack);
       if (context.mounted) Navigator.pop(context);
       messenger.showSnackBar(
-        SnackBar(content: Text('AI explanation failed: $e')),
+        const SnackBar(
+          content: Text('Could not get an explanation — try again.'),
+        ),
       );
     }
   }

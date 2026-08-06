@@ -5,6 +5,7 @@ import '../../../core/config/app_config.dart';
 import '../../../core/demo/demo_seed.dart';
 import '../../../core/services/location_service.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/storage/local_store.dart';
 import '../domain/store.dart';
 import '../domain/store_repository.dart';
 
@@ -32,20 +33,36 @@ class DemoStoreRepository implements StoreRepository {
 }
 
 class SupabaseStoreRepository implements StoreRepository {
-  SupabaseStoreRepository(this._client);
+  SupabaseStoreRepository(this._client, this._store);
 
   final SupabaseClient _client;
+  final LocalStore _store;
+
+  /// Stores move rarely; a day-old list beats a blank map when offline.
+  static const _cacheTtl = Duration(hours: 24);
+  static const _cacheKey = 'stores_nearby';
 
   @override
   Future<List<Store>> nearby(GeoPoint location, {double radiusKm = 25}) async {
-    // Bounding-box prefilter in SQL, precise sort client-side.
-    final latDelta = radiusKm / 111.0;
-    final rows = await _client
-        .from('stores')
-        .select()
-        .gte('lat', location.lat - latDelta)
-        .lte('lat', location.lat + latDelta);
-    return _sortByDistance(rows.map(Store.fromJson), location, radiusKm);
+    try {
+      // Bounding-box prefilter in SQL, precise sort client-side.
+      final latDelta = radiusKm / 111.0;
+      final rows = await _client
+          .from('stores')
+          .select()
+          .gte('lat', location.lat - latDelta)
+          .lte('lat', location.lat + latDelta);
+      await _store.putJsonList(_cacheKey, rows);
+      return _sortByDistance(rows.map(Store.fromJson), location, radiusKm);
+    } catch (_) {
+      // Offline fallback: last fetched stores, re-sorted for the
+      // current location (which may have moved since the fetch).
+      final cached = _store.getJsonList(_cacheKey, maxAge: _cacheTtl);
+      if (cached != null) {
+        return _sortByDistance(cached.map(Store.fromJson), location, radiusKm);
+      }
+      rethrow;
+    }
   }
 
   @override
@@ -61,7 +78,10 @@ class SupabaseStoreRepository implements StoreRepository {
 
 final storeRepositoryProvider = Provider<StoreRepository>((ref) {
   if (AppConfig.isDemoMode) return DemoStoreRepository();
-  return SupabaseStoreRepository(ref.watch(supabaseClientProvider));
+  return SupabaseStoreRepository(
+    ref.watch(supabaseClientProvider),
+    ref.watch(localStoreProvider),
+  );
 });
 
 /// Nearby stores for the current location.

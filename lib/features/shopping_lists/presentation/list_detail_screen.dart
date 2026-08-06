@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/ai/ai_services.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/observability/telemetry.dart';
 import '../../../core/platform/platform_support.dart';
+import '../../../core/storage/local_store.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/extensions/context_extensions.dart';
 import '../../../shared/widgets/async_value_widget.dart';
@@ -291,6 +294,42 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
           );
           return Column(
             children: [
+              // Queued offline writes are invisible until they land;
+              // surface the count so "synced" is never just assumed.
+              if (!AppConfig.isDemoMode)
+                ValueListenableBuilder(
+                  valueListenable: Hive.box<dynamic>(
+                    LocalStore.pendingOpsBox,
+                  ).listenable(),
+                  builder: (_, box, _) => box.isEmpty
+                      ? const SizedBox.shrink()
+                      : Container(
+                          width: double.infinity,
+                          color: context.colors.surfaceContainerHigh,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 6,
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.cloud_off_rounded,
+                                size: 16,
+                                color: context.colors.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${box.length} '
+                                '${box.length == 1 ? 'change' : 'changes'} '
+                                'waiting to sync',
+                                style: context.text.bodySmall?.copyWith(
+                                  color: context.colors.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                ),
               Expanded(
                 child: list.items.isEmpty
                     ? EmptyState(
@@ -396,6 +435,35 @@ class _ItemTile extends ConsumerWidget {
   final ShoppingItem item;
   final VoidCallback onChanged;
 
+  /// Single delete path: the swipe and the menu must behave identically,
+  /// undo included.
+  Future<void> _delete(BuildContext context, WidgetRef ref) async {
+    final repo = ref.read(shoppingListRepositoryProvider);
+    await repo.removeItem(item.listId, item.id);
+    onChanged();
+    Haptics.light();
+    if (context.mounted) {
+      context.showUndoSnack(
+        'Removed ${item.name}',
+        onUndo: () async {
+          await repo.addItem(item.listId, item);
+          onChanged();
+        },
+      );
+    }
+  }
+
+  void _editSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
+        child: _EditItemSheet(item: item, onChanged: onChanged),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final repo = ref.read(shoppingListRepositoryProvider);
@@ -411,20 +479,7 @@ class _ItemTile extends ConsumerWidget {
           color: context.colors.onErrorContainer,
         ),
       ),
-      onDismissed: (_) async {
-        await repo.removeItem(item.listId, item.id);
-        onChanged();
-        Haptics.light();
-        if (context.mounted) {
-          context.showUndoSnack(
-            'Removed ${item.name}',
-            onUndo: () async {
-              await repo.addItem(item.listId, item);
-              onChanged();
-            },
-          );
-        }
-      },
+      onDismissed: (_) => _delete(context, ref),
       child: CheckboxListTile(
         value: item.checked,
         onChanged: (checked) async {
@@ -448,17 +503,160 @@ class _ItemTile extends ConsumerWidget {
           '${_trimZero(item.quantity)} ${item.unit}'
           '${item.notes != null ? '  ·  ${item.notes}' : ''}',
         ),
-        secondary: item.productId != null
-            ? IconButton(
+        // Swipe-to-delete is invisible with a mouse; the menu offers the
+        // same actions discoverably on desktop/web.
+        secondary: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (item.productId != null)
+              IconButton(
                 tooltip: 'Product details',
                 icon: const Icon(Icons.info_outline_rounded),
                 onPressed: () => context.push('/products/${item.productId}'),
-              )
-            : null,
+              ),
+            PopupMenuButton<String>(
+              tooltip: 'Item actions',
+              onSelected: (action) async {
+                switch (action) {
+                  case 'edit':
+                    _editSheet(context);
+                  case 'delete':
+                    await _delete(context, ref);
+                }
+              },
+              itemBuilder: (_) => const [
+                PopupMenuItem(value: 'edit', child: Text('Edit')),
+                PopupMenuItem(value: 'delete', child: Text('Delete')),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
   static String _trimZero(double v) =>
       v == v.roundToDouble() ? v.toInt().toString() : v.toString();
+}
+
+class _EditItemSheet extends ConsumerStatefulWidget {
+  const _EditItemSheet({required this.item, required this.onChanged});
+
+  final ShoppingItem item;
+  final VoidCallback onChanged;
+
+  @override
+  ConsumerState<_EditItemSheet> createState() => _EditItemSheetState();
+}
+
+class _EditItemSheetState extends ConsumerState<_EditItemSheet> {
+  late double _quantity = widget.item.quantity;
+  late final _unitCtrl = TextEditingController(text: widget.item.unit);
+  late final _notesCtrl = TextEditingController(text: widget.item.notes ?? '');
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _unitCtrl.dispose();
+    _notesCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final unit = _unitCtrl.text.trim();
+    final notes = _notesCtrl.text.trim();
+    setState(() => _saving = true);
+    try {
+      await ref
+          .read(shoppingListRepositoryProvider)
+          .updateItem(
+            widget.item.copyWith(
+              quantity: _quantity,
+              unit: unit.isEmpty ? 'ea' : unit,
+              notes: notes.isEmpty ? null : notes,
+            ),
+          );
+      widget.onChanged();
+      if (mounted) Navigator.of(context).pop();
+    } catch (_) {
+      if (mounted) {
+        setState(() => _saving = false);
+        context.showSnack('Could not save item', error: true);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              widget.item.name,
+              style: context.text.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Text('Quantity', style: context.text.bodyLarge),
+                const Spacer(),
+                IconButton(
+                  tooltip: 'Decrease quantity',
+                  icon: const Icon(Icons.remove_circle_outline_rounded),
+                  onPressed: _quantity > 1
+                      ? () => setState(
+                          () =>
+                              _quantity = _quantity - 1 < 1 ? 1 : _quantity - 1,
+                        )
+                      : null,
+                ),
+                SizedBox(
+                  width: 40,
+                  child: Text(
+                    _ItemTile._trimZero(_quantity),
+                    textAlign: TextAlign.center,
+                    style: context.text.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Increase quantity',
+                  icon: const Icon(Icons.add_circle_outline_rounded),
+                  onPressed: () => setState(() => _quantity = _quantity + 1),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _unitCtrl,
+              decoration: const InputDecoration(labelText: 'Unit'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _notesCtrl,
+              decoration: const InputDecoration(labelText: 'Notes (optional)'),
+            ),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: _saving ? null : _save,
+              child: _saving
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2.5),
+                    )
+                  : const Text('Save changes'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

@@ -49,6 +49,16 @@ class SupabaseAuthRepository implements AuthRepository {
     }
   }
 
+  // Not on AuthRepository: demo mode has no passwords, so the screen
+  // guards on AppConfig.isDemoMode before reaching this call.
+  Future<void> resetPassword(String email) async {
+    try {
+      await _client.auth.resetPasswordForEmail(email);
+    } on sb.AuthException catch (e) {
+      throw AuthFailure(e.message, e);
+    }
+  }
+
   @override
   Future<void> signInWithGoogle() => _oauth(sb.OAuthProvider.google);
 
@@ -123,6 +133,9 @@ class DemoAuthRepository implements AuthRepository {
   @override
   Future<void> signUpWithEmail(String email, String password) async =>
       _set(_user);
+
+  /// No-op: demo mode has no real credentials to reset.
+  Future<void> resetPassword(String email) async {}
 
   @override
   Future<void> signInWithGoogle() async => _set(_user);

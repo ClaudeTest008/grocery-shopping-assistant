@@ -37,4 +37,13 @@ abstract final class Formatters {
     if (d.inMinutes < 60) return '${d.inMinutes} min';
     return '${d.inHours}h ${d.inMinutes % 60}m';
   }
+
+  /// Raw data keys ('gluten_free', 'dairy') rendered as UI labels
+  /// ('Gluten Free', 'Dairy') — chips and legends must not read like
+  /// debug output.
+  static String titleCase(String raw) => raw
+      .replaceAll('_', ' ')
+      .split(' ')
+      .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
+      .join(' ');
 }

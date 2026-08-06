@@ -184,8 +184,8 @@ class AccountAndDataSection extends ConsumerWidget {
   }
 
   Future<void> _deleteAccount(BuildContext context, WidgetRef ref) async {
-    // Two-step confirmation with typed intent for the connected case:
-    // this is the one action in the app that cannot be undone by design.
+    // One explicit confirmation dialog before the only action in the
+    // app that cannot be undone by design.
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -230,6 +230,17 @@ class AccountAndDataSection extends ConsumerWidget {
       // Full rebuild: providers, caches, auth state, onboarding flag.
       // The router lands on sign-in by itself once auth state is gone.
       AppBootstrap.restartGlobal();
+    } on AuthFailure catch (e) {
+      Telemetry.recordError(e, StackTrace.current);
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      // An expired session cannot delete the account, but leaving the
+      // user "signed in" on it strands them: sign out so the router
+      // lands on sign-in, where the snack's advice is actionable.
+      try {
+        await auth.signOut();
+      } catch (_) {
+        // Best effort — the session is already dead.
+      }
     } on Failure catch (e) {
       Telemetry.recordError(e, StackTrace.current);
       messenger.showSnackBar(SnackBar(content: Text(e.message)));

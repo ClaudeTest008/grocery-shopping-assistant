@@ -80,9 +80,16 @@ class ShoppingListsScreen extends ConsumerWidget {
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text('Cancel'),
           ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Create'),
+          // Create stays disabled until a name is entered, so the dialog
+          // can never be dismissed having silently done nothing.
+          ValueListenableBuilder(
+            valueListenable: nameController,
+            builder: (_, value, _) => FilledButton(
+              onPressed: value.text.trim().isEmpty
+                  ? null
+                  : () => Navigator.pop(ctx, true),
+              child: const Text('Create'),
+            ),
           ),
         ],
       ),

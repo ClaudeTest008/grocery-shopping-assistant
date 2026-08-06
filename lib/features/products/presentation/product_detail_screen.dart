@@ -216,10 +216,10 @@ class _Header extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              Chip(label: Text(product.category)),
+              Chip(label: Text(Formatters.titleCase(product.category))),
               for (final tag in product.tags)
                 Chip(
-                  label: Text(tag),
+                  label: Text(Formatters.titleCase(tag)),
                   backgroundColor: context.colors.secondaryContainer,
                 ),
             ],

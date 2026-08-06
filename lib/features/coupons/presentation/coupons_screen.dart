@@ -45,6 +45,18 @@ class CouponsScreen extends ConsumerWidget {
           return ListView(
             padding: const EdgeInsets.only(bottom: 16),
             children: [
+              // The coupon→optimizer link is invisible otherwise: "Clip"
+              // alone never says what clipping is for.
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Text(
+                  'Clipped coupons are applied automatically when we '
+                  'price your trip.',
+                  style: context.text.bodySmall?.copyWith(
+                    color: context.colors.onSurfaceVariant,
+                  ),
+                ),
+              ),
               if (clipped.isNotEmpty) ...[
                 const SectionHeader(title: 'Clipped'),
                 for (final coupon in clipped) _CouponCard(coupon: coupon),

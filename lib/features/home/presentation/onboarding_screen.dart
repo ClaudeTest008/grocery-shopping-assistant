@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/observability/telemetry.dart';
+import '../../../core/platform/platform_support.dart';
 import '../../../core/storage/local_store.dart';
 import '../../../shared/extensions/context_extensions.dart';
 
@@ -26,7 +27,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _controller = PageController();
   int _page = 0;
 
-  static const _pages = [
+  static final _pages = [
     (
       Icons.route_rounded,
       'One list. The cheapest trip.',
@@ -44,8 +45,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     (
       Icons.receipt_long_rounded,
       'Scan receipts, see the truth',
-      'Point the camera at any receipt: spending charts, category '
-          'breakdowns, and a forecast of next month appear automatically.',
+      // Camera OCR is mobile-only; desktop and web must not be promised
+      // a camera flow they cannot use.
+      PlatformSupport.hasOcr
+          ? 'Point the camera at any receipt: spending charts, category '
+                'breakdowns, and a forecast of next month appear '
+                'automatically.'
+          : 'Add receipts in seconds — spending charts and a forecast '
+                'appear automatically.',
     ),
   ];
 

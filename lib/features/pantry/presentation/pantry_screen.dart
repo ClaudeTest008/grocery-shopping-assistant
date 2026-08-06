@@ -42,12 +42,14 @@ class PantryScreen extends ConsumerWidget {
         value: itemsAsync,
         onRetry: () => ref.invalidate(pantryItemsProvider),
         data: (items) => items.isEmpty
-            ? const EmptyState(
+            ? EmptyState(
                 icon: Icons.kitchen_outlined,
                 title: 'Your pantry is empty',
                 message:
                     'Add items to track what you have and what\'s '
                     'about to expire.',
+                actionLabel: 'Add item',
+                onAction: () => _openSheet(context),
               )
             : _PantryList(items: items),
       ),
@@ -360,6 +362,36 @@ class _PantryItemSheetState extends ConsumerState<_PantryItemSheet> {
     }
   }
 
+  Future<void> _delete() async {
+    final item = widget.existing!;
+    final repo = ref.read(pantryRepositoryProvider);
+    // The sheet is gone by the time the undo fires, so the disposed ref
+    // can't invalidate — the app-level container can.
+    final container = ProviderScope.containerOf(context, listen: false);
+    setState(() => _saving = true);
+    try {
+      await repo.remove(item.id);
+      ref.invalidate(pantryItemsProvider);
+      Haptics.light();
+      if (!mounted) return;
+      context.showUndoSnack(
+        'Removed ${item.name}',
+        onUndo: () async {
+          // The item is unchanged, so re-adding restores it
+          // exactly — same id, same expiry, same location.
+          await repo.upsert(item);
+          container.invalidate(pantryItemsProvider);
+        },
+      );
+      Navigator.of(context).pop();
+    } catch (_) {
+      if (mounted) {
+        setState(() => _saving = false);
+        context.showSnack('Could not remove item', error: true);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isEdit = widget.existing != null;
@@ -466,6 +498,17 @@ class _PantryItemSheetState extends ConsumerState<_PantryItemSheet> {
                     )
                   : Text(isEdit ? 'Save changes' : 'Add to pantry'),
             ),
+            if (isEdit) ...[
+              const SizedBox(height: 8),
+              // No confirm dialog: the undo snack already covers mistakes.
+              TextButton(
+                onPressed: _saving ? null : _delete,
+                style: TextButton.styleFrom(
+                  foregroundColor: context.colors.error,
+                ),
+                child: const Text('Delete item'),
+              ),
+            ],
           ],
         ),
       ),

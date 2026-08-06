@@ -90,12 +90,14 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
       context.showSnack('Pantry already covers this meal');
       return;
     }
-    final lists = await ref.read(shoppingListRepositoryProvider).lists();
-    if (lists.isEmpty) {
-      if (mounted) context.showSnack('No shopping list found', error: true);
-      return;
-    }
-    final list = lists.first;
+    final repository = ref.read(shoppingListRepositoryProvider);
+    final lists = await repository.lists();
+    // ponytail: no list picker — first list, or auto-create one for the week.
+    final list = lists.isNotEmpty
+        ? lists.first
+        : await repository.create(
+            'Meal plan — ${Formatters.shortDate(_weekStart)}',
+          );
     const uuid = Uuid();
     for (final name in missing) {
       await ref
@@ -110,6 +112,28 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
     }
   }
 
+  Future<void> _confirmRegenerate() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: const Text(
+          "Replace this week's plan? The current plan will be overwritten.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Replace'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) await _generate();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -118,9 +142,9 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
         actions: [
           if (_plan != null)
             IconButton(
-              tooltip: 'Regenerate',
-              onPressed: _generating ? null : _generate,
-              icon: const Icon(Icons.refresh_rounded),
+              tooltip: 'Generate new plan',
+              onPressed: _generating ? null : _confirmRegenerate,
+              icon: const Icon(Icons.auto_awesome_rounded),
             ),
         ],
       ),

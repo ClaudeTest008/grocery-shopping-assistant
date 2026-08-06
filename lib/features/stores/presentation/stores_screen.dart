@@ -9,11 +9,18 @@ import '../../../shared/widgets/empty_state.dart';
 import '../data/store_repositories.dart';
 import '../domain/store.dart';
 
-class StoresScreen extends ConsumerWidget {
+class StoresScreen extends ConsumerStatefulWidget {
   const StoresScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<StoresScreen> createState() => _StoresScreenState();
+}
+
+class _StoresScreenState extends ConsumerState<StoresScreen> {
+  String _query = '';
+
+  @override
+  Widget build(BuildContext context) {
     final storesAsync = ref.watch(nearbyStoresProvider);
 
     return Scaffold(
@@ -32,23 +39,58 @@ class StoresScreen extends ConsumerWidget {
         onRetry: () => ref.invalidate(nearbyStoresProvider),
         data: (stores) {
           if (stores.isEmpty) {
-            return const EmptyState(
+            // Radius is fixed at 25 km; there is no control to change it.
+            return EmptyState(
               icon: Icons.storefront_outlined,
               title: 'No nearby stores',
-              message: 'Try expanding your search radius.',
+              message: 'No stores within 25 km of your location.',
+              actionLabel: 'View map',
+              onAction: () => context.push('/map'),
             );
           }
-          return RefreshIndicator(
-            onRefresh: () async {
-              ref.invalidate(nearbyStoresProvider);
-              await ref.read(nearbyStoresProvider.future);
-            },
-            child: ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: stores.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 12),
-              itemBuilder: (context, i) => _StoreCard(store: stores[i]),
-            ),
+          final q = _query.trim().toLowerCase();
+          final filtered = q.isEmpty
+              ? stores
+              : stores
+                    .where(
+                      (s) =>
+                          s.name.toLowerCase().contains(q) ||
+                          s.chain.toLowerCase().contains(q),
+                    )
+                    .toList();
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                child: SearchBar(
+                  hintText: 'Search stores',
+                  leading: const Icon(Icons.search_rounded),
+                  onChanged: (value) => setState(() => _query = value),
+                ),
+              ),
+              Expanded(
+                child: filtered.isEmpty
+                    ? const EmptyState(
+                        icon: Icons.search_off_rounded,
+                        title: 'No matching stores',
+                        message: 'Try a different store or chain name.',
+                      )
+                    : RefreshIndicator(
+                        onRefresh: () async {
+                          ref.invalidate(nearbyStoresProvider);
+                          await ref.read(nearbyStoresProvider.future);
+                        },
+                        child: ListView.separated(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: filtered.length,
+                          separatorBuilder: (_, _) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (context, i) =>
+                              _StoreCard(store: filtered[i]),
+                        ),
+                      ),
+              ),
+            ],
           );
         },
       ),

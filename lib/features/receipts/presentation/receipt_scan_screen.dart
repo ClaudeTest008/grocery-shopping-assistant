@@ -236,6 +236,35 @@ class _ReceiptScanScreenState extends ConsumerState<ReceiptScanScreen> {
     }
   }
 
+  bool get _hasFormContent =>
+      _storeCtrl.text.trim().isNotEmpty ||
+      _totalCtrl.text.trim().isNotEmpty ||
+      _rows.any(
+        (r) =>
+            r.nameCtrl.text.trim().isNotEmpty ||
+            r.priceCtrl.text.trim().isNotEmpty,
+      );
+
+  Future<void> _confirmDiscard() async {
+    final discard = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Discard this receipt?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Keep editing'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Discard'),
+          ),
+        ],
+      ),
+    );
+    if (discard == true && mounted) Navigator.of(context).pop();
+  }
+
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -248,41 +277,60 @@ class _ReceiptScanScreenState extends ConsumerState<ReceiptScanScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Scan receipt')),
-      body: switch (_stage) {
-        _Stage.pickOptions => _PickOptions(
-          onCamera: () => _pickAndScan(ImageSource.camera),
-          onGallery: () => _pickAndScan(ImageSource.gallery),
-          onManual: _startManualEntry,
-        ),
-        _Stage.processing => const Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Reading receipt…'),
-            ],
-          ),
-        ),
-        _Stage.confirm => _ConfirmForm(
-          storeCtrl: _storeCtrl,
-          totalCtrl: _totalCtrl,
-          purchasedAt: _purchasedAt,
-          rows: _rows,
-          saving: _saving,
-          onPickDate: _pickDate,
-          onAddRow: () => setState(() => _rows.add(_ItemRow())),
-          onRemoveRow: (row) => setState(() {
-            _rows.remove(row);
-            row.nameCtrl.dispose();
-            row.priceCtrl.dispose();
-          }),
-          onAiSummary: _showAiSummary,
-          onSave: _save,
-        ),
+    return PopScope(
+      // OCR results and edits in the confirm form are only lost after an
+      // explicit discard; the imperative pop in _save bypasses this.
+      canPop: _stage != _Stage.confirm,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        if (!_hasFormContent) {
+          Navigator.of(context).pop();
+          return;
+        }
+        _confirmDiscard();
       },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(switch (_stage) {
+            _Stage.pickOptions => 'Add receipt',
+            _Stage.processing => 'Scanning…',
+            _Stage.confirm => 'Review receipt',
+          }),
+        ),
+        body: switch (_stage) {
+          _Stage.pickOptions => _PickOptions(
+            onCamera: () => _pickAndScan(ImageSource.camera),
+            onGallery: () => _pickAndScan(ImageSource.gallery),
+            onManual: _startManualEntry,
+          ),
+          _Stage.processing => const Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Reading receipt…'),
+              ],
+            ),
+          ),
+          _Stage.confirm => _ConfirmForm(
+            storeCtrl: _storeCtrl,
+            totalCtrl: _totalCtrl,
+            purchasedAt: _purchasedAt,
+            rows: _rows,
+            saving: _saving,
+            onPickDate: _pickDate,
+            onAddRow: () => setState(() => _rows.add(_ItemRow())),
+            onRemoveRow: (row) => setState(() {
+              _rows.remove(row);
+              row.nameCtrl.dispose();
+              row.priceCtrl.dispose();
+            }),
+            onAiSummary: _showAiSummary,
+            onSave: _save,
+          ),
+        },
+      ),
     );
   }
 }
@@ -471,6 +519,7 @@ class _ConfirmForm extends StatelessWidget {
                   ),
                 ),
                 IconButton(
+                  tooltip: 'Remove item',
                   icon: const Icon(Icons.close_rounded),
                   onPressed: () => onRemoveRow(row),
                 ),

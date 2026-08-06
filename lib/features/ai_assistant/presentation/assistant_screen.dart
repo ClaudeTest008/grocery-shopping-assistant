@@ -59,6 +59,19 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
     });
   }
 
+  void _clearConversation() {
+    // Undo instead of a confirm dialog, matching deletion flows elsewhere.
+    final previous = List.of(_history);
+    setState(() => _history.clear());
+    context.showUndoSnack(
+      'Conversation cleared',
+      onUndo: () {
+        if (!mounted) return;
+        setState(() => _history.insertAll(0, previous));
+      },
+    );
+  }
+
   Future<void> _send(String text) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty || _sending) return;
@@ -91,9 +104,7 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
         actions: [
           IconButton(
             tooltip: 'Clear conversation',
-            onPressed: _history.isEmpty
-                ? null
-                : () => setState(() => _history.clear()),
+            onPressed: _history.isEmpty ? null : _clearConversation,
             icon: const Icon(Icons.delete_outline_rounded),
           ),
         ],
@@ -123,14 +134,19 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
                     child: TextField(
                       controller: _controller,
                       textInputAction: TextInputAction.send,
+                      // Cap keeps a stray paste from blowing the LLM
+                      // request; empty counterText hides the counter.
+                      maxLength: 2000,
                       decoration: const InputDecoration(
                         hintText: 'Ask about budgets, meals, prices…',
+                        counterText: '',
                       ),
                       onSubmitted: _send,
                     ),
                   ),
                   const SizedBox(width: 8),
                   IconButton.filled(
+                    tooltip: 'Send',
                     onPressed: _sending ? null : () => _send(_controller.text),
                     icon: const Icon(Icons.send_rounded),
                   ),

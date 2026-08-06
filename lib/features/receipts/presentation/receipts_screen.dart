@@ -16,6 +16,28 @@ final receiptsProvider = FutureProvider<List<Receipt>>(
 class ReceiptsScreen extends ConsumerWidget {
   const ReceiptsScreen({super.key});
 
+  Future<void> _delete(
+    BuildContext context,
+    WidgetRef ref,
+    Receipt receipt,
+  ) async {
+    final repo = ref.read(receiptRepositoryProvider);
+    await repo.remove(receipt.id);
+    ref.invalidate(receiptsProvider);
+    Haptics.light();
+    if (context.mounted) {
+      context.showUndoSnack(
+        'Removed receipt from ${receipt.storeName ?? 'store'}',
+        onUndo: () async {
+          // Receipts feed the spending charts, so an accidental
+          // deletion would silently distort months of analytics.
+          await repo.add(receipt);
+          ref.invalidate(receiptsProvider);
+        },
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final receiptsAsync = ref.watch(receiptsProvider);
@@ -52,26 +74,11 @@ class ReceiptsScreen extends ConsumerWidget {
                           color: context.colors.onError,
                         ),
                       ),
-                      onDismissed: (_) async {
-                        final repo = ref.read(receiptRepositoryProvider);
-                        await repo.remove(receipt.id);
-                        ref.invalidate(receiptsProvider);
-                        Haptics.light();
-                        if (context.mounted) {
-                          context.showUndoSnack(
-                            'Removed receipt from '
-                            '${receipt.storeName ?? 'store'}',
-                            onUndo: () async {
-                              // Receipts feed the spending charts, so an
-                              // accidental swipe would silently distort
-                              // months of analytics.
-                              await repo.add(receipt);
-                              ref.invalidate(receiptsProvider);
-                            },
-                          );
-                        }
-                      },
-                      child: _ReceiptCard(receipt: receipt),
+                      onDismissed: (_) => _delete(context, ref, receipt),
+                      child: _ReceiptCard(
+                        receipt: receipt,
+                        onDelete: () => _delete(context, ref, receipt),
+                      ),
                     ),
                   );
                 },
@@ -87,9 +94,10 @@ class ReceiptsScreen extends ConsumerWidget {
 }
 
 class _ReceiptCard extends StatelessWidget {
-  const _ReceiptCard({required this.receipt});
+  const _ReceiptCard({required this.receipt, required this.onDelete});
 
   final Receipt receipt;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -125,6 +133,21 @@ class _ReceiptCard extends StatelessWidget {
               padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: Text('No itemized items on this receipt.'),
             ),
+          // Discoverable alternative to swipe-to-delete; same undo flow.
+          Align(
+            alignment: Alignment.centerRight,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 8, 0),
+              child: TextButton.icon(
+                onPressed: onDelete,
+                icon: const Icon(Icons.delete_outline_rounded),
+                label: const Text('Delete'),
+                style: TextButton.styleFrom(
+                  foregroundColor: context.colors.error,
+                ),
+              ),
+            ),
+          ),
           const SizedBox(height: 8),
         ],
       ),

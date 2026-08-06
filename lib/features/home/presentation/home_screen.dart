@@ -202,7 +202,7 @@ class _ActiveListCard extends ConsumerWidget {
           ),
           trailing: FilledButton.tonal(
             onPressed: () => context.push('/lists/${list.id}/optimize'),
-            child: const Text('Optimize'),
+            child: const Text('Cheapest trip'),
           ),
           onTap: () => context.push('/lists/${list.id}'),
         ),
@@ -274,7 +274,7 @@ class _OffersPreview extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeader(
-          title: 'Deals near you',
+          title: 'Offers near you',
           actionLabel: 'See all',
           onAction: () => context.push('/offers'),
         ),

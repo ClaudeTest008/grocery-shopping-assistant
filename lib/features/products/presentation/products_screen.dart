@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/observability/telemetry.dart';
+import '../../../core/utils/formatters.dart';
 import '../../../shared/extensions/context_extensions.dart';
 import '../../../shared/widgets/async_value_widget.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -137,7 +138,8 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                   final cat = cats[i];
                   final selected = cat == selectedCategory;
                   return FilterChip(
-                    label: Text(cat),
+                    // Display only — providers keep the raw key.
+                    label: Text(Formatters.titleCase(cat)),
                     selected: selected,
                     onSelected: (on) =>
                         ref.read(_selectedCategoryProvider.notifier).state = on

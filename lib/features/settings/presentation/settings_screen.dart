@@ -49,11 +49,6 @@ const _dietaryOptions = [
   'kosher',
 ];
 
-String _titleCase(String snake) => snake
-    .split('_')
-    .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
-    .join(' ');
-
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -129,6 +124,7 @@ class SettingsScreen extends ConsumerWidget {
               },
             ),
           ),
+          const ListTile(title: Text('Units')),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: SegmentedButton<String>(
@@ -155,7 +151,7 @@ class SettingsScreen extends ConsumerWidget {
               children: [
                 for (final option in _dietaryOptions)
                   FilterChip(
-                    label: Text(_titleCase(option)),
+                    label: Text(Formatters.titleCase(option)),
                     selected: prefs.dietaryRestrictions.contains(option),
                     onSelected: (selected) {
                       final restrictions = [...prefs.dietaryRestrictions];

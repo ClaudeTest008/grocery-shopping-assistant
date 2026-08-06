@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/utils/formatters.dart';
 import '../../../shared/extensions/context_extensions.dart';
@@ -141,10 +142,12 @@ class InsightsScreen extends ConsumerWidget {
               a.categoryTotals.isNotEmpty ||
               a.monthlyTotals.any((t) => t.total > 0);
           if (!hasData) {
-            return const EmptyState(
+            return EmptyState(
               icon: Icons.insights_rounded,
               title: 'No receipts yet',
               message: 'Scan a receipt to see your spending insights.',
+              actionLabel: 'Scan receipt',
+              onAction: () => context.push('/receipts/scan'),
             );
           }
           return _InsightsBody(analytics: a);
@@ -271,10 +274,13 @@ class _BudgetCard extends StatelessWidget {
                 ),
               )
             else
-              Text(
-                'Set a monthly budget in Profile to track progress.',
-                style: context.text.bodySmall?.copyWith(
-                  color: colors.onSurfaceVariant,
+              InkWell(
+                onTap: () => context.push('/settings'),
+                child: Text(
+                  'Set a monthly budget in Settings to track progress.',
+                  style: context.text.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
                 ),
               ),
           ],
@@ -426,7 +432,7 @@ class _CategoryPieChart extends StatelessWidget {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    '${entries[i].key} · ${Formatters.currency(entries[i].value)}',
+                    '${Formatters.titleCase(entries[i].key)} · ${Formatters.currency(entries[i].value)}',
                     style: context.text.labelMedium,
                   ),
                 ],
