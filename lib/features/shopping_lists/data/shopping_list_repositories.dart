@@ -363,15 +363,27 @@ final shoppingListRepositoryProvider = Provider<ShoppingListRepository>((ref) {
 /// come (the device was online the whole time). Kept alive by the app
 /// shell.
 final pendingOpsSyncProvider = Provider<void>((ref) {
+  // The startup drain and the connectivity listener can fire within
+  // milliseconds of each other (connectivity_plus emits the current
+  // state on subscribe) — overlapping drains would replay the same ops
+  // twice. One in-flight drain at a time; a concurrent trigger is a
+  // no-op because the running drain already covers its ops.
+  var draining = false;
   Future<void> drain() async {
-    final repo = ref.read(shoppingListRepositoryProvider);
-    if (repo is! SupabaseShoppingListRepository) return;
-    final result = await repo.drainPending();
-    if (result.applied > 0 || result.dropped > 0) {
-      Telemetry.logEvent('pending_ops_drained', {
-        'applied': result.applied,
-        'dropped': result.dropped,
-      });
+    if (draining) return;
+    draining = true;
+    try {
+      final repo = ref.read(shoppingListRepositoryProvider);
+      if (repo is! SupabaseShoppingListRepository) return;
+      final result = await repo.drainPending();
+      if (result.applied > 0 || result.dropped > 0) {
+        Telemetry.logEvent('pending_ops_drained', {
+          'applied': result.applied,
+          'dropped': result.dropped,
+        });
+      }
+    } finally {
+      draining = false;
     }
   }
 

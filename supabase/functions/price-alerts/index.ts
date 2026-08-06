@@ -19,16 +19,30 @@ Deno.serve(async (req) => {
   );
 
   // Dedup window: an hourly cron must not re-notify the same user about
-  // the same drop/coupon every run. One query, then set lookups.
+  // the same drop/coupon every run. Paged, because PostgREST truncates
+  // at max_rows (1000) — an unpaged query would silently lose part of
+  // the seen-set and re-spam once the 24h window holds more rows.
   const dayAgo = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
-  const { data: recent } = await supabase
-    .from("notifications")
-    .select("user_id, type, title")
-    .gte("created_at", dayAgo)
-    .in("type", ["priceDrop", "couponExpiring"]);
-  const seen = new Set(
-    (recent ?? []).map((r) => `${r.user_id}|${r.type}|${r.title}`),
-  );
+  const seen = new Set<string>();
+  const page = 1000;
+  for (let from = 0; ; from += page) {
+    const { data: recent, error: seenError } = await supabase
+      .from("notifications")
+      .select("user_id, type, title")
+      .gte("created_at", dayAgo)
+      .in("type", ["priceDrop", "couponExpiring"])
+      .order("id")
+      .range(from, from + page - 1);
+    if (seenError) {
+      // Fail closed: without the full seen-set, inserting would spam.
+      console.error("dedup query:", seenError.message);
+      return new Response("Dedup unavailable", { status: 503 });
+    }
+    for (const r of recent ?? []) {
+      seen.add(`${r.user_id}|${r.type}|${r.title}`);
+    }
+    if ((recent ?? []).length < page) break;
+  }
 
   const notifications: Array<Record<string, unknown>> = [];
   const push = (n: {

@@ -48,8 +48,9 @@ supabase secrets set LLM_PROVIDER=anthropic LLM_API_KEY=sk-ant-... \
   function rejects calls without it.
 - In the Stripe dashboard, point a webhook at
   `https://<ref>.functions.supabase.co/stripe-webhook` for
-  `payment_intent.succeeded` and copy its signing secret into
-  `STRIPE_WEBHOOK_SECRET`.
+  `payment_intent.succeeded`, `charge.refunded` and
+  `charge.dispute.created` (grant + revoke), and copy its signing
+  secret into `STRIPE_WEBHOOK_SECRET`.
 
 ### Backups
 

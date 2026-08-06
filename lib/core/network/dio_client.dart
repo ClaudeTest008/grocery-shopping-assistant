@@ -35,7 +35,10 @@ class _LatencyInterceptor extends Interceptor {
     if (started is! DateTime) return;
     Telemetry.logEvent('http_request', {
       'host': options.uri.host,
-      'path': options.uri.path,
+      // Digit runs are identifiers (a scanned barcode reaches OFF as
+      // /api/v2/product/<code>) — collapse them so the logged path is a
+      // template, matching the no-concrete-IDs analytics policy.
+      'path': options.uri.path.replaceAll(RegExp(r'\d{6,}'), '<digits>'),
       'status': status,
       'ms': DateTime.now().difference(started).inMilliseconds,
     });

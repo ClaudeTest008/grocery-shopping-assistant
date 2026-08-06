@@ -63,7 +63,14 @@ create table public.price_submissions (
   submitted_at timestamptz not null default now(),
   -- ...vs when the row was written; rate limiting keys on this one so
   -- backdating cannot dodge it.
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  -- submitted_at flows into shared price_history.recorded_at on
+  -- approval, where it shapes 90-day averages — so it may not be in
+  -- the future nor implausibly old. A receipt is at most weeks old.
+  check (
+    submitted_at <= created_at + interval '1 hour'
+    and submitted_at >= created_at - interval '30 days'
+  )
 );
 
 create index price_submissions_user_product_idx

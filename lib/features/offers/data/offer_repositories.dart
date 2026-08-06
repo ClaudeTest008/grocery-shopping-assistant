@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../../core/demo/demo_seed.dart';
+import '../../../core/observability/telemetry.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/storage/local_store.dart';
 import '../domain/offer.dart';
@@ -36,7 +37,11 @@ class SupabaseOfferRepository implements OfferRepository {
       final rows = await query.order('valid_to');
       await _store.putJsonList(cacheKey, rows);
       return rows.map(Offer.fromJson).toList();
-    } catch (_) {
+    } catch (error, stack) {
+      // Expired sessions must surface, and every fallback is recorded —
+      // cache serving a 500 away silently is an incident nobody sees.
+      if (error is AuthException) rethrow;
+      Telemetry.recordError(error, stack);
       // Offline fallback; re-filter expiry since the clock kept moving.
       final cached = _store.getJsonList(cacheKey, maxAge: _cacheTtl);
       if (cached != null) {

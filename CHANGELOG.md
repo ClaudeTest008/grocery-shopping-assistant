@@ -3,6 +3,47 @@
 All notable changes, newest first. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com).
 
+## 1.0.0-rc.2 — 2026-08-06 (beta validation)
+
+### Real data
+- **Your receipts now feed your price history**: confidently-matched
+  receipt lines become real price points, visible immediately
+- **Report a price** on any product — community prices, rate-limited
+  and reviewed before joining the shared history
+- **Provenance on every price row** (seed / import / receipt /
+  community) — demo data can never masquerade as a feed
+- **Open Food Facts** identifies scanned barcodes the catalog doesn't
+  know (live, key-free) instead of dead-ending
+- Retailer **CSV price import** for operators (staging + validation;
+  history archived automatically)
+
+### Security
+- Closed a privilege hole: users can no longer set their own
+  `is_premium` (column-level grants); the new **stripe-webhook**
+  (signature-verified) is the only writer
+- `price-alerts` now requires a scheduler secret and dedups
+  notifications over 24h
+- Error reports are scrubbed (emails, query strings, digit runs)
+  before leaving the device
+
+### Experience
+- Forgot password, password visibility, and a clear message when
+  sign-up needs email confirmation
+- Shopping-list items: visible Edit/Delete (quantity finally
+  editable); pending-offline-changes banner; queued check-offs replay
+  at startup too
+- Screens with cached data show it during outages instead of a
+  full-screen error; stores and offers work from cache offline
+- Substitute suggestions can be applied with one tap
+- Stores tab search; meal planner creates a list when none exists and
+  confirms before regenerating; receipt form guards against
+  accidental back-discard; dozens of audited wording fixes
+
+### Observability
+- Screen views (route templates only), optimize duration, map render
+  time, external-request latency — full dictionary in
+  docs/Observability.md
+
 ## 1.0.0-rc.1 — 2026-07-30 (release candidate)
 
 ### Store compliance & security

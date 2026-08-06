@@ -84,8 +84,14 @@ abstract final class Telemetry {
     if (kDebugMode && stack != null) debugPrintStack(stackTrace: stack);
     // Server-bound copy gets the stronger scrub: emails, query strings
     // and long digit runs are shapes, not content we need for triage.
+    // Postgres errors are worse: a constraint violation's DETAIL quotes
+    // the entire failing row (list names, notes), so only code+message
+    // may leave the device — never details/hint.
+    final serverCopy = error is PostgrestException
+        ? scrub('${error.code}: ${error.message}')
+        : scrub(error);
     _tryInsert('app_error', {
-      'error': scrub(error),
+      'error': serverCopy,
       'type': error.runtimeType.toString(),
       'fatal': fatal,
     });

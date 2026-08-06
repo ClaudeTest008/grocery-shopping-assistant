@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../../core/demo/demo_seed.dart';
+import '../../../core/observability/telemetry.dart';
 import '../../../core/services/location_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/storage/local_store.dart';
@@ -54,9 +55,14 @@ class SupabaseStoreRepository implements StoreRepository {
           .lte('lat', location.lat + latDelta);
       await _store.putJsonList(_cacheKey, rows);
       return _sortByDistance(rows.map(Store.fromJson), location, radiusKm);
-    } catch (_) {
+    } catch (error, stack) {
+      // Auth problems must surface — serving cache would hide an
+      // expired session until every screen quietly went stale.
+      if (error is AuthException) rethrow;
       // Offline fallback: last fetched stores, re-sorted for the
       // current location (which may have moved since the fetch).
+      // Recorded so a server-side failure doesn't hide behind it.
+      Telemetry.recordError(error, stack);
       final cached = _store.getJsonList(_cacheKey, maxAge: _cacheTtl);
       if (cached != null) {
         return _sortByDistance(cached.map(Store.fromJson), location, radiusKm);
