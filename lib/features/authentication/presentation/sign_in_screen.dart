@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../../core/errors/failures.dart';
+import '../../../core/observability/telemetry.dart';
 import '../../../core/utils/validators.dart';
 import '../../../shared/extensions/context_extensions.dart';
 import '../../settings/presentation/account_section.dart'
@@ -81,6 +82,13 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
           _passwordController.text,
         );
       }
+      // Funnel: login success rate. Confirmation-pending signups have
+      // no session yet, so their event is dropped by design (no user
+      // row to attach it to).
+      Telemetry.logEvent('auth_success', {
+        'method': 'email',
+        'new_account': _isSignUp,
+      });
       // Success: router redirect (listening to authStateProvider) handles
       // navigation away from this screen.
     } on AuthFailure catch (e) {
@@ -155,10 +163,11 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     }
   }
 
-  Future<void> _runAuth(Future<void> Function() action) async {
+  Future<void> _runAuth(Future<void> Function() action, String method) async {
     setState(() => _isSubmitting = true);
     try {
       await action();
+      Telemetry.logEvent('auth_success', {'method': method});
     } on AuthFailure catch (e) {
       if (mounted) context.showSnack(e.message, error: true);
     } catch (e) {
@@ -260,6 +269,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                                       'demo@grocery.app',
                                       'demo',
                                     ),
+                                'demo',
                               ),
                         icon: const Icon(Icons.play_arrow_rounded),
                         label: const Text('Explore the demo — no account'),
@@ -368,6 +378,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                               () => ref
                                   .read(authRepositoryProvider)
                                   .signInWithGoogle(),
+                              'google',
                             ),
                       icon: const Icon(Icons.g_mobiledata, size: 28),
                       label: const Text('Continue with Google'),
@@ -380,6 +391,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                               () => ref
                                   .read(authRepositoryProvider)
                                   .signInWithApple(),
+                              'apple',
                             ),
                       icon: const Icon(Icons.apple),
                       label: const Text('Continue with Apple'),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/observability/telemetry.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/extensions/context_extensions.dart';
 import '../../../shared/widgets/async_value_widget.dart';
@@ -82,6 +83,7 @@ class _CouponCard extends ConsumerWidget {
     await ref
         .read(couponRepositoryProvider)
         .setClipped(coupon.id, !coupon.clipped);
+    Telemetry.logEvent('coupon_clipped', {'clipped': !coupon.clipped});
     ref.invalidate(couponsProvider);
   }
 

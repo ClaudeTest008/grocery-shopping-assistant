@@ -679,6 +679,11 @@ class _TripBanner extends StatelessWidget {
         uri,
         mode: LaunchMode.externalApplication,
       );
+      // Optimizer acceptance: the user took the recommendation to the
+      // road. trip_started / optimize_run is the beta's core metric.
+      if (launched) {
+        Telemetry.logEvent('trip_started', {'stops': stops.length});
+      }
       if (!launched && context.mounted) {
         context.showSnack('Could not open navigation', error: true);
       }

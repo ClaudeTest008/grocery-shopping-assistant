@@ -21,12 +21,18 @@ final _categoriesProvider = FutureProvider<List<String>>(
   (ref) => ref.watch(productRepositoryProvider).categories(),
 );
 
-final _productResultsProvider = FutureProvider<List<Product>>((ref) {
+final _productResultsProvider = FutureProvider<List<Product>>((ref) async {
   final query = ref.watch(_searchQueryProvider);
   final category = ref.watch(_selectedCategoryProvider);
-  return ref
+  final results = await ref
       .watch(productRepositoryProvider)
       .search(query: query, category: category);
+  // Result count only — never the query text. Zero-result searches are
+  // the catalog's missing-product signal.
+  if (query.length >= 3) {
+    Telemetry.logEvent('product_search', {'results': results.length});
+  }
+  return results;
 });
 
 IconData _categoryIcon(String category) => switch (category) {

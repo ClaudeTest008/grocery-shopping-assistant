@@ -1,3 +1,4 @@
+import '../observability/telemetry.dart';
 import '../storage/local_store.dart';
 
 /// Hive-persisted JSON collection backing demo-mode user data
@@ -20,7 +21,20 @@ class DemoCollection<T> {
 
   List<T> load() {
     final cached = _store.getJsonList(_key);
-    if (cached != null) return cached.map(_fromJson).toList();
+    if (cached != null) {
+      // One corrupt row (partial write, entity-shape drift across an
+      // app update) must cost that row, not blank the entire
+      // collection with a decode crash.
+      final out = <T>[];
+      for (final doc in cached) {
+        try {
+          out.add(_fromJson(doc));
+        } catch (error, stack) {
+          Telemetry.recordError(error, stack);
+        }
+      }
+      return out;
+    }
     final seeded = _seed?.call() ?? [];
     if (seeded.isNotEmpty) {
       // Persist the seed so later mutations build on it.

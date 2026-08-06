@@ -127,6 +127,7 @@ class AccountAndDataSection extends ConsumerWidget {
       });
 
       await Clipboard.setData(ClipboardData(text: export));
+      Telemetry.logEvent('data_exported');
       messenger.showSnackBar(
         const SnackBar(
           content: Text('Your data is on the clipboard — paste it anywhere'),
@@ -141,6 +142,8 @@ class AccountAndDataSection extends ConsumerWidget {
   }
 
   Future<void> _sendFeedback(BuildContext context, WidgetRef ref) async {
+    // Counts intent; the mail client decides whether anything is sent.
+    Telemetry.logEvent('feedback_opened');
     final version = await ref.read(appVersionProvider.future);
     final errors = Telemetry.recentErrors;
     final body = StringBuffer()

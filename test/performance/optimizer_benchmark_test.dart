@@ -77,4 +77,61 @@ void main() {
     print('optimizer: ${perRunMs.toStringAsFixed(2)}ms per 50-item run');
     expect(perRunMs, lessThan(100));
   });
+
+  test('500-item stress case stays interactive (large-list reliability)', () {
+    // 10x the realistic worst case. Proves the search scales linearly
+    // in items (store combinations dominate, items are a sum), so a
+    // power user's mega-list cannot freeze the UI isolate.
+    const home = GeoPoint(30.0, -97.0);
+    final stores = [
+      for (var s = 0; s < 6; s++)
+        Store(
+          id: 'S$s',
+          name: 'Store $s',
+          chain: 'chain$s',
+          address: 'x',
+          lat: 30.0 + 0.01 * (s + 1),
+          lng: -97.0 + 0.005 * s,
+          distanceKm: 1.1 * (s + 1),
+        ),
+    ];
+    final items = [
+      for (var i = 0; i < 500; i++)
+        ShoppingItem(id: 'i$i', listId: 'l', productId: 'p$i', name: 'p$i'),
+    ];
+    final prices = {
+      for (var i = 0; i < 500; i++)
+        'p$i': [
+          for (var s = 0; s < 6; s++)
+            Price(
+              id: 'S$s-p$i',
+              productId: 'p$i',
+              storeId: 'S$s',
+              price: 1.0 + ((i * 7 + s * 13) % 40) / 10,
+            ),
+        ],
+    };
+
+    const optimizer = BasketOptimizer();
+    optimizer.optimize(
+      items: items,
+      stores: stores,
+      pricesByProduct: prices,
+      home: home,
+    );
+
+    final stopwatch = Stopwatch()..start();
+    final result = optimizer.optimize(
+      items: items,
+      stores: stores,
+      pricesByProduct: prices,
+      home: home,
+    );
+    stopwatch.stop();
+
+    expect(result.recommended, isNotNull);
+    // ignore: avoid_print
+    print('optimizer: ${stopwatch.elapsedMilliseconds}ms for 500 items');
+    expect(stopwatch.elapsedMilliseconds, lessThan(500));
+  });
 }

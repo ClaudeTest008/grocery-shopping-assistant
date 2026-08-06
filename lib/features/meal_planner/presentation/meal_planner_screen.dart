@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/ai/ai_services.dart';
+import '../../../core/observability/telemetry.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/extensions/context_extensions.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -68,6 +69,10 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
             weeklyBudget: weeklyBudget,
           );
       await ref.read(mealPlanRepositoryProvider).save(plan);
+      Telemetry.logEvent('meal_plan_generated', {
+        'meals': plan.meals.length,
+        'had_budget': weeklyBudget != null,
+      });
       if (mounted) {
         setState(() {
           _plan = plan;

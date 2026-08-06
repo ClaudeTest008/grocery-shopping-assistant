@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/observability/telemetry.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/extensions/context_extensions.dart';
 import '../../../shared/widgets/async_value_widget.dart';
@@ -101,6 +102,9 @@ class ShoppingListsScreen extends ConsumerWidget {
           nameController.text.trim(),
           budget: double.tryParse(budgetController.text),
         );
+    Telemetry.logEvent('list_created', {
+      'has_budget': budgetController.text.trim().isNotEmpty,
+    });
     ref.invalidate(shoppingListsProvider);
     if (context.mounted) await context.push('/lists/${list.id}');
   }
