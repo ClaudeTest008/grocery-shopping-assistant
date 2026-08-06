@@ -1,4 +1,5 @@
 import '../../../core/services/location_service.dart';
+import '../../../core/utils/formatters.dart';
 import '../../coupons/domain/coupon.dart';
 import '../../products/domain/price.dart';
 import '../../stores/domain/store.dart';
@@ -283,7 +284,7 @@ class BasketOptimizer {
     }
     if (o.couponSavings > 0) {
       buffer.write(
-        ' Includes \$${o.couponSavings.toStringAsFixed(2)} coupon savings.',
+        ' Includes ${Formatters.currency(o.couponSavings)} coupon savings.',
       );
     }
     if (bestSingle != null && !identical(o, bestSingle)) {
@@ -291,13 +292,13 @@ class BasketOptimizer {
       final extraMin = o.travelTime.inMinutes - bestSingle.travelTime.inMinutes;
       if (savings > 0) {
         buffer.write(
-          ' Saves \$${savings.toStringAsFixed(2)} vs the best '
+          ' Saves ${Formatters.currency(savings)} vs the best '
           'single store for about $extraMin extra minutes'
           '${identical(o, recommended) ? ' — worth it.' : ', which is not worth the trip.'}',
         );
       } else {
         buffer.write(
-          ' Costs \$${(-savings).toStringAsFixed(2)} more than '
+          ' Costs ${Formatters.currency(-savings)} more than '
           'the best single store once driving is priced in.',
         );
       }

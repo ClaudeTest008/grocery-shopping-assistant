@@ -25,5 +25,19 @@ alter table public.products
 create index products_barcodes_idx on public.products using gin (barcodes);
 create index products_countries_idx on public.products using gin (countries);
 
--- Prices already carry currency (default USD); widen the accepted set
--- is unnecessary — ISO 4217 is free text by design. No change needed.
+-- Store attributes European shoppers plan around: parking,
+-- accessibility, in-store services. Nullable = unknown, shown as such.
+alter table public.stores
+  add column has_parking boolean,
+  add column wheelchair_accessible boolean,
+  add column services text[];
+
+-- EU labeling data on products; ingredients stays free text in the
+-- catalog's language.
+alter table public.products
+  add column allergens text[],
+  add column ingredients text;
+
+-- Prices already carry currency (default USD); widening the accepted
+-- set is unnecessary — ISO 4217 is free text by design. No change
+-- needed.

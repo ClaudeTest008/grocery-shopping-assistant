@@ -61,6 +61,9 @@ zero external dependencies, and provenance keeps it distinguishable.
 | Store-website scraping | Rejected | Violates retailer terms of service; brittle; legal risk. Not acceptable for a commercial product. |
 | Instacart / delivery-platform prices | Rejected for now | Marked-up prices that misrepresent shelf prices — would corrupt the "is this a good price" verdicts. |
 | Open Prices (OFF's price project) | Watch | Promising crowdsourced price DB, but coverage is currently too sparse in the target market to serve verdicts from. Re-evaluate for v1.1. |
+| Supplier/wholesaler catalogs | Supported via CSV path | Same staging pipeline as retailer CSV (`import_prices.sql`); product rows go through the products table with `countries`/`names_i18n`. No separate adapter until a supplier feed with a different shape exists. |
+| European retailer APIs (Carrefour, Tesco, Rewe…) | No public price APIs | Partner/affiliate programs only; the CSV path ingests partner exports today. Registry `ChainSpec` is the anchor an adapter would key on. |
+| Scraping services | Rejected | Same grounds as store-website scraping: retailer ToS, brittleness, legal exposure — commercial products don't build on it. |
 
 ## Operational characteristics
 

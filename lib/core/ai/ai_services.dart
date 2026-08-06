@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../../features/meal_planner/domain/meal_plan.dart';
 import '../../features/pantry/domain/pantry_item.dart';
 import '../../features/shopping_lists/domain/shopping_list.dart';
+import '../demo/demo_seed.dart';
 import '../errors/failures.dart';
 import 'llm_client.dart';
 import 'llm_provider.dart';
@@ -20,6 +21,26 @@ class AiServices {
   final LlmClient _llm;
   static const _uuid = Uuid();
 
+  /// AI replies follow the catalog's language — a Madrid shopper asking
+  /// about "Leche Entera" gets Spanish back. English configs add
+  /// nothing; JSON keys stay English so parsing never depends on the
+  /// reply language.
+  static String _localized(String system) {
+    const names = {
+      'es': 'Spanish',
+      'pt': 'Portuguese',
+      'fr': 'French',
+      'de': 'German',
+      'it': 'Italian',
+      'nl': 'Dutch',
+    };
+    final name = names[DemoSeed.country.primaryLanguage];
+    return name == null
+        ? system
+        : '$system Write all user-facing text in $name; keep JSON keys '
+              'and structural values in English.';
+  }
+
   Future<MealPlan> generateMealPlan({
     required String userId,
     required DateTime weekStart,
@@ -30,10 +51,11 @@ class AiServices {
   }) async {
     final response = await _llm.complete(
       LlmRequest(
-        system:
-            'You are a budget meal planner. [intent:meal_plan] Reply with ONLY '
-            'a JSON object: {"meals":[{"day","type","name","usesPantry":[],'
-            '"ingredients":[],"estimatedCost"}]}. 5 dinners, Monday-Friday.',
+        system: _localized(
+          'You are a budget meal planner. [intent:meal_plan] Reply with ONLY '
+          'a JSON object: {"meals":[{"day","type","name","usesPantry":[],'
+          '"ingredients":[],"estimatedCost"}]}. 5 dinners, Monday-Friday.',
+        ),
         messages: [
           LlmMessage.user(
             jsonEncode({
@@ -84,10 +106,11 @@ class AiServices {
   }) async {
     final response = await _llm.complete(
       LlmRequest(
-        system:
-            'You build grocery lists. [intent:generate_list] Reply with '
-            'ONLY JSON: {"name","items":[{"name","quantity","unit",'
-            '"estimatedPrice"}],"estimatedTotal","notes"}.',
+        system: _localized(
+          'You build grocery lists. [intent:generate_list] Reply with '
+          'ONLY JSON: {"name","items":[{"name","quantity","unit",'
+          '"estimatedPrice"}],"estimatedTotal","notes"}.',
+        ),
         messages: [
           LlmMessage.user(
             jsonEncode({
@@ -126,10 +149,11 @@ class AiServices {
   }) async {
     final response = await _llm.complete(
       LlmRequest(
-        system:
-            'You suggest cheaper grocery substitutions. '
-            '[intent:substitute] Reply with ONLY JSON: {"substitutions":'
-            '[{"original","replacement","savings","reason"}]}.',
+        system: _localized(
+          'You suggest cheaper grocery substitutions. '
+          '[intent:substitute] Reply with ONLY JSON: {"substitutions":'
+          '[{"original","replacement","savings","reason"}]}.',
+        ),
         messages: [
           LlmMessage.user(
             jsonEncode({
@@ -156,9 +180,11 @@ class AiServices {
     required bool recommended,
   }) => _llm.complete(
     LlmRequest(
-      system:
-          'You explain grocery trip recommendations in 2-3 friendly, '
-          'concrete sentences with dollar amounts. [intent:explain_trip]',
+      system: _localized(
+        'You explain grocery trip recommendations in 2-3 friendly, '
+        'concrete sentences with local currency amounts. '
+        '[intent:explain_trip]',
+      ),
       messages: [
         LlmMessage.user(
           jsonEncode({
@@ -179,10 +205,11 @@ class AiServices {
   Future<String> summarizeReceipt(Map<String, dynamic> receiptJson) =>
       _llm.complete(
         LlmRequest(
-          system:
-              'Summarize this grocery receipt for the shopper in 2-3 '
-              'sentences, noting anything priced above its usual range. '
-              '[intent:receipt_summary]',
+          system: _localized(
+            'Summarize this grocery receipt for the shopper in 2-3 '
+            'sentences, noting anything priced above its usual range. '
+            '[intent:receipt_summary]',
+          ),
           messages: [LlmMessage.user(jsonEncode(receiptJson))],
           maxTokens: 300,
         ),
@@ -192,11 +219,12 @@ class AiServices {
   Future<String> chat(List<LlmMessage> history, {String? contextSummary}) =>
       _llm.complete(
         LlmRequest(
-          system:
-              'You are a grocery shopping assistant inside a mobile app. '
-              'You help with budgets, meal plans, price timing, and cheaper '
-              'alternatives. Be concise and concrete with dollar amounts. '
-              '${contextSummary ?? ''}',
+          system: _localized(
+            'You are a grocery shopping assistant inside a mobile app. '
+            'You help with budgets, meal plans, price timing, and cheaper '
+            'alternatives. Be concise and concrete with local currency '
+            'amounts. ${contextSummary ?? ''}',
+          ),
           messages: history,
           maxTokens: 800,
         ),

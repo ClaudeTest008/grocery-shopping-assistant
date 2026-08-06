@@ -45,6 +45,10 @@ abstract final class DemoSeed {
     'West end',
     'Park district',
     'East district',
+    'Airport road',
+    'Industrial park',
+    'Garden suburb',
+    'Ring road',
   ];
 
   /// Deterministic coordinate offsets (~0.5–5 km) around the city
@@ -62,9 +66,25 @@ abstract final class DemoSeed {
     (0.0440, 0.0050),
     (-0.0290, 0.0370),
     (0.0120, -0.0480),
+    (0.0500, 0.0300),
+    (-0.0460, -0.0180),
+    (0.0060, 0.0520),
+    (-0.0180, -0.0540),
   ];
 
   static List<Store> get stores => _stores ??= _generateStores();
+
+  /// Service bundles assigned deterministically; discounters carry
+  /// fewer services than hypermarkets, matching European reality.
+  static const _fullServices = [
+    'bakery',
+    'butcher',
+    'fish_counter',
+    'pharmacy',
+    'click_collect',
+  ];
+  static const _midServices = ['bakery', 'click_collect'];
+  static const _discounterServices = ['bakery'];
 
   static List<Store> _generateStores() {
     final c = _country;
@@ -73,8 +93,11 @@ abstract final class DemoSeed {
     for (final (i, chain) in c.chains.indexed) {
       // Bigger chains (listed first) get two demo branches.
       final branches = i < 3 ? 2 : 1;
+      final discounter = chain.priceMultiplier < 0.92;
+      final upmarket = chain.priceMultiplier > 1.05;
       for (var n = 1; n <= branches && slot < _offsets.length; n++) {
         final (dLat, dLng) = _offsets[slot];
+        final centre = slot < 2; // first slots are the city centre
         out.add(
           Store(
             id: '${c.code.toLowerCase()}-${chain.id}-$n',
@@ -88,12 +111,27 @@ abstract final class DemoSeed {
             country: c.code,
             city: c.city,
             openingHours: {
-              for (var d = 1; d <= 6; d++) '$d': '08:00-21:00',
-              // Sunday hours are shorter across European chains; some
-              // German stores close — kept open-but-short for a
-              // friendlier demo.
-              '7': '09:00-20:00',
+              // Discounters open later and close earlier than
+              // full-line supermarkets; city-centre branches run late.
+              for (var d = 1; d <= 6; d++)
+                '$d': discounter
+                    ? '09:00-20:00'
+                    : (centre ? '08:00-22:00' : '08:30-21:00'),
+              // Germany: Sunday trading is genuinely closed. Elsewhere
+              // Sundays run short hours.
+              '7': c.code == 'DE'
+                  ? 'closed'
+                  : (discounter ? '09:00-14:00' : '09:00-20:00'),
             },
+            // Out-of-centre branches have car parks; city-centre ones
+            // usually don't. Deterministic, not random.
+            hasParking: !centre,
+            // Modern chains are broadly step-free; one older-building
+            // branch per country is honest (and exercises the UI).
+            wheelchairAccessible: slot != 1,
+            services: upmarket
+                ? _fullServices
+                : (discounter ? _discounterServices : _midServices),
           ),
         );
         slot++;
@@ -143,7 +181,38 @@ abstract final class DemoSeed {
     ('frbroccoli', 'Frozen Broccoli', 'frozen', 'oz', 12.0, ['vegan']),
     ('icecream', 'Vanilla Ice Cream', 'frozen', 'oz', 16.0, <String>[]),
     ('tofu', 'Firm Tofu', 'meat', 'oz', 14.0, ['vegan']),
+    ('shampoo', 'Shampoo', 'health', 'ea', 1.0, <String>[]),
+    ('toothpaste', 'Toothpaste', 'health', 'ea', 1.0, <String>[]),
+    ('soap', 'Hand Soap', 'health', 'ea', 1.0, <String>[]),
+    ('diapers', 'Diapers, Size 4', 'baby', 'ct', 30.0, <String>[]),
+    ('babyfood', 'Baby Food Jars', 'baby', 'ct', 6.0, <String>[]),
+    ('dogfood', 'Dog Food', 'pet', 'lb', 4.0, <String>[]),
+    ('catfood', 'Cat Food Cans', 'pet', 'ct', 12.0, <String>[]),
+    ('detergent', 'Laundry Detergent', 'household', 'ea', 1.0, <String>[]),
+    ('dishsoap', 'Dish Soap', 'household', 'ea', 1.0, <String>[]),
+    ('paper', 'Toilet Paper', 'household', 'ct', 12.0, <String>[]),
+    ('trashbags', 'Trash Bags', 'household', 'ct', 20.0, <String>[]),
+    ('water', 'Sparkling Water', 'drinks', 'ct', 6.0, ['vegan']),
+    ('cola', 'Cola', 'drinks', 'l', 2.0, ['vegan']),
+    ('tea', 'Black Tea Bags', 'drinks', 'ct', 40.0, ['vegan']),
   ];
+
+  /// EU allergen declarations for the demo catalog — real, well-known
+  /// facts about these staples, never invented per-product chemistry.
+  static const _allergens = <String, List<String>>{
+    'milk': ['milk'],
+    'butter': ['milk'],
+    'cheddar': ['milk'],
+    'yogurt': ['milk'],
+    'icecream': ['milk'],
+    'eggs': ['egg'],
+    'bread': ['gluten'],
+    'tortillas': ['gluten'],
+    'pasta': ['gluten'],
+    'cereal': ['gluten'],
+    'pb': ['peanuts'],
+    'tofu': ['soy'],
+  };
 
   /// Product names in each supported demo language. English entries are
   /// the [_baseSpecs] names; a missing language falls back to English
@@ -176,6 +245,20 @@ abstract final class DemoSeed {
       'frbroccoli': 'Brócoli Congelado',
       'icecream': 'Helado de Vainilla',
       'tofu': 'Tofu Firme',
+      'shampoo': 'Champú',
+      'toothpaste': 'Pasta de Dientes',
+      'soap': 'Jabón de Manos',
+      'diapers': 'Pañales Talla 4',
+      'babyfood': 'Potitos',
+      'dogfood': 'Comida para Perros',
+      'catfood': 'Comida para Gatos, Latas',
+      'detergent': 'Detergente para Ropa',
+      'dishsoap': 'Lavavajillas a Mano',
+      'paper': 'Papel Higiénico',
+      'trashbags': 'Bolsas de Basura',
+      'water': 'Agua con Gas',
+      'cola': 'Refresco de Cola',
+      'tea': 'Té Negro, Bolsitas',
     },
     'pt': {
       'milk': 'Leite Gordo',
@@ -204,6 +287,20 @@ abstract final class DemoSeed {
       'frbroccoli': 'Brócolos Congelados',
       'icecream': 'Gelado de Baunilha',
       'tofu': 'Tofu Firme',
+      'shampoo': 'Champô',
+      'toothpaste': 'Pasta de Dentes',
+      'soap': 'Sabonete Líquido',
+      'diapers': 'Fraldas Tamanho 4',
+      'babyfood': 'Boiões de Fruta',
+      'dogfood': 'Ração para Cão',
+      'catfood': 'Ração para Gato, Latas',
+      'detergent': 'Detergente para Roupa',
+      'dishsoap': 'Detergente Loiça',
+      'paper': 'Papel Higiénico',
+      'trashbags': 'Sacos do Lixo',
+      'water': 'Água com Gás',
+      'cola': 'Refrigerante de Cola',
+      'tea': 'Chá Preto, Saquetas',
     },
     'fr': {
       'milk': 'Lait Entier',
@@ -232,6 +329,20 @@ abstract final class DemoSeed {
       'frbroccoli': 'Brocoli Surgelé',
       'icecream': 'Glace à la Vanille',
       'tofu': 'Tofu Ferme',
+      'shampoo': 'Shampooing',
+      'toothpaste': 'Dentifrice',
+      'soap': 'Savon pour les Mains',
+      'diapers': 'Couches Taille 4',
+      'babyfood': 'Petits Pots',
+      'dogfood': 'Croquettes pour Chien',
+      'catfood': 'Pâtée pour Chat, Boîtes',
+      'detergent': 'Lessive',
+      'dishsoap': 'Liquide Vaisselle',
+      'paper': 'Papier Toilette',
+      'trashbags': 'Sacs Poubelle',
+      'water': 'Eau Gazeuse',
+      'cola': 'Cola',
+      'tea': 'Thé Noir, Sachets',
     },
     'de': {
       'milk': 'Vollmilch',
@@ -260,6 +371,20 @@ abstract final class DemoSeed {
       'frbroccoli': 'TK-Brokkoli',
       'icecream': 'Vanilleeis',
       'tofu': 'Tofu Natur',
+      'shampoo': 'Shampoo',
+      'toothpaste': 'Zahnpasta',
+      'soap': 'Handseife',
+      'diapers': 'Windeln Gr. 4',
+      'babyfood': 'Babygläschen',
+      'dogfood': 'Hundefutter',
+      'catfood': 'Katzenfutter, Dosen',
+      'detergent': 'Waschmittel',
+      'dishsoap': 'Spülmittel',
+      'paper': 'Toilettenpapier',
+      'trashbags': 'Müllbeutel',
+      'water': 'Sprudelwasser',
+      'cola': 'Cola',
+      'tea': 'Schwarzer Tee, Beutel',
     },
     'it': {
       'milk': 'Latte Intero',
@@ -288,6 +413,20 @@ abstract final class DemoSeed {
       'frbroccoli': 'Broccoli Surgelati',
       'icecream': 'Gelato alla Vaniglia',
       'tofu': 'Tofu al Naturale',
+      'shampoo': 'Shampoo',
+      'toothpaste': 'Dentifricio',
+      'soap': 'Sapone Mani',
+      'diapers': 'Pannolini Taglia 4',
+      'babyfood': 'Omogeneizzati',
+      'dogfood': 'Cibo per Cani',
+      'catfood': 'Cibo per Gatti, Lattine',
+      'detergent': 'Detersivo Bucato',
+      'dishsoap': 'Detersivo Piatti',
+      'paper': 'Carta Igienica',
+      'trashbags': 'Sacchetti Spazzatura',
+      'water': 'Acqua Frizzante',
+      'cola': 'Cola',
+      'tea': 'Tè Nero, Bustine',
     },
     'nl': {
       'milk': 'Volle Melk',
@@ -316,6 +455,20 @@ abstract final class DemoSeed {
       'frbroccoli': 'Diepvries Broccoli',
       'icecream': 'Vanille-ijs',
       'tofu': 'Tofu Naturel',
+      'shampoo': 'Shampoo',
+      'toothpaste': 'Tandpasta',
+      'soap': 'Handzeep',
+      'diapers': 'Luiers Maat 4',
+      'babyfood': 'Babyvoeding Potjes',
+      'dogfood': 'Hondenvoer',
+      'catfood': 'Kattenvoer, Blikjes',
+      'detergent': 'Wasmiddel',
+      'dishsoap': 'Afwasmiddel',
+      'paper': 'Toiletpapier',
+      'trashbags': 'Vuilniszakken',
+      'water': 'Bruiswater',
+      'cola': 'Cola',
+      'tea': 'Zwarte Thee, Zakjes',
     },
   };
 
@@ -368,7 +521,17 @@ abstract final class DemoSeed {
         unitSize: s,
         barcode: '0000${id.hashCode.abs()}',
         tags: tags,
-        nutrition: const {'calories': 120, 'protein_g': 4, 'fat_g': 3},
+        allergens: _allergens[id],
+        // Non-food categories carry no nutrition panel.
+        nutrition:
+            const {
+              'health': null,
+              'baby': null,
+              'pet': null,
+              'household': null,
+            }.containsKey(category)
+            ? null
+            : const {'calories': 120, 'protein_g': 4, 'fat_g': 3},
       );
     }
 
@@ -435,6 +598,20 @@ abstract final class DemoSeed {
     'frbroccoli': 1.79,
     'icecream': 4.99,
     'tofu': 1.99,
+    'shampoo': 3.49,
+    'toothpaste': 2.29,
+    'soap': 1.79,
+    'diapers': 8.99,
+    'babyfood': 4.49,
+    'dogfood': 6.99,
+    'catfood': 7.49,
+    'detergent': 9.99,
+    'dishsoap': 2.19,
+    'paper': 6.49,
+    'trashbags': 3.99,
+    'water': 3.29,
+    'cola': 1.89,
+    'tea': 2.99,
   };
 
   /// Items a store does NOT carry — deterministic per store so the

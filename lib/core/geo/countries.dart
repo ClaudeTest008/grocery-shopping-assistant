@@ -8,7 +8,12 @@ library;
 
 /// One grocery chain within a country's demo dataset.
 class ChainSpec {
-  const ChainSpec(this.id, this.name, this.priceMultiplier);
+  const ChainSpec(
+    this.id,
+    this.name,
+    this.priceMultiplier, {
+    this.privateLabel,
+  });
 
   /// Stable id fragment ('mercadona'); store ids become
   /// `<country>-<chain>-<n>`.
@@ -17,6 +22,11 @@ class ChainSpec {
 
   /// Relative price level vs the country baseline (discounters < 1).
   final double priceMultiplier;
+
+  /// The chain's own-brand name (Hacendado, Ja!, Boni…) — data for
+  /// private-label product ranges; null when the chain has none worth
+  /// modeling.
+  final String? privateLabel;
 }
 
 class CountryConfig {
@@ -85,14 +95,16 @@ abstract final class Countries {
       lat: 40.4168,
       lng: -3.7038,
       chains: [
-        ChainSpec('mercadona', 'Mercadona', 0.90),
-        ChainSpec('carrefour', 'Carrefour', 1.02),
-        ChainSpec('lidl', 'Lidl', 0.86),
+        ChainSpec('mercadona', 'Mercadona', 0.90, privateLabel: 'Hacendado'),
+        ChainSpec('carrefour', 'Carrefour', 1.02, privateLabel: 'Carrefour'),
+        ChainSpec('lidl', 'Lidl', 0.86, privateLabel: 'Milbona'),
         ChainSpec('aldi', 'Aldi', 0.87),
-        ChainSpec('dia', 'Dia', 0.88),
-        ChainSpec('alcampo', 'Alcampo', 0.96),
-        ChainSpec('consum', 'Consum', 1.00),
-        ChainSpec('eroski', 'Eroski', 1.04),
+        ChainSpec('dia', 'Dia', 0.88, privateLabel: 'Dia'),
+        ChainSpec('alcampo', 'Alcampo', 0.96, privateLabel: 'Auchan'),
+        ChainSpec('consum', 'Consum', 1.00, privateLabel: 'Consum'),
+        ChainSpec('eroski', 'Eroski', 1.04, privateLabel: 'Eroski'),
+        ChainSpec('hipercor', 'Hipercor', 1.10),
+        ChainSpec('elcorteingles', 'Supermercado El Corte Inglés', 1.18),
       ],
       vatRateFood: 0.10,
       pricesIncludeVat: true,
@@ -110,11 +122,13 @@ abstract final class Countries {
       lat: 38.7223,
       lng: -9.1393,
       chains: [
-        ChainSpec('continente', 'Continente', 0.98),
-        ChainSpec('pingodoce', 'Pingo Doce', 0.95),
-        ChainSpec('auchan', 'Auchan', 1.00),
-        ChainSpec('lidl', 'Lidl', 0.86),
+        ChainSpec('continente', 'Continente', 0.98, privateLabel: 'Continente'),
+        ChainSpec('pingodoce', 'Pingo Doce', 0.95, privateLabel: 'Pingo Doce'),
+        ChainSpec('auchan', 'Auchan', 1.00, privateLabel: 'Auchan'),
+        ChainSpec('lidl', 'Lidl', 0.86, privateLabel: 'Milbona'),
         ChainSpec('aldi', 'Aldi', 0.87),
+        ChainSpec('intermarche', 'Intermarché', 0.97),
+        ChainSpec('minipreco', 'Minipreço', 0.89),
       ],
       vatRateFood: 0.06,
       pricesIncludeVat: true,
@@ -132,11 +146,14 @@ abstract final class Countries {
       lat: 48.8566,
       lng: 2.3522,
       chains: [
-        ChainSpec('carrefour', 'Carrefour', 1.02),
-        ChainSpec('leclerc', 'E.Leclerc', 0.93),
+        ChainSpec('carrefour', 'Carrefour', 1.02, privateLabel: 'Carrefour'),
+        ChainSpec('leclerc', 'E.Leclerc', 0.93, privateLabel: 'Marque Repère'),
         ChainSpec('intermarche', 'Intermarché', 0.97),
-        ChainSpec('auchan', 'Auchan', 1.00),
-        ChainSpec('monoprix', 'Monoprix', 1.22),
+        ChainSpec('auchan', 'Auchan', 1.00, privateLabel: 'Auchan'),
+        ChainSpec('monoprix', 'Monoprix', 1.22, privateLabel: 'Monoprix'),
+        ChainSpec('casino', 'Casino', 1.08),
+        ChainSpec('superu', 'Super U', 0.99, privateLabel: 'U'),
+        ChainSpec('lidl', 'Lidl', 0.86, privateLabel: 'Milbona'),
       ],
       vatRateFood: 0.055,
       pricesIncludeVat: true,
@@ -154,12 +171,14 @@ abstract final class Countries {
       lat: 52.5200,
       lng: 13.4050,
       chains: [
-        ChainSpec('edeka', 'Edeka', 1.05),
-        ChainSpec('rewe', 'Rewe', 1.03),
-        ChainSpec('kaufland', 'Kaufland', 0.92),
-        ChainSpec('lidl', 'Lidl', 0.86),
+        ChainSpec('edeka', 'Edeka', 1.05, privateLabel: 'Gut&Günstig'),
+        ChainSpec('rewe', 'Rewe', 1.03, privateLabel: 'Ja!'),
+        ChainSpec('kaufland', 'Kaufland', 0.92, privateLabel: 'K-Classic'),
+        ChainSpec('lidl', 'Lidl', 0.86, privateLabel: 'Milbona'),
         ChainSpec('aldinord', 'Aldi Nord', 0.85),
         ChainSpec('aldisued', 'Aldi Süd', 0.86),
+        ChainSpec('netto', 'Netto', 0.87),
+        ChainSpec('penny', 'Penny', 0.88),
       ],
       vatRateFood: 0.07,
       pricesIncludeVat: true,
@@ -177,10 +196,18 @@ abstract final class Countries {
       lat: 45.4642,
       lng: 9.1900,
       chains: [
-        ChainSpec('esselunga', 'Esselunga', 1.06),
-        ChainSpec('coop', 'Coop', 1.02),
-        ChainSpec('conad', 'Conad', 1.00),
+        ChainSpec('esselunga', 'Esselunga', 1.06, privateLabel: 'Esselunga'),
+        ChainSpec('conad', 'Conad', 1.00, privateLabel: 'Conad'),
+        ChainSpec('coop', 'Coop', 1.02, privateLabel: 'Coop'),
         ChainSpec('eurospin', 'Eurospin', 0.84),
+        ChainSpec('pam', 'Pam', 1.03),
+        ChainSpec(
+          'carrefour',
+          'Carrefour Italia',
+          1.05,
+          privateLabel: 'Carrefour',
+        ),
+        ChainSpec('lidl', 'Lidl', 0.86, privateLabel: 'Milbona'),
       ],
       vatRateFood: 0.10,
       pricesIncludeVat: true,
@@ -198,10 +225,12 @@ abstract final class Countries {
       lat: 52.3676,
       lng: 4.9041,
       chains: [
-        ChainSpec('albertheijn', 'Albert Heijn', 1.06),
-        ChainSpec('jumbo', 'Jumbo', 1.00),
+        ChainSpec('albertheijn', 'Albert Heijn', 1.06, privateLabel: 'AH'),
+        ChainSpec('jumbo', 'Jumbo', 1.00, privateLabel: 'Jumbo'),
         ChainSpec('plus', 'PLUS', 1.03),
-        ChainSpec('lidl', 'Lidl', 0.86),
+        ChainSpec('dirk', 'Dirk', 0.88),
+        ChainSpec('lidl', 'Lidl', 0.86, privateLabel: 'Milbona'),
+        ChainSpec('aldi', 'Aldi', 0.87),
       ],
       vatRateFood: 0.09,
       pricesIncludeVat: true,
@@ -219,10 +248,12 @@ abstract final class Countries {
       lat: 50.8503,
       lng: 4.3517,
       chains: [
-        ChainSpec('colruyt', 'Colruyt', 0.92),
-        ChainSpec('delhaize', 'Delhaize', 1.08),
-        ChainSpec('carrefour', 'Carrefour', 1.02),
-        ChainSpec('lidl', 'Lidl', 0.86),
+        ChainSpec('delhaize', 'Delhaize', 1.08, privateLabel: 'Delhaize'),
+        ChainSpec('colruyt', 'Colruyt', 0.92, privateLabel: 'Boni'),
+        ChainSpec('carrefour', 'Carrefour', 1.02, privateLabel: 'Carrefour'),
+        ChainSpec('okay', 'Okay', 0.94, privateLabel: 'Boni'),
+        ChainSpec('lidl', 'Lidl', 0.86, privateLabel: 'Milbona'),
+        ChainSpec('aldi', 'Aldi', 0.87),
       ],
       vatRateFood: 0.06,
       pricesIncludeVat: true,
@@ -240,10 +271,10 @@ abstract final class Countries {
       lat: 53.3498,
       lng: -6.2603,
       chains: [
-        ChainSpec('tesco', 'Tesco', 1.00),
-        ChainSpec('supervalu', 'SuperValu', 1.06),
-        ChainSpec('dunnes', 'Dunnes Stores', 1.02),
-        ChainSpec('lidl', 'Lidl', 0.86),
+        ChainSpec('tesco', 'Tesco', 1.00, privateLabel: 'Tesco'),
+        ChainSpec('dunnes', 'Dunnes Stores', 1.02, privateLabel: 'Dunnes'),
+        ChainSpec('supervalu', 'SuperValu', 1.06, privateLabel: 'SuperValu'),
+        ChainSpec('lidl', 'Lidl', 0.86, privateLabel: 'Milbona'),
         ChainSpec('aldi', 'Aldi', 0.87),
       ],
       // Most staple foods are zero-rated in Ireland.

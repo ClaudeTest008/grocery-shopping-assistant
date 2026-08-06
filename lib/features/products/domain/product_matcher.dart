@@ -28,9 +28,53 @@ abstract final class ProductMatcher {
     return null;
   }
 
-  static String _normalize(String s) => s
-      .toLowerCase()
+  static String _normalize(String s) => foldDiacritics(s)
       .replaceAll(RegExp(r'[^a-z0-9 ]'), ' ')
       .replaceAll(RegExp(r'\s+'), ' ')
       .trim();
+
+  static const _diacritics = {
+    'á': 'a',
+    'à': 'a',
+    'â': 'a',
+    'ä': 'a',
+    'ã': 'a',
+    'å': 'a',
+    'ç': 'c',
+    'é': 'e',
+    'è': 'e',
+    'ê': 'e',
+    'ë': 'e',
+    'í': 'i',
+    'ì': 'i',
+    'î': 'i',
+    'ï': 'i',
+    'ñ': 'n',
+    'ó': 'o',
+    'ò': 'o',
+    'ô': 'o',
+    'ö': 'o',
+    'õ': 'o',
+    'ú': 'u',
+    'ù': 'u',
+    'û': 'u',
+    'ü': 'u',
+    'ý': 'y',
+    'ß': 'ss',
+    'œ': 'oe',
+    'æ': 'ae',
+  };
+
+  /// Lowercases and strips accents so "platano" finds "Plátano" and a
+  /// receipt's PLÁTANOS matches the catalog — search in six languages
+  /// must not require typing the right accent.
+  static String foldDiacritics(String s) {
+    final lower = s.toLowerCase();
+    final buffer = StringBuffer();
+    for (final rune in lower.runes) {
+      final ch = String.fromCharCode(rune);
+      buffer.write(_diacritics[ch] ?? ch);
+    }
+    return buffer.toString();
+  }
 }

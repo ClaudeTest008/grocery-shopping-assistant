@@ -8,6 +8,10 @@ abstract final class Formatters {
   static String currency(num amount, {String? code}) =>
       NumberFormat.simpleCurrency(name: code ?? defaultCurrency).format(amount);
 
+  /// The bare symbol for input decorations ('€ ', '\$ ').
+  static String get currencySymbol =>
+      NumberFormat.simpleCurrency(name: defaultCurrency).currencySymbol;
+
   /// `€2.49 / kg`, `$0.12 / oz`
   static String unitPrice(num amount, String unit, {String? code}) =>
       '${currency(amount, code: code)} / $unit';

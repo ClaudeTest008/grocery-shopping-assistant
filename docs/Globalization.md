@@ -115,6 +115,44 @@ Nothing else: no screen, repository, optimizer, parser or migration
 changes. Non-eurozone countries (UK/CH/PL) need only their currency
 code in the config — `Formatters` and the £ symbol path already work.
 
+## European production upgrade (2026-08-06)
+
+Beyond the base globalization:
+- **Chain coverage grew to 66 chains** (ES 10, PT 7, FR 8, DE 8, IT 7,
+  NL 6, BE 6, IE 5, US 8) matching the production spec, each with a
+  `privateLabel` where one exists (Hacendado, Ja!, Gut&Günstig, Boni,
+  Marque Repère…) — data awaiting private-label product ranges.
+- **Store realism as data**: varied opening hours (discounters
+  9:00–20:00, city-centre full-liners to 22:00, short EU Sundays,
+  Germany Sunday-closed), `hasParking` (city-centre = no),
+  `wheelchairAccessible` (one legacy branch per country), `services`
+  (bakery → full counters by segment). All deterministic, all shown in
+  the store sheet, all pinned by tests.
+- **Catalog: 40 base products / 160 entries across 12 categories**,
+  adding health, baby, pet, household and drinks with translations in
+  all six languages, EU allergen chips (milk, gluten, peanuts, soy,
+  egg — real facts only), and nutrition panels dropped from non-food.
+  `ingredients` exists as a column/field and stays null in demo data —
+  populated by real catalogs, never fabricated. Alcohol: the category
+  model gates by data (`category` + age flag when a real dataset
+  needs it); deliberately not implemented.
+- **Localization plumbing**: `flutter_localizations` delegates +
+  `supportedLocales` from the registry, `Intl.defaultLocale` set per
+  country (dates/numbers render locale-correct app-wide),
+  accent-insensitive search and receipt matching (`foldDiacritics`),
+  AI prompts instructed to reply in the country's language (JSON keys
+  stay English), currency symbols in input fields from the selected
+  currency, optimizer explanations through `Formatters.currency`.
+- **Map**: city/postal-code/address search via OSM Nominatim (real,
+  key-free, country-biased, one request per explicit submit),
+  closing-soon filter + store-sheet chip, city matched in store
+  search. Route modes: the navigation handoff URL accepts
+  `travelmode` — walking/cycling/transit are a parameter away, not an
+  architecture change.
+- **Shopping intelligence**: every option card states its coverage
+  ("Prices 18 of 20 items" / "All items priced") — confidence as a
+  countable fact, never a score pulled from air.
+
 ## Remaining limitations (honest)
 
 - UI chrome is English everywhere; only catalog data is localized.

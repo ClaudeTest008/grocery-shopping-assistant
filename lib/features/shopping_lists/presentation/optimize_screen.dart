@@ -228,6 +228,23 @@ class _OptionCard extends ConsumerWidget {
                     icon: Icons.shopping_bag_outlined,
                     text: 'Items ${Formatters.currency(option.itemsTotal)}',
                   ),
+                  // Confidence, stated as the countable fact it is:
+                  // how much of the list this trip actually prices.
+                  _Fact(
+                    icon: option.unavailableItems.isEmpty
+                        ? Icons.verified_outlined
+                        : Icons.rule_rounded,
+                    text: () {
+                      final priced = option.visits.fold<int>(
+                        0,
+                        (sum, v) => sum + v.items.length,
+                      );
+                      final total = priced + option.unavailableItems.length;
+                      return priced == total
+                          ? 'All $total items priced'
+                          : 'Prices $priced of $total items';
+                    }(),
+                  ),
                   if (option.couponSavings > 0)
                     _Fact(
                       icon: Icons.local_offer_outlined,

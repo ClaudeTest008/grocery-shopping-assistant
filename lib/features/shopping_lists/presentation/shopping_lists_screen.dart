@@ -69,9 +69,9 @@ class ShoppingListsScreen extends ConsumerWidget {
             TextField(
               controller: budgetController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Budget (optional)',
-                prefixText: r'$ ',
+                prefixText: '${Formatters.currencySymbol} ',
               ),
             ),
           ],

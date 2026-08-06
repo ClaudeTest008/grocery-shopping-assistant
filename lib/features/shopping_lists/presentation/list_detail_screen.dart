@@ -209,9 +209,9 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
             TextField(
               controller: budgetController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Budget (optional)',
-                prefixText: r'$ ',
+                prefixText: '${Formatters.currencySymbol} ',
               ),
             ),
             const SizedBox(height: 20),

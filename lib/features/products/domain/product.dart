@@ -34,6 +34,14 @@ abstract class Product with _$Product {
     /// Per-serving nutrition facts, free-form keys (calories, protein_g...).
     Map<String, dynamic>? nutrition,
 
+    /// EU-mandated allergen declarations: milk, gluten, peanuts, soy,
+    /// egg... Rendered as warning chips; empty/null = none declared.
+    List<String>? allergens,
+
+    /// Full ingredient list in the catalog's language. Null in demo
+    /// data — populated by real catalogs, never fabricated.
+    String? ingredients,
+
     /// Dietary tags: vegan, gluten_free, organic...
     @Default(<String>[]) List<String> tags,
   }) = _Product;

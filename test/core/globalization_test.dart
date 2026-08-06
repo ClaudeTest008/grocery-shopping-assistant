@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:grocery_shopping_assistant/core/demo/demo_seed.dart';
 import 'package:grocery_shopping_assistant/core/geo/countries.dart';
 import 'package:grocery_shopping_assistant/core/utils/formatters.dart';
+import 'package:grocery_shopping_assistant/features/products/data/product_repositories.dart';
 import 'package:grocery_shopping_assistant/features/products/domain/price.dart';
 import 'package:grocery_shopping_assistant/features/products/domain/price_verdict.dart';
 import 'package:grocery_shopping_assistant/features/receipts/domain/receipt_parser.dart';
@@ -40,14 +41,36 @@ void main() {
     test('the specified chains exist per country', () {
       List<String> chains(String code) =>
           Countries.byCode(code).chains.map((s) => s.name).toList();
-      expect(chains('ES'), containsAll(['Mercadona', 'Lidl', 'Dia']));
-      expect(chains('PT'), containsAll(['Continente', 'Pingo Doce']));
-      expect(chains('FR'), containsAll(['Carrefour', 'E.Leclerc']));
-      expect(chains('DE'), containsAll(['Edeka', 'Rewe', 'Aldi Nord']));
-      expect(chains('IT'), containsAll(['Esselunga', 'Eurospin']));
-      expect(chains('NL'), containsAll(['Albert Heijn', 'Jumbo']));
-      expect(chains('BE'), containsAll(['Colruyt', 'Delhaize']));
+      expect(
+        chains('ES'),
+        containsAll(['Mercadona', 'Lidl', 'Dia', 'Hipercor']),
+      );
+      expect(
+        chains('PT'),
+        containsAll(['Continente', 'Pingo Doce', 'Minipreço']),
+      );
+      expect(
+        chains('FR'),
+        containsAll(['Carrefour', 'E.Leclerc', 'Casino', 'Super U']),
+      );
+      expect(
+        chains('DE'),
+        containsAll(['Edeka', 'Rewe', 'Aldi Nord', 'Netto', 'Penny']),
+      );
+      expect(
+        chains('IT'),
+        containsAll(['Esselunga', 'Eurospin', 'Pam', 'Carrefour Italia']),
+      );
+      expect(chains('NL'), containsAll(['Albert Heijn', 'Jumbo', 'Dirk']));
+      expect(chains('BE'), containsAll(['Colruyt', 'Delhaize', 'Okay']));
       expect(chains('IE'), containsAll(['Tesco', 'Dunnes Stores']));
+    });
+
+    test('private labels are data on the chain, never hardcoded', () {
+      final mercadona = Countries.byCode(
+        'ES',
+      ).chains.firstWhere((c) => c.id == 'mercadona');
+      expect(mercadona.privateLabel, 'Hacendado');
     });
 
     test('unsupported codes fall back instead of throwing', () {
@@ -112,6 +135,57 @@ void main() {
           );
         }
       }
+    });
+
+    test('European store realism: hours, parking, services', () {
+      DemoSeed.country = Countries.byCode('DE');
+      // Sunday trading closed in Germany — a real market fact the
+      // open-now logic must respect.
+      expect(
+        DemoSeed.stores.every((s) => s.openingHours?['7'] == 'closed'),
+        isTrue,
+      );
+      DemoSeed.country = Countries.byCode('ES');
+      for (final store in DemoSeed.stores) {
+        expect(store.hasParking, isNotNull);
+        expect(store.services, isNotEmpty);
+      }
+      // City-centre branches have no car park; out-of-town ones do.
+      expect(DemoSeed.stores.first.hasParking, isFalse);
+      expect(DemoSeed.stores.last.hasParking, isTrue);
+    });
+
+    test('the catalog covers European household categories', () {
+      DemoSeed.country = Countries.byCode('ES');
+      final categories = DemoSeed.products.map((p) => p.category).toSet();
+      expect(
+        categories,
+        containsAll(['health', 'baby', 'pet', 'household', 'drinks']),
+      );
+      // Localized names extend to the new categories.
+      expect(
+        DemoSeed.products.firstWhere((p) => p.id == 'detergent').name,
+        'Detergente para Ropa',
+      );
+      // EU allergen declarations ride on the product.
+      expect(
+        DemoSeed.products.firstWhere((p) => p.id == 'milk').allergens,
+        contains('milk'),
+      );
+      // Non-food carries no nutrition panel.
+      expect(
+        DemoSeed.products.firstWhere((p) => p.id == 'paper').nutrition,
+        isNull,
+      );
+    });
+
+    test('search is accent-insensitive in every language', () async {
+      DemoSeed.country = Countries.byCode('ES');
+      final repo = DemoProductRepository();
+      final unaccented = await repo.search(query: 'platano');
+      expect(unaccented.map((p) => p.id), contains('bananas'));
+      final accented = await repo.search(query: 'plátano');
+      expect(accented.map((p) => p.id), contains('bananas'));
     });
 
     test('price level scales with the country', () {

@@ -25,7 +25,11 @@ mixin _$Product {
  List<String>? get countries; String get category;/// Base unit for unit-price comparison: oz, lb, ct, gal, l, kg...
  String get unit;/// Package size in [unit], e.g. 16 (oz).
  double get unitSize; String? get imageUrl;/// Per-serving nutrition facts, free-form keys (calories, protein_g...).
- Map<String, dynamic>? get nutrition;/// Dietary tags: vegan, gluten_free, organic...
+ Map<String, dynamic>? get nutrition;/// EU-mandated allergen declarations: milk, gluten, peanuts, soy,
+/// egg... Rendered as warning chips; empty/null = none declared.
+ List<String>? get allergens;/// Full ingredient list in the catalog's language. Null in demo
+/// data — populated by real catalogs, never fabricated.
+ String? get ingredients;/// Dietary tags: vegan, gluten_free, organic...
  List<String> get tags;
 /// Create a copy of Product
 /// with the given fields replaced by the non-null parameter values.
@@ -39,16 +43,16 @@ $ProductCopyWith<Product> get copyWith => _$ProductCopyWithImpl<Product>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Product&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.brand, brand) || other.brand == brand)&&(identical(other.barcode, barcode) || other.barcode == barcode)&&const DeepCollectionEquality().equals(other.barcodes, barcodes)&&const DeepCollectionEquality().equals(other.countries, countries)&&(identical(other.category, category) || other.category == category)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.unitSize, unitSize) || other.unitSize == unitSize)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&const DeepCollectionEquality().equals(other.nutrition, nutrition)&&const DeepCollectionEquality().equals(other.tags, tags));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Product&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.brand, brand) || other.brand == brand)&&(identical(other.barcode, barcode) || other.barcode == barcode)&&const DeepCollectionEquality().equals(other.barcodes, barcodes)&&const DeepCollectionEquality().equals(other.countries, countries)&&(identical(other.category, category) || other.category == category)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.unitSize, unitSize) || other.unitSize == unitSize)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&const DeepCollectionEquality().equals(other.nutrition, nutrition)&&const DeepCollectionEquality().equals(other.allergens, allergens)&&(identical(other.ingredients, ingredients) || other.ingredients == ingredients)&&const DeepCollectionEquality().equals(other.tags, tags));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,brand,barcode,const DeepCollectionEquality().hash(barcodes),const DeepCollectionEquality().hash(countries),category,unit,unitSize,imageUrl,const DeepCollectionEquality().hash(nutrition),const DeepCollectionEquality().hash(tags));
+int get hashCode => Object.hash(runtimeType,id,name,brand,barcode,const DeepCollectionEquality().hash(barcodes),const DeepCollectionEquality().hash(countries),category,unit,unitSize,imageUrl,const DeepCollectionEquality().hash(nutrition),const DeepCollectionEquality().hash(allergens),ingredients,const DeepCollectionEquality().hash(tags));
 
 @override
 String toString() {
-  return 'Product(id: $id, name: $name, brand: $brand, barcode: $barcode, barcodes: $barcodes, countries: $countries, category: $category, unit: $unit, unitSize: $unitSize, imageUrl: $imageUrl, nutrition: $nutrition, tags: $tags)';
+  return 'Product(id: $id, name: $name, brand: $brand, barcode: $barcode, barcodes: $barcodes, countries: $countries, category: $category, unit: $unit, unitSize: $unitSize, imageUrl: $imageUrl, nutrition: $nutrition, allergens: $allergens, ingredients: $ingredients, tags: $tags)';
 }
 
 
@@ -59,7 +63,7 @@ abstract mixin class $ProductCopyWith<$Res>  {
   factory $ProductCopyWith(Product value, $Res Function(Product) _then) = _$ProductCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, String? brand, String? barcode, List<String>? barcodes, List<String>? countries, String category, String unit, double unitSize, String? imageUrl, Map<String, dynamic>? nutrition, List<String> tags
+ String id, String name, String? brand, String? barcode, List<String>? barcodes, List<String>? countries, String category, String unit, double unitSize, String? imageUrl, Map<String, dynamic>? nutrition, List<String>? allergens, String? ingredients, List<String> tags
 });
 
 
@@ -76,7 +80,7 @@ class _$ProductCopyWithImpl<$Res>
 
 /// Create a copy of Product
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? brand = freezed,Object? barcode = freezed,Object? barcodes = freezed,Object? countries = freezed,Object? category = null,Object? unit = null,Object? unitSize = null,Object? imageUrl = freezed,Object? nutrition = freezed,Object? tags = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? brand = freezed,Object? barcode = freezed,Object? barcodes = freezed,Object? countries = freezed,Object? category = null,Object? unit = null,Object? unitSize = null,Object? imageUrl = freezed,Object? nutrition = freezed,Object? allergens = freezed,Object? ingredients = freezed,Object? tags = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -89,7 +93,9 @@ as String,unit: null == unit ? _self.unit : unit // ignore: cast_nullable_to_non
 as String,unitSize: null == unitSize ? _self.unitSize : unitSize // ignore: cast_nullable_to_non_nullable
 as double,imageUrl: freezed == imageUrl ? _self.imageUrl : imageUrl // ignore: cast_nullable_to_non_nullable
 as String?,nutrition: freezed == nutrition ? _self.nutrition : nutrition // ignore: cast_nullable_to_non_nullable
-as Map<String, dynamic>?,tags: null == tags ? _self.tags : tags // ignore: cast_nullable_to_non_nullable
+as Map<String, dynamic>?,allergens: freezed == allergens ? _self.allergens : allergens // ignore: cast_nullable_to_non_nullable
+as List<String>?,ingredients: freezed == ingredients ? _self.ingredients : ingredients // ignore: cast_nullable_to_non_nullable
+as String?,tags: null == tags ? _self.tags : tags // ignore: cast_nullable_to_non_nullable
 as List<String>,
   ));
 }
@@ -175,10 +181,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String? brand,  String? barcode,  List<String>? barcodes,  List<String>? countries,  String category,  String unit,  double unitSize,  String? imageUrl,  Map<String, dynamic>? nutrition,  List<String> tags)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String? brand,  String? barcode,  List<String>? barcodes,  List<String>? countries,  String category,  String unit,  double unitSize,  String? imageUrl,  Map<String, dynamic>? nutrition,  List<String>? allergens,  String? ingredients,  List<String> tags)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Product() when $default != null:
-return $default(_that.id,_that.name,_that.brand,_that.barcode,_that.barcodes,_that.countries,_that.category,_that.unit,_that.unitSize,_that.imageUrl,_that.nutrition,_that.tags);case _:
+return $default(_that.id,_that.name,_that.brand,_that.barcode,_that.barcodes,_that.countries,_that.category,_that.unit,_that.unitSize,_that.imageUrl,_that.nutrition,_that.allergens,_that.ingredients,_that.tags);case _:
   return orElse();
 
 }
@@ -196,10 +202,10 @@ return $default(_that.id,_that.name,_that.brand,_that.barcode,_that.barcodes,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String? brand,  String? barcode,  List<String>? barcodes,  List<String>? countries,  String category,  String unit,  double unitSize,  String? imageUrl,  Map<String, dynamic>? nutrition,  List<String> tags)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String? brand,  String? barcode,  List<String>? barcodes,  List<String>? countries,  String category,  String unit,  double unitSize,  String? imageUrl,  Map<String, dynamic>? nutrition,  List<String>? allergens,  String? ingredients,  List<String> tags)  $default,) {final _that = this;
 switch (_that) {
 case _Product():
-return $default(_that.id,_that.name,_that.brand,_that.barcode,_that.barcodes,_that.countries,_that.category,_that.unit,_that.unitSize,_that.imageUrl,_that.nutrition,_that.tags);case _:
+return $default(_that.id,_that.name,_that.brand,_that.barcode,_that.barcodes,_that.countries,_that.category,_that.unit,_that.unitSize,_that.imageUrl,_that.nutrition,_that.allergens,_that.ingredients,_that.tags);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -216,10 +222,10 @@ return $default(_that.id,_that.name,_that.brand,_that.barcode,_that.barcodes,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String? brand,  String? barcode,  List<String>? barcodes,  List<String>? countries,  String category,  String unit,  double unitSize,  String? imageUrl,  Map<String, dynamic>? nutrition,  List<String> tags)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String? brand,  String? barcode,  List<String>? barcodes,  List<String>? countries,  String category,  String unit,  double unitSize,  String? imageUrl,  Map<String, dynamic>? nutrition,  List<String>? allergens,  String? ingredients,  List<String> tags)?  $default,) {final _that = this;
 switch (_that) {
 case _Product() when $default != null:
-return $default(_that.id,_that.name,_that.brand,_that.barcode,_that.barcodes,_that.countries,_that.category,_that.unit,_that.unitSize,_that.imageUrl,_that.nutrition,_that.tags);case _:
+return $default(_that.id,_that.name,_that.brand,_that.barcode,_that.barcodes,_that.countries,_that.category,_that.unit,_that.unitSize,_that.imageUrl,_that.nutrition,_that.allergens,_that.ingredients,_that.tags);case _:
   return null;
 
 }
@@ -231,7 +237,7 @@ return $default(_that.id,_that.name,_that.brand,_that.barcode,_that.barcodes,_th
 @JsonSerializable()
 
 class _Product implements Product {
-  const _Product({required this.id, required this.name, this.brand, this.barcode, final  List<String>? barcodes, final  List<String>? countries, required this.category, this.unit = 'ea', this.unitSize = 1.0, this.imageUrl, final  Map<String, dynamic>? nutrition, final  List<String> tags = const <String>[]}): _barcodes = barcodes,_countries = countries,_nutrition = nutrition,_tags = tags;
+  const _Product({required this.id, required this.name, this.brand, this.barcode, final  List<String>? barcodes, final  List<String>? countries, required this.category, this.unit = 'ea', this.unitSize = 1.0, this.imageUrl, final  Map<String, dynamic>? nutrition, final  List<String>? allergens, this.ingredients, final  List<String> tags = const <String>[]}): _barcodes = barcodes,_countries = countries,_nutrition = nutrition,_allergens = allergens,_tags = tags;
   factory _Product.fromJson(Map<String, dynamic> json) => _$ProductFromJson(json);
 
 @override final  String id;
@@ -284,6 +290,22 @@ class _Product implements Product {
   return EqualUnmodifiableMapView(value);
 }
 
+/// EU-mandated allergen declarations: milk, gluten, peanuts, soy,
+/// egg... Rendered as warning chips; empty/null = none declared.
+ final  List<String>? _allergens;
+/// EU-mandated allergen declarations: milk, gluten, peanuts, soy,
+/// egg... Rendered as warning chips; empty/null = none declared.
+@override List<String>? get allergens {
+  final value = _allergens;
+  if (value == null) return null;
+  if (_allergens is EqualUnmodifiableListView) return _allergens;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(value);
+}
+
+/// Full ingredient list in the catalog's language. Null in demo
+/// data — populated by real catalogs, never fabricated.
+@override final  String? ingredients;
 /// Dietary tags: vegan, gluten_free, organic...
  final  List<String> _tags;
 /// Dietary tags: vegan, gluten_free, organic...
@@ -307,16 +329,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Product&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.brand, brand) || other.brand == brand)&&(identical(other.barcode, barcode) || other.barcode == barcode)&&const DeepCollectionEquality().equals(other._barcodes, _barcodes)&&const DeepCollectionEquality().equals(other._countries, _countries)&&(identical(other.category, category) || other.category == category)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.unitSize, unitSize) || other.unitSize == unitSize)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&const DeepCollectionEquality().equals(other._nutrition, _nutrition)&&const DeepCollectionEquality().equals(other._tags, _tags));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Product&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.brand, brand) || other.brand == brand)&&(identical(other.barcode, barcode) || other.barcode == barcode)&&const DeepCollectionEquality().equals(other._barcodes, _barcodes)&&const DeepCollectionEquality().equals(other._countries, _countries)&&(identical(other.category, category) || other.category == category)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.unitSize, unitSize) || other.unitSize == unitSize)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&const DeepCollectionEquality().equals(other._nutrition, _nutrition)&&const DeepCollectionEquality().equals(other._allergens, _allergens)&&(identical(other.ingredients, ingredients) || other.ingredients == ingredients)&&const DeepCollectionEquality().equals(other._tags, _tags));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,brand,barcode,const DeepCollectionEquality().hash(_barcodes),const DeepCollectionEquality().hash(_countries),category,unit,unitSize,imageUrl,const DeepCollectionEquality().hash(_nutrition),const DeepCollectionEquality().hash(_tags));
+int get hashCode => Object.hash(runtimeType,id,name,brand,barcode,const DeepCollectionEquality().hash(_barcodes),const DeepCollectionEquality().hash(_countries),category,unit,unitSize,imageUrl,const DeepCollectionEquality().hash(_nutrition),const DeepCollectionEquality().hash(_allergens),ingredients,const DeepCollectionEquality().hash(_tags));
 
 @override
 String toString() {
-  return 'Product(id: $id, name: $name, brand: $brand, barcode: $barcode, barcodes: $barcodes, countries: $countries, category: $category, unit: $unit, unitSize: $unitSize, imageUrl: $imageUrl, nutrition: $nutrition, tags: $tags)';
+  return 'Product(id: $id, name: $name, brand: $brand, barcode: $barcode, barcodes: $barcodes, countries: $countries, category: $category, unit: $unit, unitSize: $unitSize, imageUrl: $imageUrl, nutrition: $nutrition, allergens: $allergens, ingredients: $ingredients, tags: $tags)';
 }
 
 
@@ -327,7 +349,7 @@ abstract mixin class _$ProductCopyWith<$Res> implements $ProductCopyWith<$Res> {
   factory _$ProductCopyWith(_Product value, $Res Function(_Product) _then) = __$ProductCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, String? brand, String? barcode, List<String>? barcodes, List<String>? countries, String category, String unit, double unitSize, String? imageUrl, Map<String, dynamic>? nutrition, List<String> tags
+ String id, String name, String? brand, String? barcode, List<String>? barcodes, List<String>? countries, String category, String unit, double unitSize, String? imageUrl, Map<String, dynamic>? nutrition, List<String>? allergens, String? ingredients, List<String> tags
 });
 
 
@@ -344,7 +366,7 @@ class __$ProductCopyWithImpl<$Res>
 
 /// Create a copy of Product
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? brand = freezed,Object? barcode = freezed,Object? barcodes = freezed,Object? countries = freezed,Object? category = null,Object? unit = null,Object? unitSize = null,Object? imageUrl = freezed,Object? nutrition = freezed,Object? tags = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? brand = freezed,Object? barcode = freezed,Object? barcodes = freezed,Object? countries = freezed,Object? category = null,Object? unit = null,Object? unitSize = null,Object? imageUrl = freezed,Object? nutrition = freezed,Object? allergens = freezed,Object? ingredients = freezed,Object? tags = null,}) {
   return _then(_Product(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -357,7 +379,9 @@ as String,unit: null == unit ? _self.unit : unit // ignore: cast_nullable_to_non
 as String,unitSize: null == unitSize ? _self.unitSize : unitSize // ignore: cast_nullable_to_non_nullable
 as double,imageUrl: freezed == imageUrl ? _self.imageUrl : imageUrl // ignore: cast_nullable_to_non_nullable
 as String?,nutrition: freezed == nutrition ? _self._nutrition : nutrition // ignore: cast_nullable_to_non_nullable
-as Map<String, dynamic>?,tags: null == tags ? _self._tags : tags // ignore: cast_nullable_to_non_nullable
+as Map<String, dynamic>?,allergens: freezed == allergens ? _self._allergens : allergens // ignore: cast_nullable_to_non_nullable
+as List<String>?,ingredients: freezed == ingredients ? _self.ingredients : ingredients // ignore: cast_nullable_to_non_nullable
+as String?,tags: null == tags ? _self._tags : tags // ignore: cast_nullable_to_non_nullable
 as List<String>,
   ));
 }

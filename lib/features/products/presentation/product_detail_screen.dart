@@ -122,9 +122,9 @@ class ProductDetailScreen extends ConsumerWidget {
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Price you saw',
-                prefixText: r'$ ',
+                prefixText: '${Formatters.currencySymbol} ',
               ),
             ),
             const SizedBox(height: 12),
@@ -224,6 +224,19 @@ class _Header extends StatelessWidget {
                 Chip(
                   label: Text(Formatters.titleCase(tag)),
                   backgroundColor: context.colors.secondaryContainer,
+                ),
+              // EU labeling: allergens are safety information, not
+              // decoration — distinct color, warning icon, announced.
+              for (final allergen in product.allergens ?? const <String>[])
+                Chip(
+                  avatar: Icon(
+                    Icons.warning_amber_rounded,
+                    size: 16,
+                    color: context.colors.onErrorContainer,
+                  ),
+                  label: Text(Formatters.titleCase(allergen)),
+                  backgroundColor: context.colors.errorContainer,
+                  labelStyle: TextStyle(color: context.colors.onErrorContainer),
                 ),
             ],
           ),

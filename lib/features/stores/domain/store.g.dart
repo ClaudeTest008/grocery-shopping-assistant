@@ -20,6 +20,11 @@ _Store _$StoreFromJson(Map<String, dynamic> json) => _Store(
   openingHours: (json['opening_hours'] as Map<String, dynamic>?)?.map(
     (k, e) => MapEntry(k, e as String),
   ),
+  hasParking: json['has_parking'] as bool?,
+  wheelchairAccessible: json['wheelchair_accessible'] as bool?,
+  services: (json['services'] as List<dynamic>?)
+      ?.map((e) => e as String)
+      .toList(),
   distanceKm: (json['distance_km'] as num?)?.toDouble(),
 );
 
@@ -35,5 +40,8 @@ Map<String, dynamic> _$StoreToJson(_Store instance) => <String, dynamic>{
   'logo_url': instance.logoUrl,
   'phone': instance.phone,
   'opening_hours': instance.openingHours,
+  'has_parking': instance.hasParking,
+  'wheelchair_accessible': instance.wheelchairAccessible,
+  'services': instance.services,
   'distance_km': instance.distanceKm,
 };

@@ -48,6 +48,11 @@ IconData _categoryIcon(String category) => switch (category) {
   'pantry' => Icons.kitchen_outlined,
   'beverages' => Icons.local_cafe_outlined,
   'frozen' => Icons.ac_unit_outlined,
+  'health' => Icons.spa_outlined,
+  'baby' => Icons.child_care_outlined,
+  'pet' => Icons.pets_outlined,
+  'household' => Icons.cleaning_services_outlined,
+  'drinks' => Icons.local_drink_outlined,
   _ => Icons.shopping_basket_outlined,
 };
 

@@ -20,6 +20,7 @@ import '../../offers/domain/offer.dart';
 import '../../profile/data/preferences_repository.dart';
 import '../../stores/data/store_repositories.dart';
 import '../../stores/domain/store.dart';
+import '../data/geocoding_client.dart';
 import 'map_providers.dart';
 
 /// No hardcoded map bounds anywhere: the fallback centre is the
@@ -47,6 +48,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
 
   String _query = '';
   bool _openNowOnly = false;
+  bool _closingSoonOnly = false;
   bool _favoritesOnly = false;
   double _rotation = 0;
   double _zoom = 12;
@@ -118,11 +120,28 @@ class _MapScreenState extends ConsumerState<MapScreen>
       for (final s in stores)
         if ((q.isEmpty ||
                 s.name.toLowerCase().contains(q) ||
-                s.chain.toLowerCase().contains(q)) &&
+                s.chain.toLowerCase().contains(q) ||
+                (s.city?.toLowerCase().contains(q) ?? false)) &&
             (!_openNowOnly || s.isOpenNow) &&
+            (!_closingSoonOnly || s.isClosingSoon) &&
             (!_favoritesOnly || favorites.contains(s.id)))
           s,
     ];
+  }
+
+  /// Submitted query with no store match: treat it as a place (city,
+  /// postal code, address) and fly there via Nominatim. One request per
+  /// explicit submit — never per keystroke.
+  Future<void> _searchPlace(String query) async {
+    final place = await ref.read(geocodingClientProvider).search(query);
+    if (!mounted) return;
+    if (place == null) {
+      context.showSnack('No store or place found for "$query"');
+      return;
+    }
+    Telemetry.logEvent('map_place_search', {'found': true});
+    _animateTo(LatLng(place.lat, place.lng), 13);
+    context.showSnack('Showing ${place.label}');
   }
 
   @override
@@ -249,10 +268,15 @@ class _MapScreenState extends ConsumerState<MapScreen>
               _SearchAndFilters(
                 controller: _searchController,
                 openNowOnly: _openNowOnly,
+                closingSoonOnly: _closingSoonOnly,
                 favoritesOnly: _favoritesOnly,
                 resultCount: stores.length,
                 onQuery: (q) => setState(() => _query = q),
+                onSubmitted: (q) {
+                  if (q.trim().isNotEmpty && stores.isEmpty) _searchPlace(q);
+                },
                 onOpenNow: (v) => setState(() => _openNowOnly = v),
+                onClosingSoon: (v) => setState(() => _closingSoonOnly = v),
                 onFavorites: (v) => setState(() => _favoritesOnly = v),
               ),
               if (trip != null)
@@ -592,19 +616,25 @@ class _SearchAndFilters extends StatelessWidget {
   const _SearchAndFilters({
     required this.controller,
     required this.openNowOnly,
+    required this.closingSoonOnly,
     required this.favoritesOnly,
     required this.resultCount,
     required this.onQuery,
+    required this.onSubmitted,
     required this.onOpenNow,
+    required this.onClosingSoon,
     required this.onFavorites,
   });
 
   final TextEditingController controller;
   final bool openNowOnly;
+  final bool closingSoonOnly;
   final bool favoritesOnly;
   final int resultCount;
   final ValueChanged<String> onQuery;
+  final ValueChanged<String> onSubmitted;
   final ValueChanged<bool> onOpenNow;
+  final ValueChanged<bool> onClosingSoon;
   final ValueChanged<bool> onFavorites;
 
   @override
@@ -617,9 +647,10 @@ class _SearchAndFilters extends StatelessWidget {
           children: [
             SearchBar(
               controller: controller,
-              hintText: 'Search stores',
+              hintText: 'Search stores, city or postal code',
               leading: const Icon(Icons.search_rounded),
               onChanged: onQuery,
+              onSubmitted: onSubmitted,
               elevation: const WidgetStatePropertyAll(3),
               constraints: const BoxConstraints(minHeight: 48, maxWidth: 560),
             ),
@@ -634,6 +665,14 @@ class _SearchAndFilters extends StatelessWidget {
                   avatar: openNowOnly
                       ? null
                       : const Icon(Icons.schedule_rounded, size: 16),
+                ),
+                FilterChip(
+                  label: const Text('Closing soon'),
+                  selected: closingSoonOnly,
+                  onSelected: onClosingSoon,
+                  avatar: closingSoonOnly
+                      ? null
+                      : const Icon(Icons.timelapse_rounded, size: 16),
                 ),
                 FilterChip(
                   label: const Text('Favorites'),
@@ -943,6 +982,15 @@ class _StoreSheet extends ConsumerWidget {
                       : 'Closed · today $todayHours',
                 ),
               ),
+              if (store.isClosingSoon)
+                Chip(
+                  avatar: Icon(
+                    Icons.timelapse_rounded,
+                    size: 16,
+                    color: context.colors.error,
+                  ),
+                  label: const Text('Closing soon'),
+                ),
               if (store.distanceKm != null)
                 Chip(
                   avatar: const Icon(Icons.directions_car_outlined, size: 16),
@@ -951,6 +999,18 @@ class _StoreSheet extends ConsumerWidget {
                     '${Formatters.duration(store.driveTime)}',
                   ),
                 ),
+              if (store.hasParking == true)
+                const Chip(
+                  avatar: Icon(Icons.local_parking_rounded, size: 16),
+                  label: Text('Parking'),
+                ),
+              if (store.wheelchairAccessible == true)
+                const Chip(
+                  avatar: Icon(Icons.accessible_rounded, size: 16),
+                  label: Text('Step-free'),
+                ),
+              for (final service in store.services ?? const <String>[])
+                Chip(label: Text(Formatters.titleCase(service))),
             ],
           ),
           const SizedBox(height: 12),

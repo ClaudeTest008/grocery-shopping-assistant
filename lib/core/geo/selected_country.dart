@@ -1,6 +1,8 @@
 import 'dart:ui';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 
 import '../demo/demo_seed.dart';
 import '../storage/local_store.dart';
@@ -34,6 +36,17 @@ abstract final class SelectedCountry {
   static Future<void> apply(CountryConfig config, {bool persist = true}) async {
     DemoSeed.country = config;
     Formatters.defaultCurrency = config.currency;
+    // Dates and numbers follow the country everywhere Formatters is
+    // used: 05/03/2026 and 1.234,56 € in Madrid, Mar 5 and $1,234.56
+    // in Austin — one assignment, zero per-screen work.
+    final locale = '${config.primaryLanguage}_${config.code}';
+    try {
+      await initializeDateFormatting(config.primaryLanguage);
+      Intl.defaultLocale = locale;
+    } catch (_) {
+      // Unknown locale data: keep the previous locale rather than crash
+      // at boot. English formatting is a degraded state, not a failure.
+    }
     if (persist) {
       await LocalStore.instance.prefs.put(_prefKey, config.code);
     }

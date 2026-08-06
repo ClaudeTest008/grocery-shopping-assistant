@@ -8,19 +8,23 @@ import '../../../core/services/supabase_service.dart';
 import '../../../core/storage/local_store.dart';
 import '../domain/price.dart';
 import '../domain/product.dart';
+import '../domain/product_matcher.dart';
 import '../domain/product_repository.dart';
 
 class DemoProductRepository implements ProductRepository {
   @override
   Future<List<Product>> search({String query = '', String? category}) async {
-    final q = query.toLowerCase();
+    // Accent-insensitive: "platano" must find "Plátano" in every
+    // catalog language.
+    final q = ProductMatcher.foldDiacritics(query);
     return DemoSeed.products
         .where(
           (p) =>
               (category == null || p.category == category) &&
               (q.isEmpty ||
-                  p.name.toLowerCase().contains(q) ||
-                  (p.brand?.toLowerCase().contains(q) ?? false)),
+                  ProductMatcher.foldDiacritics(p.name).contains(q) ||
+                  (p.brand != null &&
+                      ProductMatcher.foldDiacritics(p.brand!).contains(q))),
         )
         .toList();
   }

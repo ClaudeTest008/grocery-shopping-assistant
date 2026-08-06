@@ -1,8 +1,11 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/config/app_config.dart';
+import 'core/demo/demo_seed.dart';
+import 'core/geo/countries.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'features/profile/data/preferences_repository.dart';
@@ -45,6 +48,21 @@ class GroceryApp extends ConsumerWidget {
       },
       routerConfig: router,
       scrollBehavior: const _DesktopScrollBehavior(),
+      // Material/Cupertino chrome (date pickers, tooltips, semantics
+      // labels) localizes to the selected country's language; dates and
+      // numbers follow via Intl.defaultLocale (set in SelectedCountry).
+      // The framework is RTL-ready by construction — a future RTL
+      // locale needs only its delegate, no layout work.
+      locale: Locale(DemoSeed.country.primaryLanguage),
+      supportedLocales: [
+        for (final language in {for (final c in Countries.all) ...c.languages})
+          Locale(language),
+      ],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       builder: (context, child) {
         // Accessibility: user-controlled text scaling on top of the
         // system setting, clamped to keep layouts usable.

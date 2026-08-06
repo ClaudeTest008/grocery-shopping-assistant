@@ -22,6 +22,10 @@ _Product _$ProductFromJson(Map<String, dynamic> json) => _Product(
   unitSize: (json['unit_size'] as num?)?.toDouble() ?? 1.0,
   imageUrl: json['image_url'] as String?,
   nutrition: json['nutrition'] as Map<String, dynamic>?,
+  allergens: (json['allergens'] as List<dynamic>?)
+      ?.map((e) => e as String)
+      .toList(),
+  ingredients: json['ingredients'] as String?,
   tags:
       (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ??
       const <String>[],
@@ -39,5 +43,7 @@ Map<String, dynamic> _$ProductToJson(_Product instance) => <String, dynamic>{
   'unit_size': instance.unitSize,
   'image_url': instance.imageUrl,
   'nutrition': instance.nutrition,
+  'allergens': instance.allergens,
+  'ingredients': instance.ingredients,
   'tags': instance.tags,
 };
