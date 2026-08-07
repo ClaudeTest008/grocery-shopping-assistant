@@ -36,6 +36,21 @@ analytics rows — including error reports — are deleted with your account.
 Demo mode sends nothing. There is no advertising, no third-party
 analytics SDK, and no sale of data of any kind.
 
+## External lookups you trigger
+
+Two features call open, non-commercial services directly, in every
+mode including demo — only when you use them:
+
+- **Scanning a barcode** the catalog doesn't know sends that barcode
+  (nothing else) to Open Food Facts (openfoodfacts.org) to identify
+  the product.
+- **Searching a place on the map** (a city or postal code that matches
+  no store) sends that search text (nothing else) to OpenStreetMap's
+  Nominatim (openstreetmap.org) to find the location.
+
+Neither request carries your account, device identifiers, or
+location; both services receive only what you typed or scanned.
+
 ## AI features
 
 When you use the assistant, meal planner or trip explanations, the text
